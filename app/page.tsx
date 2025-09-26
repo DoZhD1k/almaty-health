@@ -1,11 +1,30 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { FacilityMap } from "@/components/map/FacilityMapNew";
+import dynamic from "next/dynamic";
 import { SideFilterPanel } from "@/components/side-filter-panel";
 import { QuickSummary } from "@/components/quick-summary";
 import { FacilityStatistic } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
+
+// Dynamically import the map component to prevent SSR issues with Leaflet
+const FacilityMap = dynamic(
+  () =>
+    import("@/components/map/FacilityMapNew").then((mod) => ({
+      default: mod.FacilityMap,
+    })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[600px] bg-gray-100 rounded-lg flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-600">Загрузка карты...</p>
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface FilterState {
   search: string;
