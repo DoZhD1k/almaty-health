@@ -1,25 +1,30 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
-import { OverloadAlerts } from "./recommendations/overload-alerts"
-import { PatientRouting } from "./recommendations/patient-routing"
-import { LoadForecasting } from "./recommendations/load-forecasting"
-import { AlertTriangle, Route, TrendingUp, RefreshCw, Clock } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { OverloadAlerts } from "./recommendations/overload-alerts";
+import { PatientRouting } from "./recommendations/patient-routing";
+import {
+  AlertTriangle,
+  Route,
+  TrendingUp,
+  RefreshCw,
+  Clock,
+} from "lucide-react";
 
 export function RecommendationsEngine() {
-  const [lastUpdated, setLastUpdated] = useState(new Date())
-  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const handleRefresh = async () => {
-    setIsRefreshing(true)
+    setIsRefreshing(true);
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
-    setLastUpdated(new Date())
-    setIsRefreshing(false)
-  }
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    setLastUpdated(new Date());
+    setIsRefreshing(false);
+  };
 
   return (
     <div className="space-y-6">
@@ -38,7 +43,9 @@ export function RecommendationsEngine() {
           size="sm"
           className="gap-2 bg-transparent"
         >
-          <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+          <RefreshCw
+            className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+          />
           Обновить
         </Button>
       </div>
@@ -48,14 +55,14 @@ export function RecommendationsEngine() {
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Критические уведомления</AlertTitle>
         <AlertDescription>
-          Обнаружено 3 медицинских организации с критической перегрузкой. Требуется немедленное перераспределение
-          пациентов.
+          Система мониторинга обнаружила перегруженные медицинские организации.
+          Рекомендуется принять меры по перераспределению пациентов.
         </AlertDescription>
       </Alert>
 
       {/* Main Tabs */}
       <Tabs defaultValue="alerts" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="alerts" className="gap-2">
             <AlertTriangle className="h-4 w-4" />
             Уведомления о перегрузке
@@ -63,10 +70,6 @@ export function RecommendationsEngine() {
           <TabsTrigger value="routing" className="gap-2">
             <Route className="h-4 w-4" />
             Маршрутизация пациентов
-          </TabsTrigger>
-          <TabsTrigger value="forecasting" className="gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Прогнозирование
           </TabsTrigger>
         </TabsList>
 
@@ -77,11 +80,7 @@ export function RecommendationsEngine() {
         <TabsContent value="routing">
           <PatientRouting />
         </TabsContent>
-
-        <TabsContent value="forecasting">
-          <LoadForecasting />
-        </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

@@ -18,10 +18,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className} overflow-x-hidden`}>
-        <Navbar />
-        {children}
-        {/* <Analytics /> */}
+      <body className={`${inter.className}`}>
+        <div className="relative min-h-screen overflow-x-hidden bg-gradient-to-b from-background via-background/95 to-background">
+          <div className="relative z-10 flex min-h-screen flex-col">
+            <Navbar />
+            <main className="flex-1">{children}</main>
+          </div>
+        </div>
       </body>
     </html>
   );

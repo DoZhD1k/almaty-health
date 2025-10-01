@@ -12,6 +12,7 @@ interface SummaryData {
   totalBeds: number;
   highLoadCount: number;
   normalLoadCount: number;
+  lowLoadCount: number;
 }
 
 interface QuickSummaryProps {
@@ -29,6 +30,7 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
         totalBeds: 0,
         highLoadCount: 0,
         normalLoadCount: 0,
+        lowLoadCount: 0,
       };
     }
 
@@ -51,7 +53,10 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
       (f) => f.occupancy_rate_percent > 0.7 && f.occupancy_rate_percent <= 0.9
     ).length;
     const normalLoadCount = facilities.filter(
-      (f) => f.occupancy_rate_percent <= 0.7
+      (f) => f.occupancy_rate_percent >= 0.4 && f.occupancy_rate_percent <= 0.7
+    ).length;
+    const lowLoadCount = facilities.filter(
+      (f) => f.occupancy_rate_percent < 0.4
     ).length;
 
     return {
@@ -61,6 +66,7 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
       totalBeds,
       highLoadCount,
       normalLoadCount,
+      lowLoadCount,
     };
   }, [facilities]);
 
@@ -83,11 +89,38 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
 
           {/* Средняя загруженность */}
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-100">
-              <TrendingUp className="h-5 w-5 text-orange-600" />
+            <div
+              className={`flex items-center justify-center w-10 h-10 rounded-lg ${
+                summaryData.averageOccupancy >= 40 &&
+                summaryData.averageOccupancy <= 70
+                  ? "bg-green-100"
+                  : summaryData.averageOccupancy > 70
+                  ? "bg-orange-100"
+                  : "bg-gray-100"
+              }`}
+            >
+              <TrendingUp
+                className={`h-5 w-5 ${
+                  summaryData.averageOccupancy >= 40 &&
+                  summaryData.averageOccupancy <= 70
+                    ? "text-green-600"
+                    : summaryData.averageOccupancy > 70
+                    ? "text-orange-600"
+                    : "text-gray-600"
+                }`}
+              />
             </div>
             <div>
-              <div className="text-2xl font-bold text-orange-600">
+              <div
+                className={`text-2xl font-bold ${
+                  summaryData.averageOccupancy >= 40 &&
+                  summaryData.averageOccupancy <= 70
+                    ? "text-green-600"
+                    : summaryData.averageOccupancy > 70
+                    ? "text-orange-600"
+                    : "text-gray-600"
+                }`}
+              >
                 {summaryData.averageOccupancy}%
               </div>
               <div className="text-xs text-muted-foreground">Средняя загр.</div>

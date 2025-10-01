@@ -7,11 +7,11 @@ import { QuickSummary } from "@/components/quick-summary";
 import { FacilityStatistic } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 
-// Dynamically import the map component to prevent SSR issues with Leaflet
-const FacilityMap = dynamic(
+// Dynamically import the enhanced map component to prevent SSR issues with Leaflet
+const EnhancedFacilityMap = dynamic(
   () =>
-    import("@/components/map/FacilityMapNew").then((mod) => ({
-      default: mod.FacilityMap,
+    import("@/components/map/EnhancedFacilityMap").then((mod) => ({
+      default: mod.EnhancedFacilityMap,
     })),
   {
     ssr: false,
@@ -19,7 +19,9 @@ const FacilityMap = dynamic(
       <div className="h-[600px] bg-gray-100 rounded-lg flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Загрузка карты...</p>
+          <p className="mt-2 text-sm text-gray-600">
+            Загрузка интерактивной карты...
+          </p>
         </div>
       </div>
     ),
@@ -164,7 +166,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <main className="container mx-auto px-4 py-6">
+      <main className="mx-4 px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Боковой фильтр */}
           <div className="lg:col-span-1">
@@ -180,7 +182,7 @@ export default function HomePage() {
             <QuickSummary facilities={filteredFacilities} />
 
             {/* Карта */}
-            <FacilityMap
+            <EnhancedFacilityMap
               facilities={filteredFacilities}
               className="h-[600px]"
             />

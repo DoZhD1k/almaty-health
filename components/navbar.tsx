@@ -35,7 +35,7 @@ export function Navbar() {
 
   const isActive = (href: string) => {
     if (!pathname) return false;
-    if (href === "/ru") {
+    if (href === "/") {
       return pathname === href;
     }
 

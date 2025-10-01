@@ -137,19 +137,27 @@ export function AnalyticsDashboard() {
       (sum, facility) => sum + (facility.total_inpatient_bed_days || 0),
       0
     );
+    const avgBedDaysPerPatient =
+      totalHospitalizations > 0 ? totalBedDays / totalHospitalizations : 0;
     const avgLoad =
       filteredFacilities.length > 0
-        ? filteredFacilities.reduce(
-            (sum, facility) =>
-              sum + (facility.occupancy_rate_percent || 0) * 100,
+        ? (filteredFacilities.reduce(
+            (sum, facility) => sum + (facility.occupancy_rate_percent || 0),
             0
-          ) / filteredFacilities.length
+          ) /
+            filteredFacilities.length) *
+          100 // Приводим к процентам только в конце
         : 0;
     const overloadedCount = filteredFacilities.filter(
       (facility) => (facility.occupancy_rate_percent || 0) > 0.9
     ).length;
 
-    return { totalHospitalizations, avgLoad, overloadedCount, totalBedDays };
+    return {
+      totalHospitalizations,
+      avgLoad,
+      overloadedCount,
+      avgBedDaysPerPatient,
+    };
   }, [filteredFacilities]);
 
   const smpVtmpStats = useMemo(() => {
@@ -327,12 +335,12 @@ export function AnalyticsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">
-                  Койко-дни
+                  Койко-дни на пациента
                 </p>
                 <p className="text-2xl font-bold">
-                  {formatNumber(overallStats.totalBedDays)}
+                  {overallStats.avgBedDaysPerPatient.toFixed(1)}
                 </p>
-                <p className="text-xs text-green-600">Общий объем</p>
+                <p className="text-xs text-blue-600">Среднее значение</p>
               </div>
               <Bed className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -382,11 +390,12 @@ export function AnalyticsDashboard() {
                       );
                       const avgOccupancy =
                         facilities.length > 0
-                          ? facilities.reduce(
-                              (sum, f) =>
-                                sum + (f.occupancy_rate_percent || 0) * 100,
+                          ? (facilities.reduce(
+                              (sum, f) => sum + (f.occupancy_rate_percent || 0),
                               0
-                            ) / facilities.length
+                            ) /
+                              facilities.length) *
+                            100 // Приводим к процентам только в конце
                           : 0;
 
                       return {

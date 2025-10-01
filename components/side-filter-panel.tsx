@@ -283,43 +283,6 @@ export function SideFilterPanel({
             </div>
           </div>
         </div>
-
-        {/* Statistics */}
-        <div className="pt-4 border-t">
-          <div className="text-sm space-y-2">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Всего МО:</span>
-              <span className="font-medium">{facilities.length}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">
-                Средняя загруженность:
-              </span>
-              <span className="font-medium">
-                {facilities.length > 0
-                  ? Math.round(
-                      (facilities.reduce(
-                        (sum, f) => sum + f.occupancy_rate_percent,
-                        0
-                      ) /
-                        facilities.length) *
-                        100
-                    )
-                  : 0}
-                %
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Перегруженных:</span>
-              <span className="font-medium text-destructive">
-                {
-                  facilities.filter((f) => f.occupancy_rate_percent > 0.9)
-                    .length
-                }
-              </span>
-            </div>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
