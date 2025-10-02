@@ -146,6 +146,7 @@ export default function HomePage() {
         </div>
       </div>
     );
+    //fun
   }
 
   if (error) {
