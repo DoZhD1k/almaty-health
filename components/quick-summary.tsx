@@ -141,7 +141,7 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
               </div>
             </div>
           </div>
-
+          {/* new */}
           {/* Перегруженные */}
           <div className="flex items-center gap-3 border-b pb-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-100">
