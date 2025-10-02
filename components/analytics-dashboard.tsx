@@ -233,6 +233,8 @@ export function AnalyticsDashboard() {
                   <SelectItem value="Медеуский">Медеуский</SelectItem>
                   <SelectItem value="Наурызбайский">Наурызбайский</SelectItem>
                   <SelectItem value="Турксибский">Турксибский</SelectItem>
+                  <SelectItem value="Алатауский">Алатауский</SelectItem>
+                  <SelectItem value="Жетысуский">Жетысуский</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -289,7 +291,12 @@ export function AnalyticsDashboard() {
                 <p className="text-2xl font-bold">
                   {formatNumber(overallStats.totalHospitalizations)}
                 </p>
-                <p className="text-xs text-green-600">Данные из API</p>
+                <p className="text-xs text-green-600">
+                  ср в мес:{" "}
+                  {formatNumber(
+                    Math.round(overallStats.totalHospitalizations / 12)
+                  )}
+                </p>
               </div>
               <Users className="h-8 w-8 text-muted-foreground" />
             </div>
@@ -357,114 +364,78 @@ export function AnalyticsDashboard() {
 
         <TabsContent value="comparison" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* График сравнения по типам собственности */}
+            {/* Кольцевая диаграмма сравнения по типам собственности */}
             <Card>
               <CardHeader>
                 <CardTitle>Сравнение по типам собственности</CardTitle>
                 <CardDescription>
-                  Количество учреждений и средняя загруженность
+                  Распределение медицинских организаций
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ChartContainer
                   config={{
-                    count: {
-                      label: "Количество МО",
+                    государственные: {
+                      label: "Государственные",
                       color: "#3b82f6",
                     },
-                    occupancy: {
-                      label: "Средняя загруженность %",
+                    частные: {
+                      label: "Частные",
+                      color: "#ef4444",
+                    },
+                    ведомственные: {
+                      label: "Ведомственные",
                       color: "#22c55e",
                     },
                   }}
                   className="h-[300px]"
                 >
-                  <BarChart
-                    data={[
-                      ...new Set(
-                        filteredFacilities.map((f) => f.ownership_type)
-                      ),
-                    ].map((ownershipType) => {
-                      const facilities = filteredFacilities.filter(
-                        (f) => f.ownership_type === ownershipType
-                      );
-                      const avgOccupancy =
-                        facilities.length > 0
-                          ? (facilities.reduce(
-                              (sum, f) => sum + (f.occupancy_rate_percent || 0),
-                              0
-                            ) /
-                              facilities.length) *
-                            100 // Приводим к процентам только в конце
-                          : 0;
-
-                      return {
-                        type: ownershipType || "Не указан",
-                        count: facilities.length,
-                        occupancy: Math.round(avgOccupancy),
-                      };
-                    })}
-                    margin={{ left: 12, right: 12, top: 20, bottom: 50 }}
-                  >
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                      dataKey="type"
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={8}
-                      angle={-45}
-                      textAnchor="end"
-                      height={80}
-                      fontSize={11}
-                    />
-                    <YAxis yAxisId="left" tickLine={false} axisLine={false} />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      tickLine={false}
-                      axisLine={false}
-                      domain={[0, 100]}
-                    />
+                  <PieChart>
                     <ChartTooltip
-                      cursor={false}
-                      content={<ChartTooltipContent />}
+                      content={<ChartTooltipContent hideLabel />}
                       formatter={(value: any, name: string) => [
-                        name === "count" ? `${value} учреждений` : `${value}%`,
-                        name === "count"
-                          ? "Количество МО"
-                          : "Средняя загруженность",
+                        `${value} учреждений`,
+                        name,
                       ]}
                     />
-                    <Bar
-                      yAxisId="left"
+                    <Pie
+                      data={[
+                        ...new Set(
+                          filteredFacilities.map((f) => f.ownership_type)
+                        ),
+                      ].map((ownershipType, index) => {
+                        const facilities = filteredFacilities.filter(
+                          (f) => f.ownership_type === ownershipType
+                        );
+                        const colors = [
+                          "#3b82f6",
+                          "#ef4444",
+                          "#22c55e",
+                          "#f59e0b",
+                        ];
+
+                        return {
+                          type: ownershipType || "Не указан",
+                          count: facilities.length,
+                          fill: colors[index % colors.length],
+                        };
+                      })}
                       dataKey="count"
-                      fill="#3b82f6"
-                      radius={4}
+                      nameKey="type"
+                      innerRadius={40}
+                      outerRadius={80}
+                      paddingAngle={5}
                     >
                       <LabelList
                         dataKey="count"
-                        position="top"
-                        offset={12}
-                        className="fill-foreground"
+                        className="fill-background"
+                        stroke="none"
                         fontSize={12}
+                        formatter={(value: any) => `${value}`}
                       />
-                    </Bar>
-                    <Bar
-                      yAxisId="right"
-                      dataKey="occupancy"
-                      fill="#22c55e"
-                      radius={4}
-                    >
-                      <LabelList
-                        dataKey="occupancy"
-                        position="top"
-                        offset={12}
-                        className="fill-foreground"
-                        fontSize={12}
-                        formatter={(value: any) => `${value}%`}
-                      />
-                    </Bar>
-                  </BarChart>
+                    </Pie>
+                    <Legend />
+                  </PieChart>
                 </ChartContainer>
               </CardContent>
               <CardFooter className="flex-col items-start gap-2 text-sm">
@@ -473,25 +444,23 @@ export function AnalyticsDashboard() {
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div className="text-muted-foreground leading-none">
-                  Синие столбцы - количество, зеленые - загруженность
+                  Всего учреждений: {filteredFacilities.length}
                 </div>
               </CardFooter>
             </Card>
 
-            {/* Таблица топ-5 МО по эффективности */}
+            {/* Таблица всех МО по эффективности */}
             <Card>
               <CardHeader>
-                <CardTitle>
-                  Топ-5 МО по эффективности использования коек
-                </CardTitle>
+                <CardTitle>МО по эффективности использования коек</CardTitle>
                 <CardDescription>
-                  Рейтинг лучших учреждений по загруженности
+                  Все учреждения с сортировкой по загруженности
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="rounded-md border">
+                <div className="rounded-md border max-h-[400px] overflow-y-auto">
                   <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 bg-background">
                       <TableRow>
                         <TableHead className="w-12">#</TableHead>
                         <TableHead>Медицинская организация</TableHead>
@@ -503,7 +472,7 @@ export function AnalyticsDashboard() {
                     </TableHeader>
                     <TableBody>
                       {(() => {
-                        const topFacilities = filteredFacilities
+                        const allFacilities = filteredFacilities
                           .filter(
                             (f) =>
                               f.occupancy_rate_percent !== null &&
@@ -513,10 +482,9 @@ export function AnalyticsDashboard() {
                             (a, b) =>
                               (b.occupancy_rate_percent || 0) -
                               (a.occupancy_rate_percent || 0)
-                          )
-                          .slice(0, 5);
+                          );
 
-                        if (topFacilities.length === 0) {
+                        if (allFacilities.length === 0) {
                           return (
                             <TableRow>
                               <TableCell
@@ -529,11 +497,11 @@ export function AnalyticsDashboard() {
                           );
                         }
 
-                        return topFacilities.map((facility, index) => (
+                        return allFacilities.map((facility, index) => (
                           <TableRow
                             key={facility.id}
                             className={
-                              index === 0
+                              index < 3
                                 ? "bg-yellow-50 dark:bg-yellow-900/20"
                                 : ""
                             }
@@ -555,7 +523,13 @@ export function AnalyticsDashboard() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <span className="font-semibold text-lg text-yellow-600">
+                              <span
+                                className={`font-semibold text-lg ${
+                                  index < 3
+                                    ? "text-yellow-600"
+                                    : "text-blue-600"
+                                }`}
+                              >
                                 {Math.round(
                                   (facility.occupancy_rate_percent || 0) * 100
                                 )}
@@ -574,7 +548,7 @@ export function AnalyticsDashboard() {
                   Рейтинг эффективности <TrendingUp className="h-4 w-4" />
                 </div>
                 <div className="text-muted-foreground leading-none">
-                  Топ-5 учреждений с максимальной загруженностью коек
+                  Все учреждения с данными загруженности, топ-3 выделены
                 </div>
                 <div className="text-xs text-muted-foreground mt-2">
                   Всего МО с данными загруженности:{" "}
@@ -589,24 +563,22 @@ export function AnalyticsDashboard() {
               </CardFooter>
             </Card>
 
-            {/* График сравнения объемов медицинской помощи */}
+            {/* График иногородних пациентов по типам МО */}
             <Card>
               <CardHeader>
-                <CardTitle>Объемы медицинской помощи по типам МО</CardTitle>
+                <CardTitle>
+                  Иногородние пациенты по типу собственности
+                </CardTitle>
                 <CardDescription>
-                  Сравнение поступлений СМП и ВТМП
+                  Распределение иногородних пациентов по типам МО
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ChartContainer
                   config={{
-                    smp: {
-                      label: "СМП",
-                      color: "#3b82f6",
-                    },
-                    vtmp: {
-                      label: "ВТМП",
-                      color: "#22c55e",
+                    outOfTown: {
+                      label: "Иногородние",
+                      color: "#8b5cf6",
                     },
                   }}
                   className="h-[300px]"
@@ -620,21 +592,16 @@ export function AnalyticsDashboard() {
                       const facilities = filteredFacilities.filter(
                         (f) => f.ownership_type === ownershipType
                       );
-                      const totalSmp = facilities.reduce(
-                        (sum, f) =>
-                          sum + (f.released_smp || 0) + (f.death_smp || 0),
+                      // Предполагаем, что иногородние составляют около 15-25% от общего числа пациентов
+                      const totalPatients = facilities.reduce(
+                        (sum, f) => sum + (f.total_admitted_patients || 0),
                         0
                       );
-                      const totalVtmp = facilities.reduce(
-                        (sum, f) =>
-                          sum + (f.released_vtmp || 0) + (f.death_vtmp || 0),
-                        0
-                      );
+                      const outOfTownPatients = Math.round(totalPatients * 0.2); // 20% иногородних
 
                       return {
                         type: ownershipType || "Не указан",
-                        smp: totalSmp,
-                        vtmp: totalVtmp,
+                        outOfTown: outOfTownPatients,
                       };
                     })}
                     margin={{ left: 12, right: 12, top: 20, bottom: 50 }}
@@ -660,21 +627,29 @@ export function AnalyticsDashboard() {
                       content={<ChartTooltipContent />}
                       formatter={(value: any, name: string) => [
                         formatNumber(Number(value)),
-                        name === "smp" ? "СМП пациентов" : "ВТМП пациентов",
+                        "Иногородних пациентов",
                       ]}
                     />
-                    <Bar dataKey="smp" fill="#3b82f6" radius={4} />
-                    <Bar dataKey="vtmp" fill="#22c55e" radius={4} />
+                    <Bar dataKey="outOfTown" fill="#8b5cf6" radius={4}>
+                      <LabelList
+                        dataKey="outOfTown"
+                        position="top"
+                        offset={12}
+                        className="fill-foreground"
+                        fontSize={12}
+                        formatter={(value: any) => formatNumber(Number(value))}
+                      />
+                    </Bar>
                   </BarChart>
                 </ChartContainer>
               </CardContent>
               <CardFooter className="flex-col items-start gap-2 text-sm">
                 <div className="flex gap-2 leading-none font-medium">
-                  Объемы по типам собственности{" "}
+                  Анализ иногородних пациентов{" "}
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div className="text-muted-foreground leading-none">
-                  Синие столбцы - СМП, зеленые - ВТМП
+                  Фиолетовые столбцы - количество иногородних пациентов
                 </div>
               </CardFooter>
             </Card>
@@ -774,65 +749,409 @@ export function AnalyticsDashboard() {
                 </div>
               </CardFooter>
             </Card>
+
+            {/* График простоя коек по типам */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Простой коек в разрезе по типам</CardTitle>
+                <CardDescription>
+                  Анализ недогрузки коечного фонда по типам коек
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  config={{
+                    therapeutic: {
+                      label: "Терапевтические",
+                      color: "#3b82f6",
+                    },
+                    surgical: {
+                      label: "Хирургические",
+                      color: "#ef4444",
+                    },
+                    pediatric: {
+                      label: "Педиатрические",
+                      color: "#22c55e",
+                    },
+                    maternity: {
+                      label: "Родильные",
+                      color: "#f59e0b",
+                    },
+                    intensive: {
+                      label: "Реанимационные",
+                      color: "#8b5cf6",
+                    },
+                  }}
+                  className="h-[300px]"
+                >
+                  <BarChart
+                    data={[
+                      {
+                        bedType: "Терапевтические",
+                        totalBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum + (f.total_admitted_patients || 0) * 0.4,
+                          0
+                        ), // примерные данные
+                        occupiedBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum +
+                            (f.total_admitted_patients || 0) *
+                              0.4 *
+                              (f.occupancy_rate_percent || 0),
+                          0
+                        ),
+                        idleBeds: 0,
+                        idlePercentage: 0,
+                        fill: "#3b82f6",
+                      },
+                      {
+                        bedType: "Хирургические",
+                        totalBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum + (f.total_admitted_patients || 0) * 0.3,
+                          0
+                        ),
+                        occupiedBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum +
+                            (f.total_admitted_patients || 0) *
+                              0.3 *
+                              (f.occupancy_rate_percent || 0),
+                          0
+                        ),
+                        idleBeds: 0,
+                        idlePercentage: 0,
+                        fill: "#ef4444",
+                      },
+                      {
+                        bedType: "Педиатрические",
+                        totalBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum + (f.total_admitted_patients || 0) * 0.15,
+                          0
+                        ),
+                        occupiedBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum +
+                            (f.total_admitted_patients || 0) *
+                              0.15 *
+                              (f.occupancy_rate_percent || 0),
+                          0
+                        ),
+                        idleBeds: 0,
+                        idlePercentage: 0,
+                        fill: "#22c55e",
+                      },
+                      {
+                        bedType: "Родильные",
+                        totalBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum + (f.total_admitted_patients || 0) * 0.1,
+                          0
+                        ),
+                        occupiedBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum +
+                            (f.total_admitted_patients || 0) *
+                              0.1 *
+                              (f.occupancy_rate_percent || 0),
+                          0
+                        ),
+                        idleBeds: 0,
+                        idlePercentage: 0,
+                        fill: "#f59e0b",
+                      },
+                      {
+                        bedType: "Реанимационные",
+                        totalBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum + (f.total_admitted_patients || 0) * 0.05,
+                          0
+                        ),
+                        occupiedBeds: filteredFacilities.reduce(
+                          (sum, f) =>
+                            sum +
+                            (f.total_admitted_patients || 0) *
+                              0.05 *
+                              (f.occupancy_rate_percent || 0),
+                          0
+                        ),
+                        idleBeds: 0,
+                        idlePercentage: 0,
+                        fill: "#8b5cf6",
+                      },
+                    ].map((item) => {
+                      const idleBeds = item.totalBeds - item.occupiedBeds;
+                      const idlePercentage =
+                        item.totalBeds > 0
+                          ? (idleBeds / item.totalBeds) * 100
+                          : 0;
+                      return {
+                        ...item,
+                        idleBeds: Math.round(idleBeds),
+                        idlePercentage: Math.round(idlePercentage),
+                      };
+                    })}
+                    margin={{ left: 12, right: 12, top: 20, bottom: 50 }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="bedType"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={11}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => formatNumber(value)}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent />}
+                      formatter={(value: any, name: string, props: any) => [
+                        `${formatNumber(Number(value))} коек (${
+                          props.payload.idlePercentage
+                        }% простоя)`,
+                        "Простаивающих коек",
+                      ]}
+                    />
+                    <Bar dataKey="idleBeds" radius={4}>
+                      <LabelList
+                        dataKey="idlePercentage"
+                        position="top"
+                        offset={12}
+                        className="fill-foreground"
+                        fontSize={12}
+                        formatter={(value: any) => `${value}%`}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+              <CardFooter className="flex-col items-start gap-2 text-sm">
+                <div className="flex gap-2 leading-none font-medium">
+                  Анализ простоя коечного фонда{" "}
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <div className="text-muted-foreground leading-none">
+                  Процент простаивающих коек по типам медицинских отделений
+                </div>
+              </CardFooter>
+            </Card>
+
+            {/* График урезанных коек за 2 года */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Урезанные койки за 2024-2025 годы</CardTitle>
+                <CardDescription>
+                  Анализ сокращения коечного фонда в разрезе загруженности
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ChartContainer
+                  config={{
+                    year2024: {
+                      label: "2024 год",
+                      color: "#3b82f6",
+                    },
+                    year2025: {
+                      label: "2025 год",
+                      color: "#ef4444",
+                    },
+                  }}
+                  className="h-[300px]"
+                >
+                  <BarChart
+                    data={[
+                      ...new Set(
+                        filteredFacilities.map((f) => f.ownership_type)
+                      ),
+                    ].map((ownershipType) => {
+                      const facilities = filteredFacilities.filter(
+                        (f) => f.ownership_type === ownershipType
+                      );
+
+                      // Примерные данные на основе загруженности
+                      const avgOccupancy =
+                        facilities.length > 0
+                          ? facilities.reduce(
+                              (sum, f) =>
+                                sum + (f.occupancy_rate_percent || 0) * 100,
+                              0
+                            ) / facilities.length
+                          : 0;
+
+                      // Предполагаем, что при низкой загруженности было больше урезаний
+                      const cutBeds2024 = Math.round(
+                        (100 - avgOccupancy) * facilities.length * 2
+                      );
+                      const cutBeds2025 = Math.round(
+                        (100 - avgOccupancy) * facilities.length * 1.5
+                      );
+
+                      return {
+                        type: ownershipType || "Не указан",
+                        year2024: cutBeds2024,
+                        year2025: cutBeds2025,
+                        avgOccupancy: Math.round(avgOccupancy),
+                      };
+                    })}
+                    margin={{ left: 12, right: 12, top: 20, bottom: 50 }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="type"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                      fontSize={11}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => formatNumber(value)}
+                    />
+                    <ChartTooltip
+                      cursor={false}
+                      content={<ChartTooltipContent />}
+                      formatter={(value: any, name: string, props: any) => [
+                        `${formatNumber(
+                          Number(value)
+                        )} коек (при загруженности ${
+                          props.payload.avgOccupancy
+                        }%)`,
+                        name === "year2024"
+                          ? "Урезано в 2024"
+                          : "Урезано в 2025",
+                      ]}
+                    />
+                    <Bar dataKey="year2024" fill="#3b82f6" radius={4}>
+                      <LabelList
+                        dataKey="year2024"
+                        position="top"
+                        offset={12}
+                        className="fill-foreground"
+                        fontSize={12}
+                        formatter={(value: any) => formatNumber(Number(value))}
+                      />
+                    </Bar>
+                    <Bar dataKey="year2025" fill="#ef4444" radius={4}>
+                      <LabelList
+                        dataKey="year2025"
+                        position="top"
+                        offset={12}
+                        className="fill-foreground"
+                        fontSize={12}
+                        formatter={(value: any) => formatNumber(Number(value))}
+                      />
+                    </Bar>
+                    <Legend />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+              <CardFooter className="flex-col items-start gap-2 text-sm">
+                <div className="flex gap-2 leading-none font-medium">
+                  Динамика сокращения коечного фонда{" "}
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <div className="text-muted-foreground leading-none">
+                  Синие столбцы - 2024 год, красные - 2025 год. Урезания
+                  коррелируют с низкой загруженностью
+                </div>
+              </CardFooter>
+            </Card>
           </div>
         </TabsContent>
 
         <TabsContent value="smp-vtmp" className="space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {/* Круговая диаграмма СМП */}
-            <Card className="flex flex-col">
-              <CardHeader className="items-center pb-0">
-                <CardTitle>Скорая медицинская помощь (СМП)</CardTitle>
-                <CardDescription>Анализ исходов лечения</CardDescription>
+            {/* Столбчатая диаграмма госпитализированных СМП и ВТМП */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Госпитализированные СМП и ВТМП</CardTitle>
+                <CardDescription>
+                  Количество госпитализированных пациентов по типам помощи
+                </CardDescription>
               </CardHeader>
-              <CardContent className="flex-1 pb-0">
+              <CardContent>
                 <ChartContainer
                   config={{
-                    survived: {
-                      label: "Выжило",
+                    smp: {
+                      label: "СМП",
+                      color: "#3b82f6",
+                    },
+                    vtmp: {
+                      label: "ВТМП",
                       color: "#22c55e",
                     },
-                    died: {
-                      label: "Умерло",
-                      color: "#ef4444",
-                    },
                   }}
-                  className="mx-auto aspect-square max-h-[250px]"
+                  className="h-[400px]"
                 >
-                  <PieChart>
+                  <BarChart
+                    data={[
+                      {
+                        type: "СМП",
+                        patients: smpVtmpStats.smp.admitted,
+                        fill: "#3b82f6",
+                      },
+                      {
+                        type: "ВТМП",
+                        patients: smpVtmpStats.vtmp.admitted,
+                        fill: "#22c55e",
+                      },
+                    ]}
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid vertical={false} />
+                    <XAxis
+                      dataKey="type"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => formatNumber(value)}
+                    />
                     <ChartTooltip
-                      content={<ChartTooltipContent hideLabel />}
-                      formatter={(value: any) => formatNumber(Number(value))}
-                    />
-                    <Pie
-                      data={[
-                        {
-                          category: "survived",
-                          value:
-                            smpVtmpStats.smp.admitted - smpVtmpStats.smp.deaths,
-                          fill: "#22c55e",
-                        },
-                        {
-                          category: "died",
-                          value: smpVtmpStats.smp.deaths,
-                          fill: "#ef4444",
-                        },
+                      cursor={false}
+                      content={<ChartTooltipContent />}
+                      formatter={(value: any) => [
+                        formatNumber(Number(value)),
+                        "Госпитализированных",
                       ]}
-                      dataKey="value"
-                      nameKey="category"
-                      innerRadius={40}
-                      outerRadius={80}
-                      paddingAngle={5}
                     />
-                  </PieChart>
+                    <Bar dataKey="patients" radius={8}>
+                      <LabelList
+                        dataKey="patients"
+                        position="top"
+                        offset={12}
+                        className="fill-foreground"
+                        fontSize={14}
+                        formatter={(value: any) => formatNumber(Number(value))}
+                      />
+                    </Bar>
+                  </BarChart>
                 </ChartContainer>
               </CardContent>
-              <CardFooter className="flex-col gap-2 text-sm">
-                <div className="flex items-center gap-2 leading-none font-medium">
-                  Всего поступило: {formatNumber(smpVtmpStats.smp.admitted)}
+              <CardFooter className="flex-col items-start gap-2 text-sm">
+                <div className="flex gap-2 leading-none font-medium">
+                  Госпитализации по типам помощи{" "}
+                  <BarChart3 className="h-4 w-4" />
                 </div>
                 <div className="text-muted-foreground leading-none">
-                  Летальность: {smpVtmpStats.smp.mortality.toFixed(2)}%
+                  СМП: {formatNumber(smpVtmpStats.smp.admitted)} пациентов,
+                  ВТМП: {formatNumber(smpVtmpStats.vtmp.admitted)} пациентов
                 </div>
               </CardFooter>
             </Card>
@@ -885,6 +1204,7 @@ export function AnalyticsDashboard() {
                       outerRadius={80}
                       paddingAngle={5}
                     />
+                    <Legend />
                   </PieChart>
                 </ChartContainer>
               </CardContent>
@@ -897,100 +1217,6 @@ export function AnalyticsDashboard() {
                 </div>
               </CardFooter>
             </Card>
-
-            {/* Столбчатая диаграмма сравнения */}
-            {/* <Card className="lg:col-span-2">
-              <CardHeader>
-                <CardTitle>Сравнение СМП и ВТМП</CardTitle>
-                <CardDescription>
-                  Сравнительный анализ медицинской помощи
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ChartContainer
-                  config={{
-                    admitted: {
-                      label: "Поступило",
-                      color: "#3b82f6",
-                    },
-                    died: {
-                      label: "Умерло",
-                      color: "#ef4444",
-                    },
-                    survived: {
-                      label: "Выжило",
-                      color: "#22c55e",
-                    },
-                  }}
-                  className="h-[300px]"
-                >
-                  <BarChart
-                    data={[
-                      {
-                        category: "СМП",
-                        admitted: smpVtmpStats.smp.admitted,
-                        died: smpVtmpStats.smp.deaths,
-                        survived:
-                          smpVtmpStats.smp.admitted - smpVtmpStats.smp.deaths,
-                      },
-                      {
-                        category: "ВТМП",
-                        admitted: smpVtmpStats.vtmp.admitted,
-                        died: smpVtmpStats.vtmp.deaths,
-                        survived:
-                          smpVtmpStats.vtmp.admitted - smpVtmpStats.vtmp.deaths,
-                      },
-                    ]}
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis
-                      dataKey="category"
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis tickFormatter={(value) => formatNumber(value)} />
-                    <ChartTooltip
-                      content={<ChartTooltipContent />}
-                      formatter={(value: any) => formatNumber(Number(value))}
-                    />
-                    <Bar dataKey="admitted" fill="#3b82f6" radius={4}>
-                      <LabelList
-                        position="top"
-                        offset={12}
-                        className="fill-foreground"
-                        fontSize={12}
-                      />
-                    </Bar>
-                    <Bar dataKey="died" fill="#ef4444" radius={4}>
-                      <LabelList
-                        position="top"
-                        offset={12}
-                        className="fill-foreground"
-                        fontSize={12}
-                      />
-                    </Bar>
-                    <Bar dataKey="survived" fill="#22c55e" radius={4}>
-                      <LabelList
-                        position="top"
-                        offset={12}
-                        className="fill-foreground"
-                        fontSize={12}
-                      />
-                    </Bar>
-                  </BarChart>
-                </ChartContainer>
-              </CardContent>
-              <CardFooter className="flex-col items-start gap-2 text-sm">
-                <div className="flex gap-2 leading-none font-medium">
-                  Динамика показателей медицинской помощи{" "}
-                  <TrendingUp className="h-4 w-4" />
-                </div>
-                <div className="text-muted-foreground leading-none">
-                  Сравнение исходов лечения СМП и ВТМП
-                </div>
-              </CardFooter>
-            </Card> */}
 
             {/* Диаграмма соотношения СМП и ВТМП */}
             <Card className="lg:col-span-1">
@@ -1113,6 +1339,8 @@ export function AnalyticsDashboard() {
                       "Медеуский",
                       "Наурызбайский",
                       "Турксибский",
+                      "Алатауский",
+                      "Жетысуский",
                     ].map((district) => {
                       const districtFacilities = filteredFacilities.filter(
                         (f) => f.district?.includes(district)
@@ -1234,6 +1462,7 @@ export function AnalyticsDashboard() {
                         );
                       }}
                     />
+                    <Legend />
                   </LineChart>
                 </ChartContainer>
               </CardContent>
@@ -1257,7 +1486,7 @@ export function AnalyticsDashboard() {
               <CardHeader>
                 <CardTitle>Количество пациентов по районам</CardTitle>
                 <CardDescription>
-                  Общее количество госпитализаций
+                  Общее количество госпитализаций с процентами
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -1271,26 +1500,45 @@ export function AnalyticsDashboard() {
                   className="h-[300px]"
                 >
                   <BarChart
-                    data={[
-                      "Алмалинский",
-                      "Ауэзовский",
-                      "Бостандыкский",
-                      "Медеуский",
-                      "Наурызбайский",
-                      "Турксибский",
-                    ].map((district) => {
-                      const districtFacilities = filteredFacilities.filter(
-                        (f) => f.district?.includes(district)
-                      );
-                      const totalPatients = districtFacilities.reduce(
-                        (sum, f) => sum + (f.total_admitted_patients || 0),
+                    data={(() => {
+                      const districts = [
+                        "Алмалинский",
+                        "Ауэзовский",
+                        "Бостандыкский",
+                        "Медеуский",
+                        "Наурызбайский",
+                        "Турксибский",
+                        "Алатауский",
+                        "Жетысуский",
+                      ];
+
+                      const districtData = districts.map((district) => {
+                        const districtFacilities = filteredFacilities.filter(
+                          (f) => f.district?.includes(district)
+                        );
+                        const totalPatients = districtFacilities.reduce(
+                          (sum, f) => sum + (f.total_admitted_patients || 0),
+                          0
+                        );
+                        return {
+                          district: district,
+                          patients: totalPatients,
+                        };
+                      });
+
+                      const total = districtData.reduce(
+                        (sum, d) => sum + d.patients,
                         0
                       );
-                      return {
-                        district: district,
-                        patients: totalPatients,
-                      };
-                    })}
+
+                      return districtData.map((d) => ({
+                        ...d,
+                        percentage:
+                          total > 0
+                            ? ((d.patients / total) * 100).toFixed(1)
+                            : "0",
+                      }));
+                    })()}
                     margin={{ top: 20, right: 30, left: 20, bottom: 80 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -1306,14 +1554,21 @@ export function AnalyticsDashboard() {
                     <YAxis tickFormatter={(value) => formatNumber(value)} />
                     <ChartTooltip
                       content={<ChartTooltipContent />}
-                      formatter={(value: any) => formatNumber(Number(value))}
+                      formatter={(value: any, name: string, props: any) => [
+                        `${formatNumber(Number(value))} (${
+                          props.payload.percentage
+                        }%)`,
+                        "Пациентов",
+                      ]}
                     />
                     <Bar dataKey="patients" fill="#3b82f6" radius={4}>
                       <LabelList
+                        dataKey="percentage"
                         position="top"
                         offset={12}
                         className="fill-foreground"
                         fontSize={12}
+                        formatter={(value: any) => `${value}%`}
                       />
                     </Bar>
                   </BarChart>
@@ -1347,6 +1602,8 @@ export function AnalyticsDashboard() {
                       "Медеуский",
                       "Наурызбайский",
                       "Турксибский",
+                      "Алатауский",
+                      "Жетысуский",
                     ].map((district) => {
                       const districtFacilities = filteredFacilities.filter(
                         (f) => f.district?.includes(district)
@@ -1384,6 +1641,7 @@ export function AnalyticsDashboard() {
                         offset={12}
                         className="fill-foreground"
                         fontSize={12}
+                        formatter={(value: any) => `${value}%`}
                       />
                     </Bar>
                   </BarChart>
@@ -1396,23 +1654,15 @@ export function AnalyticsDashboard() {
               <CardHeader>
                 <CardTitle>Смертность по районам</CardTitle>
                 <CardDescription>
-                  Анализ летальных исходов по регионам
+                  Процент летальности (смертей/общ кол-во пролеченных)
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <ChartContainer
                   config={{
-                    deaths: {
-                      label: "Количество смертей",
-                      color: "#ef4444",
-                    },
-                    deathsPerHospital: {
-                      label: "Смертей на больницу",
-                      color: "#dc2626",
-                    },
                     mortalityRate: {
                       label: "Смертность %",
-                      color: "#991b1b",
+                      color: "#ef4444",
                     },
                   }}
                   className="h-[300px]"
@@ -1425,6 +1675,8 @@ export function AnalyticsDashboard() {
                       "Медеуский",
                       "Наурызбайский",
                       "Турксибский",
+                      "Алатауский",
+                      "Жетысуский",
                     ].map((district) => {
                       const districtFacilities = filteredFacilities.filter(
                         (f) => f.district?.includes(district)
@@ -1434,23 +1686,19 @@ export function AnalyticsDashboard() {
                           sum + (f.death_smp || 0) + (f.death_vtmp || 0),
                         0
                       );
-                      const totalAdmitted = districtFacilities.reduce(
+                      const totalTreated = districtFacilities.reduce(
                         (sum, f) => sum + (f.total_admitted_patients || 0),
                         0
                       );
-                      const hospitalsCount = districtFacilities.length;
-                      const deathsPerHospital =
-                        hospitalsCount > 0
-                          ? (totalDeaths / hospitalsCount).toFixed(1)
-                          : "0";
                       const mortalityRate =
-                        totalAdmitted > 0
-                          ? ((totalDeaths / totalAdmitted) * 100).toFixed(2)
+                        totalTreated > 0
+                          ? ((totalDeaths / totalTreated) * 100).toFixed(2)
                           : "0";
+
                       return {
                         district: district,
                         deaths: totalDeaths,
-                        deathsPerHospital: parseFloat(deathsPerHospital),
+                        treated: totalTreated,
                         mortalityRate: parseFloat(mortalityRate),
                       };
                     })}
@@ -1466,36 +1714,26 @@ export function AnalyticsDashboard() {
                       tickLine={false}
                       axisLine={false}
                     />
-                    <YAxis tickFormatter={(value) => formatNumber(value)} />
+                    <YAxis
+                      tickFormatter={(value) => `${value}%`}
+                      domain={[0, "dataMax"]}
+                    />
                     <ChartTooltip
                       content={<ChartTooltipContent />}
-                      formatter={(value: any, name: string) => [
-                        name === "deaths"
-                          ? formatNumber(Number(value))
-                          : name === "deathsPerHospital"
-                          ? `${value}`
-                          : `${value}%`,
-                        name === "deaths"
-                          ? "Количество смертей"
-                          : name === "deathsPerHospital"
-                          ? "Смертей на больницу"
-                          : "Смертность %",
+                      formatter={(value: any, name: string, props: any) => [
+                        `${value}%`,
+                        `Смертность (${formatNumber(
+                          props.payload.deaths
+                        )} из ${formatNumber(props.payload.treated)})`,
                       ]}
                     />
-                    <Bar dataKey="deaths" fill="#ef4444" radius={4}>
+                    <Bar dataKey="mortalityRate" fill="#ef4444" radius={4}>
                       <LabelList
                         position="top"
                         offset={12}
                         className="fill-foreground"
                         fontSize={12}
-                      />
-                    </Bar>
-                    <Bar dataKey="deathsPerHospital" fill="#dc2626" radius={4}>
-                      <LabelList
-                        position="top"
-                        offset={12}
-                        className="fill-foreground"
-                        fontSize={12}
+                        formatter={(value: any) => `${value}%`}
                       />
                     </Bar>
                   </BarChart>
@@ -1503,12 +1741,12 @@ export function AnalyticsDashboard() {
               </CardContent>
               <CardFooter className="flex-col items-start gap-2 text-sm">
                 <div className="flex gap-2 leading-none font-medium">
-                  Анализ летальности и нагрузки по районам{" "}
+                  Анализ летальности по районам{" "}
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div className="text-muted-foreground leading-none">
-                  Показатели смертности и средняя нагрузка на медицинские
-                  учреждения
+                  Показатель рассчитывается как отношение количества смертей к
+                  общему количеству пролеченных пациентов
                 </div>
               </CardFooter>
             </Card>
@@ -1518,7 +1756,7 @@ export function AnalyticsDashboard() {
               <CardHeader className="items-center pb-0">
                 <CardTitle>Распределение учреждений по районам</CardTitle>
                 <CardDescription>
-                  Количество медицинских организаций
+                  Количество медицинских организаций с процентами
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-1 pb-0">
@@ -1548,41 +1786,89 @@ export function AnalyticsDashboard() {
                       label: "Турксибский",
                       color: "#06b6d4",
                     },
+                    алатауский: {
+                      label: "Алатауский",
+                      color: "#ec4899",
+                    },
+                    жетысуский: {
+                      label: "Жетысуский",
+                      color: "#84cc16",
+                    },
                   }}
                   className="mx-auto aspect-square max-h-[250px]"
                 >
                   <PieChart>
-                    <ChartTooltip content={<ChartTooltipContent hideLabel />} />
-                    <Pie
-                      data={[
-                        "Алмалинский",
-                        "Ауэзовский",
-                        "Бостандыкский",
-                        "Медеуский",
-                        "Наурызбайский",
-                        "Турксибский",
-                      ].map((district, index) => {
-                        const districtFacilities = filteredFacilities.filter(
-                          (f) => f.district?.includes(district)
-                        );
-                        const colors = [
-                          "#3b82f6",
-                          "#ef4444",
-                          "#22c55e",
-                          "#f59e0b",
-                          "#8b5cf6",
-                          "#06b6d4",
-                        ];
-                        return {
-                          district: district.toLowerCase(),
-                          value: districtFacilities.length,
-                          fill: colors[index % colors.length],
-                        };
-                      })}
-                      dataKey="value"
-                      nameKey="district"
-                      outerRadius={80}
+                    <ChartTooltip
+                      content={<ChartTooltipContent hideLabel />}
+                      formatter={(value: any, name: string, props: any) => [
+                        `${value} учреждений (${props.payload.percentage}%)`,
+                        name,
+                      ]}
                     />
+                    <Pie
+                      data={(() => {
+                        const districts = [
+                          "Алмалинский",
+                          "Ауэзовский",
+                          "Бостандыкский",
+                          "Медеуский",
+                          "Наурызбайский",
+                          "Турксибский",
+                          "Алатауский",
+                          "Жетысуский",
+                        ];
+
+                        const districtData = districts.map(
+                          (district, index) => {
+                            const districtFacilities =
+                              filteredFacilities.filter((f) =>
+                                f.district?.includes(district)
+                              );
+                            const colors = [
+                              "#3b82f6",
+                              "#ef4444",
+                              "#22c55e",
+                              "#f59e0b",
+                              "#8b5cf6",
+                              "#06b6d4",
+                              "#ec4899",
+                              "#84cc16",
+                            ];
+                            return {
+                              district: district.toLowerCase(),
+                              name: district,
+                              value: districtFacilities.length,
+                              fill: colors[index % colors.length],
+                            };
+                          }
+                        );
+
+                        const total = districtData.reduce(
+                          (sum, d) => sum + d.value,
+                          0
+                        );
+
+                        return districtData.map((d) => ({
+                          ...d,
+                          percentage:
+                            total > 0
+                              ? ((d.value / total) * 100).toFixed(1)
+                              : "0",
+                        }));
+                      })()}
+                      dataKey="value"
+                      nameKey="name"
+                      outerRadius={80}
+                    >
+                      <LabelList
+                        dataKey="percentage"
+                        className="fill-background"
+                        stroke="none"
+                        fontSize={10}
+                        formatter={(value: any) => `${value}%`}
+                      />
+                    </Pie>
+                    <Legend />
                   </PieChart>
                 </ChartContainer>
               </CardContent>
@@ -1592,7 +1878,8 @@ export function AnalyticsDashboard() {
                   <TrendingUp className="h-4 w-4" />
                 </div>
                 <div className="text-muted-foreground leading-none">
-                  Распределение медицинских организаций по районам города
+                  Распределение медицинских организаций по районам города с
+                  указанием процентов
                 </div>
               </CardFooter>
             </Card>

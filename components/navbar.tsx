@@ -18,11 +18,6 @@ const navigation = [
     href: "/analytics",
     icon: BarChart3,
   },
-  {
-    name: "Рекоммендации",
-    href: "/recommendations",
-    icon: TrendingUp,
-  },
 ];
 
 export function Navbar() {
@@ -127,10 +122,12 @@ export function Navbar() {
                       : "text-gray-700 hover:bg-gray-100"
                   )}
                 >
-                  <span className={cn(
-                    "flex h-10 w-10 items-center justify-center rounded-xl",
-                    active ? "bg-white/20" : "bg-gray-100"
-                  )}>
+                  <span
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-xl",
+                      active ? "bg-white/20" : "bg-gray-100"
+                    )}
+                  >
                     <item.icon className="h-5 w-5" />
                   </span>
                   <span>{item.name}</span>
