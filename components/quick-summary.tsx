@@ -74,19 +74,6 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
     <Card className={`${className} shadow-xl backdrop-blur-sm bg-white/95`}>
       <CardContent className="p-4">
         <div className="flex flex-col gap-3">
-          {/* Всего МО */}
-          <div className="flex items-center gap-3 border-b pb-3">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[rgb(var(--blue-normal))]">
-              <Building2 className="h-5 w-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <div className="text-xs text-gray-600 mb-0.5">Всего МО</div>
-              <div className="text-2xl font-bold text-[rgb(var(--blue-normal))]">
-                {summaryData.totalFacilities}
-              </div>
-            </div>
-          </div>
-
           {/* Всего коек */}
           <div className="flex items-center gap-3 border-b pb-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-blue-100">
@@ -124,7 +111,9 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
               />
             </div>
             <div className="flex-1">
-              <div className="text-xs text-gray-600 mb-0.5">Средняя загруженность</div>
+              <div className="text-xs text-gray-600 mb-0.5">
+                Средняя загруженность
+              </div>
               <div
                 className={`text-2xl font-bold ${
                   summaryData.averageOccupancy >= 40 &&
@@ -140,13 +129,28 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
             </div>
           </div>
 
+          {/* Всего МО */}
+          <div className="flex items-center gap-3 border-b pb-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-[rgb(var(--blue-normal))]">
+              <Building2 className="h-5 w-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="text-xs text-gray-600 mb-0.5">Всего МО</div>
+              <div className="text-2xl font-bold text-[rgb(var(--blue-normal))]">
+                {summaryData.totalFacilities}
+              </div>
+            </div>
+          </div>
+
           {/* Перегруженные */}
           <div className="flex items-center gap-3 border-b pb-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-red-100">
               <AlertTriangle className="h-5 w-5 text-red-600" />
             </div>
             <div className="flex-1">
-              <div className="text-xs text-gray-600 mb-0.5">Критическая (&gt; 90%)</div>
+              <div className="text-xs text-gray-600 mb-0.5">
+                Критическая (&gt; 90%)
+              </div>
               <div className="text-2xl font-bold text-red-600">
                 {summaryData.overloadedCount}
               </div>
@@ -159,7 +163,9 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
               <div className="w-3 h-3 rounded-full bg-orange-500"></div>
             </div>
             <div className="flex-1">
-              <div className="text-xs text-gray-600 mb-0.5">Высокая (70-90%)</div>
+              <div className="text-xs text-gray-600 mb-0.5">
+                Высокая (70-90%)
+              </div>
               <div className="text-2xl font-bold text-orange-600">
                 {summaryData.highLoadCount}
               </div>
@@ -172,7 +178,9 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
             </div>
             <div className="flex-1">
-              <div className="text-xs text-gray-600 mb-0.5">Нормальная (40-70%)</div>
+              <div className="text-xs text-gray-600 mb-0.5">
+                Нормальная (40-70%)
+              </div>
               <div className="text-2xl font-bold text-green-600">
                 {summaryData.normalLoadCount}
               </div>
