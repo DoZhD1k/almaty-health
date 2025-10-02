@@ -29,14 +29,47 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* Custom Blue Palette (Set 1) */
+  --blue-light: 235 241 255;
+  --blue-light-hover: 225 234 255;
+  --blue-light-active: 193 211 255;
+  --blue-normal: 55 114 255;
+  --blue-normal-hover: 50 103 230;
+  --blue-normal-active: 44 91 204;
+  --blue-dark: 41 86 191;
+  --blue-dark-hover: 33 68 153;
+  --blue-dark-active: 25 51 115;
+  --blue-darker: 19 40 89;
+
+  /* Blue Palette (Set 2 – darker themed) */
+  --blue2-light: 234 235 238;
+  --blue2-light-hover: 223 224 229;
+  --blue2-light-active: 188 192 202;
+  --blue2-normal: 40 51 83;
+  --blue2-normal-hover: 36 46 75;
+  --blue2-normal-active: 32 41 66;
+  --blue2-dark: 30 38 62;
+  --blue2-dark-hover: 24 31 50;
+  --blue2-dark-active: 18 23 37;
+  --blue2-darker: 14 18 29;
+
+  /* Grey Palette */
+  --grey-light: 232 232 232;
+  --grey-light-hover: 221 221 221;
+  --grey-light-active: 184 184 184;
+  --grey-normal: 27 27 27;
+  --grey-dark: 20 20 20;
+  --grey-darker: 9 9 9;
+
+  /* Sidebar colors using Blue Set 2 */
+  --sidebar: rgb(var(--blue2-darker));
+  --sidebar-foreground: rgb(var(--blue2-light));
+  --sidebar-primary: rgb(var(--blue-normal));
+  --sidebar-primary-foreground: rgb(255 255 255);
+  --sidebar-accent: rgb(var(--blue2-dark));
+  --sidebar-accent-foreground: rgb(var(--blue2-light));
+  --sidebar-border: rgb(var(--blue2-dark-hover));
+  --sidebar-ring: rgb(var(--blue-normal));
 
   /* Load status colors */
   --load-low: 120 50% 50%;

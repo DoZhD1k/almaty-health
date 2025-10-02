@@ -43,7 +43,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="top-0 z-50 flex flex-col gap-2 pb-4 pt-2 md:pb-6">
+    <header className="top-0 z-50 flex flex-col gap-2">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-x-0 top-0 hidden h-12 bg-gradient-to-b from-background/70 via-background/50 to-transparent blur-3xl md:block"

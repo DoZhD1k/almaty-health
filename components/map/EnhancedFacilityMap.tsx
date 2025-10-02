@@ -32,6 +32,7 @@ interface EnhancedFacilityMapProps {
   facilities?: FacilityStatistic[];
   className?: string;
   showLayerControls?: boolean;
+  fullscreen?: boolean;
 }
 
 const getStatusColor = (statusColor: string, occupancyRate: number) => {
@@ -60,6 +61,7 @@ export function EnhancedFacilityMap({
   facilities: propFacilities,
   className,
   showLayerControls = true,
+  fullscreen = false,
 }: EnhancedFacilityMapProps) {
   const [facilities, setFacilities] = useState<FacilityStatistic[]>(
     propFacilities || []
@@ -253,6 +255,83 @@ export function EnhancedFacilityMap({
     );
   }
 
+  // Fullscreen mode - no card wrapper
+  if (fullscreen) {
+    return (
+      <div className={`h-full w-full ${className}`}>
+        <MapContainer
+          center={ALMATY_CENTER}
+          zoom={DEFAULT_ZOOM}
+          className="h-full w-full"
+          zoomControl={true}
+          scrollWheelZoom={true}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            maxZoom={18}
+            tileSize={256}
+          />
+          {/* Render facilities markers */}
+          {showApiFacilities &&
+            facilities.map((facility, index) => {
+              if (!facility.latitude || !facility.longitude) return null;
+
+              const position: [number, number] = [
+                Number(facility.latitude),
+                Number(facility.longitude),
+              ];
+              const occupancyRate = facility.occupancy_rate_percent || 0;
+              const color = getStatusColor("", occupancyRate);
+
+              return (
+                <CircleMarker
+                  key={`facility-${index}`}
+                  center={position}
+                  radius={8}
+                  pathOptions={{
+                    color: color,
+                    fillColor: color,
+                    fillOpacity: 0.7,
+                    weight: 2,
+                  }}
+                >
+                  <Popup>
+                    <div className="min-w-[250px]">
+                      <h3 className="font-bold text-sm mb-2">
+                        {facility.medical_organization}
+                      </h3>
+                      <div className="space-y-1 text-xs">
+                        <p>
+                          <strong>Район:</strong> {facility.district}
+                        </p>
+                        <p>
+                          <strong>Тип:</strong> {facility.facility_type}
+                        </p>
+                        <p>
+                          <strong>Профиль:</strong> {facility.bed_profile}
+                        </p>
+                        <p>
+                          <strong>Коек развернуто:</strong>{" "}
+                          {facility.beds_deployed_withdrawn_for_rep}
+                        </p>
+                        <p>
+                          <strong>Загруженность:</strong>{" "}
+                          <Badge variant={getOccupancyBadgeVariant(occupancyRate)}>
+                            {getStatusText(occupancyRate)} ({(occupancyRate * 100).toFixed(1)}%)
+                          </Badge>
+                        </p>
+                      </div>
+                    </div>
+                  </Popup>
+                </CircleMarker>
+              );
+            })}
+        </MapContainer>
+      </div>
+    );
+  }
+
   return (
     <div className={`flex gap-4 ${className}`}>
       <Card className="flex-1">
@@ -269,9 +348,7 @@ export function EnhancedFacilityMap({
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="h-[600px] w-full">
-            {" "}
-            {/* Увеличиваем высоту карты */}
+          <div className="h-[calc(100vh-280px)] min-h-[500px] w-full">
             <MapContainer
               center={ALMATY_CENTER}
               zoom={DEFAULT_ZOOM}

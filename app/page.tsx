@@ -7,18 +7,18 @@ import { QuickSummary } from "@/components/quick-summary";
 import { FacilityStatistic } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 
-// Dynamically import the enhanced map component to prevent SSR issues with Leaflet
-const EnhancedFacilityMap = dynamic(
+// Dynamically import the MapLibre map component to prevent SSR issues
+const MapLibreFacilityMap = dynamic(
   () =>
-    import("@/components/map/EnhancedFacilityMap").then((mod) => ({
-      default: mod.EnhancedFacilityMap,
+    import("@/components/map/MapLibreFacilityMap").then((mod) => ({
+      default: mod.MapLibreFacilityMap,
     })),
   {
     ssr: false,
     loading: () => (
-      <div className="h-[600px] bg-gray-100 rounded-lg flex items-center justify-center">
+      <div className="h-full w-full bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[rgb(var(--blue-normal))] mx-auto"></div>
           <p className="mt-2 text-sm text-gray-600">
             Загрузка интерактивной карты...
           </p>
@@ -165,30 +165,56 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <main className="mx-4 px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Боковой фильтр */}
-          <div className="lg:col-span-1">
+    <div className="relative flex-1 overflow-hidden">
+      {/* Full-screen Map Background */}
+      <div className="absolute inset-0 z-0">
+        <MapLibreFacilityMap
+          facilities={filteredFacilities}
+          fullscreen={true}
+          selectedDistrict={filters.district}
+        />
+      </div>
+
+      {/* Sidebar - Overlaying the map on desktop */}
+      <aside className="hidden lg:flex lg:flex-col absolute left-0 top-0 bottom-0 w-[340px] bg-gradient-to-b from-[#4169E1] to-[#5B7FED] backdrop-blur-sm border-r border-white/20 shadow-2xl z-10">
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6">
+            {/* Sidebar Header */}
+            <div className="mb-6">
+              <h1 className="text-xl font-bold text-white mb-1">
+                Мониторинг МО
+              </h1>
+              <p className="text-sm text-white/80">
+                Система фильтрации медицинских организаций
+              </p>
+            </div>
+
             <SideFilterPanel
               onFiltersChange={setFilters}
               facilities={facilities}
-            />
-          </div>
-
-          {/* Основной контент */}
-          <div className="lg:col-span-3 space-y-4">
-            {/* Краткая сводка */}
-            <QuickSummary facilities={filteredFacilities} />
-
-            {/* Карта */}
-            <EnhancedFacilityMap
-              facilities={filteredFacilities}
-              className="h-[600px]"
+              className="border-0 shadow-none bg-transparent"
             />
           </div>
         </div>
-      </main>
+      </aside>
+
+      {/* Quick Summary - Overlaying on desktop, top-right */}
+      <div className="hidden lg:block absolute top-6 right-6 z-10 max-w-md">
+        <QuickSummary facilities={filteredFacilities} />
+      </div>
+
+      {/* Mobile Layout - Full width stacked */}
+      <div className="lg:hidden flex flex-col h-full">
+        <div className="bg-white p-4 shadow-md z-10">
+          <SideFilterPanel
+            onFiltersChange={setFilters}
+            facilities={facilities}
+          />
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <QuickSummary facilities={filteredFacilities} />
+        </div>
+      </div>
     </div>
   );
 }
