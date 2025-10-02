@@ -6,12 +6,24 @@ import {
   DashboardFilters,
 } from "@/types/healthcare";
 
-const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+// Get base URL from environment variable with fallback
+const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://admin.smartalmaty.kz';
+
+// Log warning if environment variable is not set
+if (!process.env.NEXT_PUBLIC_API_URL) {
+  console.warn('⚠️ NEXT_PUBLIC_API_URL is not defined. Using fallback URL:', baseUrl);
+}
 
 class HealthcareApiClient {
   private async request<T>(endpoint: string): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${baseUrl}${endpoint}`, {
+      // Remove leading slash from endpoint if present to avoid double slashes
+      const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+      const url = `${baseUrl}${cleanEndpoint}`;
+      
+      console.log('Making API request to:', url);
+      
+      const response = await fetch(url, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -26,7 +38,7 @@ class HealthcareApiClient {
       return data as ApiResponse<T>;
     } catch (error) {
       console.error("API request failed:", error);
-      // Возвращаем пустой результат в случае ошибки
+      // Return empty result in case of error
       return {
         count: 0,
         next: null,
@@ -61,8 +73,11 @@ class HealthcareApiClient {
         params.append("granularity", filters.timeGranularity);
       }
 
-      if (params.toString()) {
-        endpoint += `?${params.toString()}`;
+      const queryString = params.toString();
+      if (queryString) {
+        // Check if endpoint already has query parameters
+        const separator = endpoint.includes('?') ? '&' : '?';
+        endpoint += `${separator}${queryString}`;
       }
     }
 
@@ -77,7 +92,7 @@ class HealthcareApiClient {
     );
   }
 
-  // Метод для получения мок данных для разработки (на случай если API недоступен)
+  // Method to get mock data for development (in case API is unavailable)
   async getMockFacilityStatistics(): Promise<ApiResponse<FacilityStatistic>> {
     const mockData: FacilityStatistic[] = [
       {
