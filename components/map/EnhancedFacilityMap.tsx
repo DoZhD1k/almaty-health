@@ -37,23 +37,23 @@ interface EnhancedFacilityMapProps {
 
 const getStatusColor = (statusColor: string, occupancyRate: number) => {
   // Новая схема: 40-70% = зеленый (нормальная), выше 70% = оранжевый/красный
-  if (occupancyRate > 0.9) return "#dc2626"; // red-600 - критическая (выше 90%)
-  if (occupancyRate > 0.7) return "#ea580c"; // orange-600 - высокая (70-90%)
-  if (occupancyRate >= 0.4) return "#16a34a"; // green-600 - нормальная (40-70%)
+  if (occupancyRate > 0.95) return "#dc2626"; // red-600 - критическая (выше 90%)
+  if (occupancyRate > 0.8) return "#ea580c"; // orange-600 - высокая (70-90%)
+  if (occupancyRate >= 0.5) return "#16a34a"; // green-600 - нормальная (40-70%)
   return "#6b7280"; // gray-500 - низкая (ниже 40%)
 };
 
 const getStatusText = (occupancyRate: number) => {
-  if (occupancyRate > 0.9) return "Критическая";
-  if (occupancyRate > 0.7) return "Высокая";
-  if (occupancyRate >= 0.4) return "Нормальная";
+  if (occupancyRate > 0.95) return "Критическая";
+  if (occupancyRate > 0.8) return "Высокая";
+  if (occupancyRate >= 0.5) return "Нормальная";
   return "Низкая";
 };
 
 const getOccupancyBadgeVariant = (occupancyRate: number) => {
-  if (occupancyRate > 0.9) return "destructive";
-  if (occupancyRate > 0.7) return "default";
-  if (occupancyRate >= 0.4) return "secondary";
+  if (occupancyRate > 0.95) return "destructive";
+  if (occupancyRate > 0.8) return "default";
+  if (occupancyRate >= 0.5) return "secondary";
   return "outline";
 };
 
@@ -317,8 +317,11 @@ export function EnhancedFacilityMap({
                         </p>
                         <p>
                           <strong>Загруженность:</strong>{" "}
-                          <Badge variant={getOccupancyBadgeVariant(occupancyRate)}>
-                            {getStatusText(occupancyRate)} ({(occupancyRate * 100).toFixed(1)}%)
+                          <Badge
+                            variant={getOccupancyBadgeVariant(occupancyRate)}
+                          >
+                            {getStatusText(occupancyRate)} (
+                            {(occupancyRate * 100).toFixed(1)}%)
                           </Badge>
                         </p>
                       </div>

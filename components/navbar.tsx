@@ -41,7 +41,7 @@ export function Navbar() {
     <header className="top-0 z-50 flex flex-col gap-2">
       <nav className="relative mx-auto flex w-screen items-center justify-between bg-white px-4 py-3 shadow-lg sm:px-6">
         <div className="flex gap-3 justify-end">
-          <Link href="/ru" className="group flex items-center gap-3">
+          <Link href="/" className="group flex items-center gap-3">
             <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[#4169E1] text-white shadow-lg transition-transform duration-300 group-hover:scale-105 group-hover:bg-[#5B7FED]">
               <Activity className="h-5 w-5" />
             </span>

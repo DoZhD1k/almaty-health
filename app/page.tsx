@@ -112,11 +112,11 @@ export default function HomePage() {
       if (filters.loadStatus.length > 0) {
         const occupancyRate = facility.occupancy_rate_percent || 0;
         const facilityLoadStatus =
-          occupancyRate > 0.9
+          occupancyRate > 0.95
             ? "critical"
-            : occupancyRate > 0.7
+            : occupancyRate > 0.8
             ? "high"
-            : occupancyRate > 0.4
+            : occupancyRate > 0.5
             ? "normal"
             : "low";
 

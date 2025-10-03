@@ -24,16 +24,16 @@ interface DistrictFeature {
 }
 
 const getStatusColor = (occupancyRate: number) => {
-  if (occupancyRate > 0.9) return "#dc2626"; // red-600 - критическая (выше 90%)
-  if (occupancyRate > 0.7) return "#ea580c"; // orange-600 - высокая (70-90%)
-  if (occupancyRate >= 0.4) return "#16a34a"; // green-600 - нормальная (40-70%)
-  return "#6b7280"; // gray-500 - низкая (ниже 40%)
+  if (occupancyRate > 0.95) return "#dc2626"; // red-600 - критическая (выше 95%)
+  if (occupancyRate > 0.8) return "#ea580c"; // orange-600 - высокая (80-95%)
+  if (occupancyRate >= 0.5) return "#16a34a"; // green-600 - нормальная (50-80%)
+  return "#6b7280"; // gray-500 - низкая (ниже 50%)
 };
 
 const getStatusText = (occupancyRate: number) => {
-  if (occupancyRate > 0.9) return "Критическая";
-  if (occupancyRate > 0.7) return "Высокая";
-  if (occupancyRate >= 0.4) return "Нормальная";
+  if (occupancyRate > 0.95) return "Критическая";
+  if (occupancyRate > 0.8) return "Высокая";
+  if (occupancyRate >= 0.5) return "Нормальная";
   return "Низкая";
 };
 
@@ -44,148 +44,176 @@ export function MapLibreFacilityMap({
   selectedDistrict = "Все районы",
 }: MapLibreFacilityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { mapRef, isLoading, zoomIn, zoomOut, resetView } = useMapInitialization(containerRef);
+  const { mapRef, isLoading, zoomIn, zoomOut, resetView } =
+    useMapInitialization(containerRef);
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const [districts, setDistricts] = useState<DistrictFeature[]>([]);
 
   // Fetch districts data
   useEffect(() => {
-    fetch('https://admin.smartalmaty.kz/api/v1/address/districts')
-      .then(res => res.json())
-      .then(data => {
-        console.log('Districts API response:', data);
+    fetch("https://admin.smartalmaty.kz/api/v1/address/districts")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Districts API response:", data);
         // API returns {count, next, previous, results: {type: "FeatureCollection", features: [...]}}
         if (data.results && data.results.features) {
           // Filter out districts with id 0 and 9
           const filteredDistricts = data.results.features.filter(
             (feature: any) => {
               const id = feature.id || feature.properties?.id;
-              console.log('District id:', id, 'name:', feature.properties?.name_ru);
+              console.log(
+                "District id:",
+                id,
+                "name:",
+                feature.properties?.name_ru
+              );
               return id !== 0 && id !== 9;
             }
           );
-          console.log('Districts loaded (filtered):', filteredDistricts.length, 'from', data.results.features.length);
+          console.log(
+            "Districts loaded (filtered):",
+            filteredDistricts.length,
+            "from",
+            data.results.features.length
+          );
           setDistricts(filteredDistricts);
         }
       })
-      .catch(err => console.error('Error loading districts:', err));
+      .catch((err) => console.error("Error loading districts:", err));
   }, []);
 
   // Add district polygons to map
   useEffect(() => {
     if (!mapRef.current) return;
     if (!districts.length) {
-      console.log('No districts data yet');
+      console.log("No districts data yet");
       return;
     }
 
     const map = mapRef.current;
-    console.log('Districts effect triggered, isLoading:', isLoading, 'style loaded:', map.isStyleLoaded());
+    console.log(
+      "Districts effect triggered, isLoading:",
+      isLoading,
+      "style loaded:",
+      map.isStyleLoaded()
+    );
 
     const addLayers = () => {
       try {
         const geojson = {
-          type: 'FeatureCollection',
-          features: districts
+          type: "FeatureCollection",
+          features: districts,
         };
 
-        console.log('Adding districts source with', districts.length, 'features');
-        console.log('Sample feature:', districts[0]);
+        console.log(
+          "Adding districts source with",
+          districts.length,
+          "features"
+        );
+        console.log("Sample feature:", districts[0]);
 
         // Remove existing layers if present
-        if (map.getLayer('districts-fill')) {
-          console.log('Removing existing districts-fill layer');
-          map.removeLayer('districts-fill');
+        if (map.getLayer("districts-fill")) {
+          console.log("Removing existing districts-fill layer");
+          map.removeLayer("districts-fill");
         }
-        if (map.getLayer('districts-outline')) {
-          console.log('Removing existing districts-outline layer');
-          map.removeLayer('districts-outline');
+        if (map.getLayer("districts-outline")) {
+          console.log("Removing existing districts-outline layer");
+          map.removeLayer("districts-outline");
         }
-        if (map.getLayer('districts-highlight')) {
-          console.log('Removing existing districts-highlight layer');
-          map.removeLayer('districts-highlight');
+        if (map.getLayer("districts-highlight")) {
+          console.log("Removing existing districts-highlight layer");
+          map.removeLayer("districts-highlight");
         }
-        if (map.getSource('districts')) {
-          console.log('Removing existing districts source');
-          map.removeSource('districts');
+        if (map.getSource("districts")) {
+          console.log("Removing existing districts source");
+          map.removeSource("districts");
         }
 
         // Add source
-        map.addSource('districts', {
-          type: 'geojson',
-          data: geojson as any
+        map.addSource("districts", {
+          type: "geojson",
+          data: geojson as any,
         });
-        console.log('Districts source added');
+        console.log("Districts source added");
 
         // If a district is selected, show only that district
-        if (selectedDistrict !== 'Все районы') {
+        if (selectedDistrict !== "Все районы") {
           // Fill layer for selected district only
           map.addLayer({
-            id: 'districts-fill',
-            type: 'fill',
-            source: 'districts',
-            filter: ['==', ['get', 'name_ru'], selectedDistrict],
+            id: "districts-fill",
+            type: "fill",
+            source: "districts",
+            filter: ["==", ["get", "name_ru"], selectedDistrict],
             paint: {
-              'fill-color': '#3772ff',
-              'fill-opacity': 0.3
-            }
+              "fill-color": "#3772ff",
+              "fill-opacity": 0.3,
+            },
           });
-          console.log('Districts fill layer added (filtered for:', selectedDistrict, ')');
+          console.log(
+            "Districts fill layer added (filtered for:",
+            selectedDistrict,
+            ")"
+          );
 
           // Outline layer for selected district only
           map.addLayer({
-            id: 'districts-outline',
-            type: 'line',
-            source: 'districts',
-            filter: ['==', ['get', 'name_ru'], selectedDistrict],
+            id: "districts-outline",
+            type: "line",
+            source: "districts",
+            filter: ["==", ["get", "name_ru"], selectedDistrict],
             paint: {
-              'line-color': '#3772ff',
-              'line-width': 3,
-              'line-opacity': 0.9
-            }
+              "line-color": "#3772ff",
+              "line-width": 3,
+              "line-opacity": 0.9,
+            },
           });
-          console.log('Districts outline layer added (filtered for:', selectedDistrict, ')');
+          console.log(
+            "Districts outline layer added (filtered for:",
+            selectedDistrict,
+            ")"
+          );
         } else {
           // Show all districts when none selected
           map.addLayer({
-            id: 'districts-fill',
-            type: 'fill',
-            source: 'districts',
+            id: "districts-fill",
+            type: "fill",
+            source: "districts",
             paint: {
-              'fill-color': '#3772ff',
-              'fill-opacity': 0.1
-            }
+              "fill-color": "#3772ff",
+              "fill-opacity": 0.1,
+            },
           });
-          console.log('Districts fill layer added (all districts)');
+          console.log("Districts fill layer added (all districts)");
 
           map.addLayer({
-            id: 'districts-outline',
-            type: 'line',
-            source: 'districts',
+            id: "districts-outline",
+            type: "line",
+            source: "districts",
             paint: {
-              'line-color': '#3772ff',
-              'line-width': 2,
-              'line-opacity': 0.6
-            }
+              "line-color": "#3772ff",
+              "line-width": 2,
+              "line-opacity": 0.6,
+            },
           });
-          console.log('Districts outline layer added (all districts)');
+          console.log("Districts outline layer added (all districts)");
         }
 
-        console.log('All district layers added successfully');
+        console.log("All district layers added successfully");
       } catch (error) {
-        console.error('Error adding district layers:', error);
+        console.error("Error adding district layers:", error);
       }
     };
 
     // Wait for map style to load with retry mechanism
     const attemptAddLayers = () => {
       if (map.isStyleLoaded() && map.loaded()) {
-        console.log('Map is ready, adding layers');
+        console.log("Map is ready, adding layers");
         addLayers();
       } else {
-        console.log('Map not ready, waiting...');
-        map.once('load', () => {
-          console.log('Map load event fired');
+        console.log("Map not ready, waiting...");
+        map.once("load", () => {
+          console.log("Map load event fired");
           addLayers();
         });
       }
@@ -195,14 +223,16 @@ export function MapLibreFacilityMap({
     setTimeout(attemptAddLayers, 500);
 
     return () => {
-      if (!map) return;
+      if (!map || map._removed) return;
       try {
-        if (map.getLayer('districts-fill')) map.removeLayer('districts-fill');
-        if (map.getLayer('districts-outline')) map.removeLayer('districts-outline');
-        if (map.getLayer('districts-highlight')) map.removeLayer('districts-highlight');
-        if (map.getSource('districts')) map.removeSource('districts');
+        if (map.getLayer("districts-fill")) map.removeLayer("districts-fill");
+        if (map.getLayer("districts-outline"))
+          map.removeLayer("districts-outline");
+        if (map.getLayer("districts-highlight"))
+          map.removeLayer("districts-highlight");
+        if (map.getSource("districts")) map.removeSource("districts");
       } catch (e) {
-        console.error('Error cleaning up districts:', e);
+        console.warn("Error cleaning up districts:", e);
       }
     };
   }, [districts, selectedDistrict, mapRef]);
@@ -225,13 +255,23 @@ export function MapLibreFacilityMap({
       // Create popup content
       const popupContent = `
         <div class="min-w-[250px] p-2">
-          <h3 class="font-bold text-sm mb-2">${facility.medical_organization || 'Неизвестно'}</h3>
+          <h3 class="font-bold text-sm mb-2">${
+            facility.medical_organization || "Неизвестно"
+          }</h3>
           <div class="space-y-1 text-xs">
-            <p><strong>Район:</strong> ${facility.district || 'Неизвестно'}</p>
-            <p><strong>Тип:</strong> ${facility.facility_type || 'Неизвестно'}</p>
-            <p><strong>Профиль:</strong> ${facility.bed_profile || 'Неизвестно'}</p>
-            <p><strong>Коек развернуто:</strong> ${facility.beds_deployed_withdrawn_for_rep || 0}</p>
-            <p><strong>Загруженность:</strong> <span style="color: ${color}; font-weight: bold;">${getStatusText(occupancyRate)} (${(occupancyRate * 100).toFixed(1)}%)</span></p>
+            <p><strong>Район:</strong> ${facility.district || "Неизвестно"}</p>
+            <p><strong>Тип:</strong> ${
+              facility.facility_type || "Неизвестно"
+            }</p>
+            <p><strong>Профиль:</strong> ${
+              facility.bed_profile || "Неизвестно"
+            }</p>
+            <p><strong>Коек развернуто:</strong> ${
+              facility.beds_deployed_withdrawn_for_rep || 0
+            }</p>
+            <p><strong>Загруженность:</strong> <span style="color: ${color}; font-weight: bold;">${getStatusText(
+        occupancyRate
+      )} (${(occupancyRate * 100).toFixed(1)}%)</span></p>
           </div>
         </div>
       `;
@@ -239,15 +279,15 @@ export function MapLibreFacilityMap({
       const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
 
       // Create marker element
-      const el = document.createElement('div');
-      el.className = 'facility-marker';
-      el.style.width = '16px';
-      el.style.height = '16px';
-      el.style.borderRadius = '50%';
+      const el = document.createElement("div");
+      el.className = "facility-marker";
+      el.style.width = "16px";
+      el.style.height = "16px";
+      el.style.borderRadius = "50%";
       el.style.backgroundColor = color;
-      el.style.border = '2px solid white';
-      el.style.boxShadow = '0 2px 4px rgba(0,0,0,0.3)';
-      el.style.cursor = 'pointer';
+      el.style.border = "2px solid white";
+      el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+      el.style.cursor = "pointer";
 
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([Number(facility.longitude), Number(facility.latitude)])
@@ -258,17 +298,32 @@ export function MapLibreFacilityMap({
     });
 
     return () => {
-      markersRef.current.forEach((marker) => marker.remove());
-      markersRef.current = [];
+      try {
+        markersRef.current.forEach((marker) => {
+          if (marker && typeof marker.remove === "function") {
+            marker.remove();
+          }
+        });
+        markersRef.current = [];
+      } catch (error) {
+        console.warn(
+          "Error cleaning up markers in MapLibreFacilityMap:",
+          error
+        );
+      }
     };
   }, [facilities, isLoading, mapRef]);
 
   return (
-    <div className={`relative ${fullscreen ? 'h-full w-full' : 'h-[600px] w-full'} ${className}`}>
+    <div
+      className={`relative ${
+        fullscreen ? "h-full w-full" : "h-[600px] w-full"
+      } ${className}`}
+    >
       <div
         ref={containerRef}
         className="absolute inset-0"
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: "100%", height: "100%" }}
       />
 
       {isLoading && (
@@ -283,10 +338,16 @@ export function MapLibreFacilityMap({
       {/* Debug info */}
       <div className="absolute top-4 left-4 bg-white p-2 rounded shadow text-xs z-10">
         <div>Districts: {districts.length}</div>
-        <div>Map Ready: {mapRef.current?.loaded() ? 'Yes' : 'No'}</div>
-        <div>Style Loaded: {mapRef.current?.isStyleLoaded() ? 'Yes' : 'No'}</div>
-        <div>Has Source: {mapRef.current?.getSource('districts') ? 'Yes' : 'No'}</div>
-        <div>Has Layer: {mapRef.current?.getLayer('districts-fill') ? 'Yes' : 'No'}</div>
+        <div>Map Ready: {mapRef.current?.loaded() ? "Yes" : "No"}</div>
+        <div>
+          Style Loaded: {mapRef.current?.isStyleLoaded() ? "Yes" : "No"}
+        </div>
+        <div>
+          Has Source: {mapRef.current?.getSource("districts") ? "Yes" : "No"}
+        </div>
+        <div>
+          Has Layer: {mapRef.current?.getLayer("districts-fill") ? "Yes" : "No"}
+        </div>
       </div>
 
       {/* Map controls */}
@@ -297,8 +358,18 @@ export function MapLibreFacilityMap({
             className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
             title="Приблизить"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4v16m8-8H4"
+              />
             </svg>
           </button>
           <button
@@ -306,8 +377,18 @@ export function MapLibreFacilityMap({
             className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
             title="Отдалить"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M20 12H4"
+              />
             </svg>
           </button>
           <button
@@ -315,8 +396,18 @@ export function MapLibreFacilityMap({
             className="bg-white hover:bg-gray-100 p-2 rounded shadow-md transition-colors"
             title="Сбросить вид"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
             </svg>
           </button>
         </div>

@@ -19,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.className}`}>
+      <body className={`${inter.className} overflow-x-hidden`}>
         <div className="flex min-h-screen flex-col">
           <Navbar />
           {children}

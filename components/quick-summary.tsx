@@ -43,20 +43,20 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
       (totalOccupancy / totalFacilities) * 100
     );
     const overloadedCount = facilities.filter(
-      (f) => f.occupancy_rate_percent > 0.9
+      (f) => f.occupancy_rate_percent > 0.95
     ).length;
     const totalBeds = facilities.reduce(
       (sum, f) => sum + (f.beds_deployed_withdrawn_for_rep || 0),
       0
     );
     const highLoadCount = facilities.filter(
-      (f) => f.occupancy_rate_percent > 0.7 && f.occupancy_rate_percent <= 0.9
+      (f) => f.occupancy_rate_percent > 0.8 && f.occupancy_rate_percent <= 0.95
     ).length;
     const normalLoadCount = facilities.filter(
-      (f) => f.occupancy_rate_percent >= 0.4 && f.occupancy_rate_percent <= 0.7
+      (f) => f.occupancy_rate_percent >= 0.5 && f.occupancy_rate_percent <= 0.8
     ).length;
     const lowLoadCount = facilities.filter(
-      (f) => f.occupancy_rate_percent < 0.4
+      (f) => f.occupancy_rate_percent < 0.5
     ).length;
 
     return {
@@ -149,7 +149,7 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
             </div>
             <div className="flex-1">
               <div className="text-xs text-gray-600 mb-0.5">
-                Критическая (&gt; 90%)
+                Критическая (&gt; 95%)
               </div>
               <div className="text-2xl font-bold text-red-600">
                 {summaryData.overloadedCount}
@@ -164,7 +164,7 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
             </div>
             <div className="flex-1">
               <div className="text-xs text-gray-600 mb-0.5">
-                Высокая (70-90%)
+                Высокая (80-95%)
               </div>
               <div className="text-2xl font-bold text-orange-600">
                 {summaryData.highLoadCount}
@@ -179,7 +179,7 @@ export function QuickSummary({ facilities, className }: QuickSummaryProps) {
             </div>
             <div className="flex-1">
               <div className="text-xs text-gray-600 mb-0.5">
-                Нормальная (40-70%)
+                Нормальная (50-80%)
               </div>
               <div className="text-2xl font-bold text-green-600">
                 {summaryData.normalLoadCount}

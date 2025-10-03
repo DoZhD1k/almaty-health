@@ -200,10 +200,10 @@ export function getDistrictStyle(districtName: string, facilitiesData?: any[]) {
           return sum + overload;
         }, 0) / districtFacilities.length;
 
-      if (avgOverload >= 90) {
+      if (avgOverload >= 95) {
         style.fillColor = "#fee2e2";
         style.fillOpacity = 0.4;
-      } else if (avgOverload >= 70) {
+      } else if (avgOverload >= 80) {
         style.fillColor = "#fed7aa";
         style.fillOpacity = 0.3;
       } else {

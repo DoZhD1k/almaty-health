@@ -26,14 +26,14 @@ const getStatusColor = (statusColor: string, occupancyRate: number) => {
 };
 
 const getStatusText = (occupancyRate: number) => {
-  if (occupancyRate > 0.9) return "Критическая";
-  if (occupancyRate > 0.7) return "Высокая";
+  if (occupancyRate > 0.95) return "Критическая";
+  if (occupancyRate > 0.8) return "Высокая";
   return "Нормальная";
 };
 
 const getOccupancyBadgeVariant = (occupancyRate: number) => {
-  if (occupancyRate > 0.9) return "destructive";
-  if (occupancyRate > 0.7) return "default";
+  if (occupancyRate > 0.95) return "destructive";
+  if (occupancyRate > 0.8) return "default";
   return "secondary";
 };
 
@@ -242,9 +242,9 @@ export function FacilityMap({
                       <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                         <div
                           className={`h-2 rounded-full transition-all ${
-                            facility.occupancy_rate_percent > 0.9
+                            facility.occupancy_rate_percent > 0.95
                               ? "bg-red-600"
-                              : facility.occupancy_rate_percent > 0.7
+                              : facility.occupancy_rate_percent > 0.8
                               ? "bg-orange-600"
                               : "bg-green-600"
                           }`}

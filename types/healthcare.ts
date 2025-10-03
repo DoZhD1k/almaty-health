@@ -27,6 +27,7 @@ export interface FacilityStatistic {
   occupancy_rate_percent: number;
   occupancy_status_color: string;
   emergency_mo: string | null;
+  patient_bed_days_conducted: number;
 }
 
 export interface HospitalizationStatistic {
@@ -93,6 +94,8 @@ export interface CityMedicalOrganization {
   bed_downtime_2024: number;
   bed_downtime_2025: number;
   emergency_mo_flag: string;
+  load2024: number;
+  load2025: number;
   med_fk: number;
 }
 

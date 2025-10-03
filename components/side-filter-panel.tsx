@@ -31,10 +31,10 @@ interface SideFilterPanelProps {
 }
 
 const loadStatuses = [
-  { id: "low", label: "Низкая (< 40%)", color: "bg-gray-500" },
-  { id: "normal", label: "Нормальная (40-70%)", color: "bg-green-500" },
-  { id: "high", label: "Высокая (70-90%)", color: "bg-orange-500" },
-  { id: "critical", label: "Критическая (> 90%)", color: "bg-red-500" },
+  { id: "low", label: "Низкая (< 50%)", color: "bg-gray-500" },
+  { id: "normal", label: "Нормальная (50-80%)", color: "bg-green-500" },
+  { id: "high", label: "Высокая (80-95%)", color: "bg-orange-500" },
+  { id: "critical", label: "Критическая (> 95%)", color: "bg-red-500" },
 ];
 
 export function SideFilterPanel({
@@ -115,9 +115,7 @@ export function SideFilterPanel({
               <Filter className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-white">
-                Фильтры
-              </h2>
+              <h2 className="text-base font-semibold text-white">Фильтры</h2>
               {activeFiltersCount > 0 && (
                 <span className="text-xs text-white/70">
                   {activeFiltersCount} активных
@@ -142,7 +140,10 @@ export function SideFilterPanel({
       <div className="space-y-4">
         {/* Search */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <Label htmlFor="search" className="text-sm font-medium text-white mb-3 block">
+          <Label
+            htmlFor="search"
+            className="text-sm font-medium text-white mb-3 block"
+          >
             Поиск по названию
           </Label>
           <div className="relative">
@@ -159,7 +160,9 @@ export function SideFilterPanel({
 
         {/* District Filter */}
         <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <Label className="text-sm font-medium text-white mb-3 block">Район</Label>
+          <Label className="text-sm font-medium text-white mb-3 block">
+            Район
+          </Label>
           <Select
             value={filters.district}
             onValueChange={(value) => updateFilters({ district: value })}
