@@ -6,6 +6,7 @@ import {
   FacilityStatistic,
   HospitalizationStatistic,
 } from "@/types/healthcare";
+import { healthcareApi } from "@/lib/api/healthcare";
 import { AnalyticsFilters } from "./analytics/filters";
 import { KeyMetrics } from "./analytics/cards";
 import { ComparisonTab } from "./analytics/tabs/comparison-tab";
@@ -30,22 +31,19 @@ export function AnalyticsDashboard() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log("🚀 Loading analytics data...");
+
         const [facilitiesResponse, hospitalizationsResponse] =
           await Promise.all([
-            fetch("/api/facilities/statistics"),
-            fetch("/api/hospitalizations/statistics"),
+            healthcareApi.getFacilityStatistics(),
+            healthcareApi.getHospitalizationStatistics(),
           ]);
 
-        if (!facilitiesResponse.ok || !hospitalizationsResponse.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const facilitiesData = await facilitiesResponse.json();
-        const hospitalizationsData = await hospitalizationsResponse.json();
-
-        setFacilities(facilitiesData);
-        setHospitalizations(hospitalizationsData);
+        console.log("✅ Analytics data loaded successfully");
+        setFacilities(facilitiesResponse.results || []);
+        setHospitalizations(hospitalizationsResponse.results || []);
       } catch (err) {
+        console.error("💥 Analytics data loading failed:", err);
         setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);

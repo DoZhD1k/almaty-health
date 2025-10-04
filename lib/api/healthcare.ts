@@ -6,92 +6,71 @@ import {
   DashboardFilters,
 } from "@/types/healthcare";
 
-// Get base URL from environment variable with fallback
-const baseUrl =
-  process.env.NEXT_PUBLIC_API_URL || "https://admin.smartalmaty.kz";
-
-// Log warning if environment variable is not set
-if (!process.env.NEXT_PUBLIC_API_URL) {
-  console.warn(
-    "⚠️ NEXT_PUBLIC_API_URL is not defined. Using fallback URL:",
-    baseUrl
-  );
-}
+// Прямой доступ к внешнему API без прокси Next.js
+const API_BASE_URL = "https://admin.smartalmaty.kz";
 
 class HealthcareApiClient {
-  // Проверка доступности API
-  async checkApiHealth(): Promise<boolean> {
-    try {
-      const healthUrl = `${baseUrl}/api/v1/health/`;
-      const response = await fetch(healthUrl, {
-        method: 'GET',
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return response.ok;
-    } catch (error) {
-      console.error("API health check failed:", error);
-      return false;
-    }
-  }
+  private async directFetch<T>(endpoint: string): Promise<ApiResponse<T>> {
+    const url = `${API_BASE_URL}${endpoint}`;
 
-  private async request<T>(endpoint: string): Promise<ApiResponse<T>> {
-    // Remove leading slash from endpoint if present to avoid double slashes
-    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
-    const url = `${baseUrl}${cleanEndpoint}`;
-
-    console.log("Making API request to:", url);
+    console.log("🚀 Direct fetch to:", url);
 
     try {
       const response = await fetch(url, {
+        method: "GET",
         headers: {
           "Content-Type": "application/json",
+          Accept: "application/json",
         },
+        mode: "cors",
         cache: "no-store",
       });
 
-      console.log("API Response status:", response.status);
-      console.log("API Response headers:", Object.fromEntries(response.headers.entries()));
+      console.log("📊 Response status:", response.status);
+      console.log(
+        "📋 Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error(`HTTP ${response.status} error:`, errorText);
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+        console.error(`❌ HTTP ${response.status} error:`, errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      console.log("API Response data sample:", data.results ? `${data.results.length} items` : 'No results array');
+      console.log(
+        "✅ Response data:",
+        data.results ? `${data.results.length} items` : "No results array"
+      );
       return data as ApiResponse<T>;
     } catch (error) {
-      console.error("API request failed:", error);
+      console.error("💥 Direct fetch failed:", error);
       throw error;
     }
   }
 
   async getFacilityStatistics(): Promise<ApiResponse<FacilityStatistic>> {
     try {
-      // Сначала проверяем здоровье API
-      const isHealthy = await this.checkApiHealth();
-      if (!isHealthy) {
-        console.warn("API health check failed, but trying to proceed anyway");
-      }
-
-      return await this.request<FacilityStatistic>(
+      return await this.directFetch<FacilityStatistic>(
         "/api/v1/healthcare/facility-statistic/?limit=1000"
       );
     } catch (error) {
-      console.error("Failed to load from API:", error);
-      
+      console.error("💥 Failed to load facilities:", error);
+
       // Попробуем упрощенный эндпоинт
       try {
-        console.log("Trying simplified endpoint...");
-        return await this.request<FacilityStatistic>(
+        console.log("🔄 Trying simplified endpoint...");
+        return await this.directFetch<FacilityStatistic>(
           "/api/v1/healthcare/facility-statistic/"
         );
       } catch (fallbackError) {
-        console.error("Fallback endpoint also failed:", fallbackError);
-        throw new Error(`API недоступен: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+        console.error("💥 Fallback endpoint also failed:", fallbackError);
+        throw new Error(
+          `API недоступен: ${
+            error instanceof Error ? error.message : "Неизвестная ошибка"
+          }`
+        );
       }
     }
   }
@@ -123,13 +102,13 @@ class HealthcareApiClient {
       }
     }
 
-    return this.request<HospitalizationStatistic>(endpoint);
+    return this.directFetch<HospitalizationStatistic>(endpoint);
   }
 
   async getCityMedicalOrganizations(): Promise<
     ApiResponse<CityMedicalOrganization>
   > {
-    return this.request<CityMedicalOrganization>(
+    return this.directFetch<CityMedicalOrganization>(
       "/api/v1/healthcare/city-medical-organization/?limit=1000"
     );
   }
