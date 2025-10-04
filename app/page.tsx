@@ -61,7 +61,7 @@ export default function HomePage() {
       console.log("Loading facilities from API...");
       const response = await healthcareApi.getFacilityStatistics();
       console.log("API response received:", response);
-      
+
       if (response.results && response.results.length > 0) {
         setFacilities(response.results);
         console.log(`Loaded ${response.results.length} facilities`);
@@ -71,9 +71,10 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error("Error loading facilities:", error);
-      const errorMessage = error instanceof Error 
-        ? `Ошибка подключения к серверу: ${error.message}` 
-        : "Ошибка подключения к серверу";
+      const errorMessage =
+        error instanceof Error
+          ? `Ошибка подключения к серверу: ${error.message}`
+          : "Ошибка подключения к серверу";
       setError(errorMessage);
     } finally {
       setLoading(false);
