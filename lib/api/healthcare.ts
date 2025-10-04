@@ -19,6 +19,23 @@ if (!process.env.NEXT_PUBLIC_API_URL) {
 }
 
 class HealthcareApiClient {
+  // Проверка доступности API
+  async checkApiHealth(): Promise<boolean> {
+    try {
+      const healthUrl = `${baseUrl}/api/v1/health/`;
+      const response = await fetch(healthUrl, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      return response.ok;
+    } catch (error) {
+      console.error("API health check failed:", error);
+      return false;
+    }
+  }
+
   private async request<T>(endpoint: string): Promise<ApiResponse<T>> {
     // Remove leading slash from endpoint if present to avoid double slashes
     const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
@@ -26,25 +43,57 @@ class HealthcareApiClient {
 
     console.log("Making API request to:", url);
 
-    const response = await fetch(url, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-    });
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      console.log("API Response status:", response.status);
+      console.log("API Response headers:", Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`HTTP ${response.status} error:`, errorText);
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log("API Response data sample:", data.results ? `${data.results.length} items` : 'No results array');
+      return data as ApiResponse<T>;
+    } catch (error) {
+      console.error("API request failed:", error);
+      throw error;
     }
-
-    const data = await response.json();
-    return data as ApiResponse<T>;
   }
 
   async getFacilityStatistics(): Promise<ApiResponse<FacilityStatistic>> {
-    return this.request<FacilityStatistic>(
-      "/api/v1/healthcare/facility-statistic/?limit=1000"
-    );
+    try {
+      // Сначала проверяем здоровье API
+      const isHealthy = await this.checkApiHealth();
+      if (!isHealthy) {
+        console.warn("API health check failed, but trying to proceed anyway");
+      }
+
+      return await this.request<FacilityStatistic>(
+        "/api/v1/healthcare/facility-statistic/?limit=1000"
+      );
+    } catch (error) {
+      console.error("Failed to load from API:", error);
+      
+      // Попробуем упрощенный эндпоинт
+      try {
+        console.log("Trying simplified endpoint...");
+        return await this.request<FacilityStatistic>(
+          "/api/v1/healthcare/facility-statistic/"
+        );
+      } catch (fallbackError) {
+        console.error("Fallback endpoint also failed:", fallbackError);
+        throw new Error(`API недоступен: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+      }
+    }
   }
 
   async getHospitalizationStatistics(
