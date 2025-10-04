@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { ZoomIn, ZoomOut, RotateCcw, Layers } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 
 // Токен Mapbox - нужно настроить в .env.local
@@ -36,11 +36,72 @@ interface MedicalFacility {
   };
 }
 
+interface GeoJSONLayer {
+  id: string;
+  name: string;
+  url: string;
+  color: string;
+  visible: boolean;
+  type: "polygon" | "point" | "line";
+  icon: string;
+}
+
+// Конфигурация всех доступных слоев
+const AVAILABLE_LAYERS: GeoJSONLayer[] = [
+  {
+    id: "districts",
+    name: "Районы",
+    url: "/geo-files/districts.geojson",
+    color: "#627BC1",
+    visible: true,
+    type: "polygon",
+    icon: "🏛️",
+  },
+  {
+    id: "green_10min",
+    name: "Зеленые зоны (10 мин)",
+    url: "/geo-files/10min_green.geojson",
+    color: "#22c55e",
+    visible: false,
+    type: "polygon",
+    icon: "🌳",
+  },
+  {
+    id: "accessibility_15min",
+    name: "Доступность (15 мин)",
+    url: "/geo-files/15min.geojson",
+    color: "#3b82f6",
+    visible: false,
+    type: "polygon",
+    icon: "🚶",
+  },
+  {
+    id: "accessibility_30min",
+    name: "Доступность (30 мин)",
+    url: "/geo-files/30min.geojson",
+    color: "#8b5cf6",
+    visible: false,
+    type: "polygon",
+    icon: "🚗",
+  },
+  {
+    id: "population_grid",
+    name: "Сетка населения",
+    url: "/geo-files/pop_grids.geojson",
+    color: "#f59e0b",
+    visible: false,
+    type: "polygon",
+    icon: "👥",
+  },
+];
+
 export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [facilities, setFacilities] = useState<MedicalFacility[]>([]);
+  const [layers, setLayers] = useState<GeoJSONLayer[]>(AVAILABLE_LAYERS);
+  const [showLayerPanel, setShowLayerPanel] = useState(false);
 
   // Инициализация карты
   useEffect(() => {
@@ -134,14 +195,26 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
       },
     });
 
-    // Функция для определения цвета маркера
+    // Функция для определения цвета маркера (как на главной странице)
     const getMarkerColor = (overload: string) => {
       const percent = parseInt(overload.replace("%", ""));
-      if (percent >= 100) return "#8B0000"; // bordo
-      if (percent >= 90) return "#FF0000"; // red
-      if (percent >= 80) return "#FFA500"; // orange
-      if (percent >= 60) return "#FFFF00"; // yellow
-      return "#008000"; // green
+      const occupancyRate = percent / 100;
+
+      if (occupancyRate > 0.95) return "#dc2626"; // red-600 - критическая (выше 95%)
+      if (occupancyRate > 0.8) return "#ea580c"; // orange-600 - высокая (80-95%)
+      if (occupancyRate >= 0.5) return "#16a34a"; // green-600 - нормальная (50-80%)
+      return "#6b7280"; // gray-500 - низкая (ниже 50%)
+    };
+
+    // Функция для получения текста статуса
+    const getStatusText = (overload: string) => {
+      const percent = parseInt(overload.replace("%", ""));
+      const occupancyRate = percent / 100;
+
+      if (occupancyRate > 0.95) return "Критическая";
+      if (occupancyRate > 0.8) return "Высокая";
+      if (occupancyRate >= 0.5) return "Нормальная";
+      return "Низкая";
     };
 
     // Добавляем слой с маркерами
@@ -153,17 +226,29 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
         "circle-radius": ["case", ["==", ["get", "type2"], "Частные"], 8, 10],
         "circle-color": [
           "case",
-          ["==", ["get", "color"], "bordo"],
-          "#8B0000",
-          ["==", ["get", "color"], "red"],
-          "#FF0000",
-          ["==", ["get", "color"], "orange"],
-          "#FFA500",
-          ["==", ["get", "color"], "yellow"],
-          "#FFFF00",
-          ["==", ["get", "color"], "green"],
-          "#008000",
-          "#666666",
+          // Критическая загруженность (>95%)
+          [
+            ">",
+            ["/", ["to-number", ["slice", ["get", "Overload"], 0, -1]], 100],
+            0.95,
+          ],
+          "#dc2626", // red-600
+          // Высокая загруженность (80-95%)
+          [
+            ">",
+            ["/", ["to-number", ["slice", ["get", "Overload"], 0, -1]], 100],
+            0.8,
+          ],
+          "#ea580c", // orange-600
+          // Нормальная загруженность (50-80%)
+          [
+            ">=",
+            ["/", ["to-number", ["slice", ["get", "Overload"], 0, -1]], 100],
+            0.5,
+          ],
+          "#16a34a", // green-600
+          // Низкая загруженность (<50%)
+          "#6b7280", // gray-500
         ],
         "circle-stroke-color": "#ffffff",
         "circle-stroke-width": 2,
@@ -194,7 +279,9 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
               }</p>
               <p><strong>Загруженность:</strong> <span class="font-medium" style="color: ${getMarkerColor(
                 props.Overload
-              )}">${props.Overload}</span></p>
+              )}">${props.Overload} (${getStatusText(
+            props.Overload
+          )})</span></p>
               <p><strong>Принято пациентов:</strong> ${
                 props["Patients admitted total"] || "Н/Д"
               }</p>
@@ -219,6 +306,95 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
 
     console.log(`Added ${facilities.length} medical facilities to map`);
   }, [mapRef.current, isLoading, facilities]);
+
+  // Управление GeoJSON слоями
+  useEffect(() => {
+    if (!mapRef.current || isLoading || facilities.length === 0) return;
+
+    const map = mapRef.current;
+
+    // Проверяем, что слой медучреждений уже существует
+    if (!map.getLayer("facilities-layer")) return;
+
+    const loadGeoJSONLayers = async () => {
+      for (const layer of layers) {
+        const sourceId = `layer-${layer.id}`;
+        const layerId = `${sourceId}-fill`;
+        const strokeId = `${sourceId}-stroke`;
+
+        // Удаляем существующие слои
+        if (map.getLayer(strokeId)) map.removeLayer(strokeId);
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+
+        if (!layer.visible) continue;
+
+        try {
+          console.log(`Loading layer: ${layer.name}`);
+          const response = await fetch(layer.url);
+
+          if (!response.ok) {
+            console.warn(`Failed to load ${layer.name}: ${response.status}`);
+            continue;
+          }
+
+          const data = await response.json();
+
+          // Добавляем источник данных
+          map.addSource(sourceId, {
+            type: "geojson",
+            data,
+          });
+
+          // Добавляем слой заливки для полигонов
+          if (layer.type === "polygon") {
+            map.addLayer(
+              {
+                id: layerId,
+                type: "fill",
+                source: sourceId,
+                paint: {
+                  "fill-color": layer.color,
+                  "fill-opacity": 0.3,
+                },
+              },
+              "facilities-layer"
+            ); // Добавляем ДО слоя медучреждений
+
+            // Добавляем слой границ
+            map.addLayer(
+              {
+                id: strokeId,
+                type: "line",
+                source: sourceId,
+                paint: {
+                  "line-color": layer.color,
+                  "line-width": 2,
+                  "line-opacity": 0.8,
+                },
+              },
+              "facilities-layer"
+            ); // Добавляем ДО слоя медучреждений
+          }
+
+          console.log(`Successfully loaded layer: ${layer.name}`);
+        } catch (error) {
+          console.error(`Error loading layer ${layer.name}:`, error);
+        }
+      }
+    };
+
+    loadGeoJSONLayers();
+  }, [mapRef.current, isLoading, layers, facilities]);
+
+  // Функция для переключения видимости слоя
+  const toggleLayer = (layerId: string) => {
+    setLayers((prev) =>
+      prev.map((layer) =>
+        layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
+      )
+    );
+  };
 
   const zoomIn = () => {
     if (mapRef.current) {
@@ -295,24 +471,20 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
         <h4 className="text-xs font-semibold mb-2">Загруженность коек</h4>
         <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-500"></div>
-            <span>&lt; 80%</span>
+            <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+            <span>Низкая (&lt; 50%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-            <span>80-89%</span>
+            <div className="w-3 h-3 rounded-full bg-green-600"></div>
+            <span>Нормальная (50-80%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-            <span>90-99%</span>
+            <div className="w-3 h-3 rounded-full bg-orange-600"></div>
+            <span>Высокая (80-95%)</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-500"></div>
-            <span>100-109%</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-800"></div>
-            <span>≥ 110%</span>
+            <div className="w-3 h-3 rounded-full bg-red-600"></div>
+            <span>Критическая (&gt; 95%)</span>
           </div>
         </div>
         <div className="mt-2 pt-2 border-t border-gray-200">
@@ -325,6 +497,14 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
 
       {/* Контролы масштаба */}
       <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowLayerPanel(!showLayerPanel)}
+          className={showLayerPanel ? "bg-blue-100" : ""}
+        >
+          <Layers className="h-4 w-4" />
+        </Button>
         <Button variant="outline" size="sm" onClick={zoomIn}>
           <ZoomIn className="h-4 w-4" />
         </Button>
@@ -335,6 +515,55 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>
+
+      {/* Панель управления слоями */}
+      {showLayerPanel && (
+        <div className="absolute top-4 right-20 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-lg max-w-xs z-10">
+          <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+            <Layers className="h-4 w-4" />
+            Слои карты
+          </h4>
+          <div className="space-y-2">
+            {layers.map((layer) => (
+              <div key={layer.id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`layer-${layer.id}`}
+                  checked={layer.visible}
+                  onChange={() => toggleLayer(layer.id)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <label
+                  htmlFor={`layer-${layer.id}`}
+                  className="text-xs cursor-pointer flex items-center gap-1 flex-1"
+                >
+                  <span>{layer.icon}</span>
+                  <span>{layer.name}</span>
+                </label>
+                <div
+                  className={`w-3 h-3 rounded-full border border-gray-300 ${
+                    layer.id === "districts"
+                      ? "bg-blue-500"
+                      : layer.id === "green_10min"
+                      ? "bg-green-500"
+                      : layer.id === "accessibility_15min"
+                      ? "bg-yellow-500"
+                      : layer.id === "accessibility_30min"
+                      ? "bg-orange-500"
+                      : layer.id === "population_grid"
+                      ? "bg-purple-500"
+                      : "bg-gray-500"
+                  }`}
+                ></div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 pt-2 border-t border-gray-200 text-xs text-gray-600">
+            Всего слоев: {layers.filter((l) => l.visible).length}/
+            {layers.length}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
