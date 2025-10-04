@@ -1,0 +1,340 @@
+"use client";
+
+import React, { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import { Button } from "@/components/ui/button";
+import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import "mapbox-gl/dist/mapbox-gl.css";
+
+// Токен Mapbox - нужно настроить в .env.local
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+
+if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes("example")) {
+  console.warn(
+    "⚠️ Mapbox token not configured. Please set NEXT_PUBLIC_MAPBOX_TOKEN in .env.local"
+  );
+}
+
+interface SmpVtmpMapboxProps {
+  className?: string;
+}
+
+interface MedicalFacility {
+  type: "Feature";
+  properties: {
+    medical_organization: string;
+    type: string;
+    type2: string;
+    Overload: string;
+    color: string;
+    Number_of_beds_actually_deployed_closed?: string;
+    [key: string]: any;
+  };
+  geometry: {
+    type: "Point";
+    coordinates: [number, number];
+  };
+}
+
+export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<mapboxgl.Map | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [facilities, setFacilities] = useState<MedicalFacility[]>([]);
+
+  // Инициализация карты
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    // Проверяем наличие токена Mapbox
+    if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes("example")) {
+      console.error("Mapbox token not configured properly");
+      setIsLoading(false);
+      return;
+    }
+
+    // Устанавливаем токен Mapbox
+    mapboxgl.accessToken = MAPBOX_TOKEN;
+
+    // Создаем карту
+    const map = new mapboxgl.Map({
+      container: containerRef.current,
+      style: "mapbox://styles/mapbox/streets-v12",
+      center: [76.9, 43.25], // Координаты Алматы
+      zoom: 11,
+      maxZoom: 18,
+      minZoom: 9,
+    });
+
+    mapRef.current = map;
+
+    map.on("load", () => {
+      console.log("Mapbox: Map loaded successfully");
+      setIsLoading(false);
+    });
+
+    map.on("error", (e: any) => {
+      console.error("Mapbox: Map error:", e);
+      setIsLoading(false);
+    });
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, []);
+
+  // Загрузка данных медучреждений
+  useEffect(() => {
+    const loadFacilities = async () => {
+      try {
+        console.log("Loading Extra_MO_coord.geojson...");
+        const response = await fetch("/geo-files/Extra_MO_coord.geojson");
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Loaded facilities data:", data);
+
+        if (data.features && Array.isArray(data.features)) {
+          setFacilities(data.features);
+        }
+      } catch (error) {
+        console.error("Error loading facilities:", error);
+      }
+    };
+
+    loadFacilities();
+  }, []);
+
+  // Добавление маркеров на карту
+  useEffect(() => {
+    if (!mapRef.current || isLoading || facilities.length === 0) return;
+
+    const map = mapRef.current;
+
+    // Удаляем существующий источник и слой если есть
+    if (map.getSource("facilities")) {
+      if (map.getLayer("facilities-layer")) {
+        map.removeLayer("facilities-layer");
+      }
+      map.removeSource("facilities");
+    }
+
+    // Добавляем источник данных
+    map.addSource("facilities", {
+      type: "geojson",
+      data: {
+        type: "FeatureCollection",
+        features: facilities,
+      },
+    });
+
+    // Функция для определения цвета маркера
+    const getMarkerColor = (overload: string) => {
+      const percent = parseInt(overload.replace("%", ""));
+      if (percent >= 100) return "#8B0000"; // bordo
+      if (percent >= 90) return "#FF0000"; // red
+      if (percent >= 80) return "#FFA500"; // orange
+      if (percent >= 60) return "#FFFF00"; // yellow
+      return "#008000"; // green
+    };
+
+    // Добавляем слой с маркерами
+    map.addLayer({
+      id: "facilities-layer",
+      type: "circle",
+      source: "facilities",
+      paint: {
+        "circle-radius": ["case", ["==", ["get", "type2"], "Частные"], 8, 10],
+        "circle-color": [
+          "case",
+          ["==", ["get", "color"], "bordo"],
+          "#8B0000",
+          ["==", ["get", "color"], "red"],
+          "#FF0000",
+          ["==", ["get", "color"], "orange"],
+          "#FFA500",
+          ["==", ["get", "color"], "yellow"],
+          "#FFFF00",
+          ["==", ["get", "color"], "green"],
+          "#008000",
+          "#666666",
+        ],
+        "circle-stroke-color": "#ffffff",
+        "circle-stroke-width": 2,
+        "circle-opacity": 0.8,
+      },
+    });
+
+    // Добавляем всплывающие окна
+    map.on("click", "facilities-layer", (e: any) => {
+      if (!e.features || e.features.length === 0) return;
+
+      const feature = e.features[0] as any;
+      const props = feature.properties;
+
+      new mapboxgl.Popup()
+        .setLngLat(e.lngLat)
+        .setHTML(
+          `
+          <div class="p-3 max-w-sm">
+            <h3 class="font-semibold text-sm mb-2">${
+              props.medical_organization
+            }</h3>
+            <div class="text-xs space-y-1">
+              <p><strong>Тип:</strong> ${props.type}</p>
+              <p><strong>Форма собственности:</strong> ${props.type2}</p>
+              <p><strong>Коек:</strong> ${
+                props["Number_of_ beds_actually_deployed_closed"] || "Н/Д"
+              }</p>
+              <p><strong>Загруженность:</strong> <span class="font-medium" style="color: ${getMarkerColor(
+                props.Overload
+              )}">${props.Overload}</span></p>
+              <p><strong>Принято пациентов:</strong> ${
+                props["Patients admitted total"] || "Н/Д"
+              }</p>
+              <p><strong>Сельские жители:</strong> ${
+                props["Rural residents"] || "Н/Д"
+              }</p>
+            </div>
+          </div>
+        `
+        )
+        .addTo(map);
+    });
+
+    // Меняем курсор при наведении
+    map.on("mouseenter", "facilities-layer", () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+
+    map.on("mouseleave", "facilities-layer", () => {
+      map.getCanvas().style.cursor = "";
+    });
+
+    console.log(`Added ${facilities.length} medical facilities to map`);
+  }, [mapRef.current, isLoading, facilities]);
+
+  const zoomIn = () => {
+    if (mapRef.current) {
+      mapRef.current.zoomIn();
+    }
+  };
+
+  const zoomOut = () => {
+    if (mapRef.current) {
+      mapRef.current.zoomOut();
+    }
+  };
+
+  const resetView = () => {
+    if (mapRef.current) {
+      mapRef.current.flyTo({
+        center: [76.9, 43.25],
+        zoom: 11,
+        duration: 1000,
+      });
+    }
+  };
+
+  return (
+    <div className={`relative h-[500px] w-full ${className}`}>
+      {/* Контейнер карты */}
+      <div
+        ref={containerRef}
+        className="h-full w-full rounded-lg overflow-hidden"
+      />
+
+      {/* Ошибка настройки токена */}
+      {(!MAPBOX_TOKEN || MAPBOX_TOKEN.includes("example")) && (
+        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center rounded-lg">
+          <div className="text-center p-8 max-w-md">
+            <div className="text-6xl mb-4">🗺️</div>
+            <h3 className="text-lg font-semibold mb-2">Настройка карты</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Для отображения карты необходимо настроить токен Mapbox.
+            </p>
+            <div className="text-xs text-left bg-gray-50 p-3 rounded border">
+              <p className="font-medium mb-2">Инструкция:</p>
+              <ol className="space-y-1">
+                <li>1. Зарегистрируйтесь на mapbox.com</li>
+                <li>2. Получите токен доступа</li>
+                <li>3. Добавьте его в .env.local:</li>
+                <li className="font-mono text-xs bg-white p-1 rounded">
+                  NEXT_PUBLIC_MAPBOX_TOKEN=ваш_токен
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Индикатор загрузки */}
+      {isLoading && MAPBOX_TOKEN && !MAPBOX_TOKEN.includes("example") && (
+        <div className="absolute inset-0 bg-white/90 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-sm text-gray-600">Загрузка карты...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Информация о загруженных данных */}
+      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-2 text-xs">
+        <div>Медучреждений: {facilities.length}</div>
+        <div>Статус: {isLoading ? "Загрузка..." : "Готово"}</div>
+      </div>
+
+      {/* Легенда */}
+      <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg p-3">
+        <h4 className="text-xs font-semibold mb-2">Загруженность коек</h4>
+        <div className="space-y-1 text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            <span>&lt; 80%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+            <span>80-89%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+            <span>90-99%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+            <span>100-109%</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-800"></div>
+            <span>≥ 110%</span>
+          </div>
+        </div>
+        <div className="mt-2 pt-2 border-t border-gray-200">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
+            <span>Частные (меньший размер)</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Контролы масштаба */}
+      <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
+        <Button variant="outline" size="sm" onClick={zoomIn}>
+          <ZoomIn className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" onClick={zoomOut}>
+          <ZoomOut className="h-4 w-4" />
+        </Button>
+        <Button variant="outline" size="sm" onClick={resetView}>
+          <RotateCcw className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}

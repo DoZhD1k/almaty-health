@@ -29,7 +29,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { EChartsPieChart } from "@/components/charts/echarts-pie-chart";
-import { SmpVtmpMapLibre } from "@/components/map/SmpVtmpMapLibre";
+import { SmpVtmpMapbox } from "@/components/map/SmpVtmpMapbox";
 import {
   FacilityStatistic,
   HospitalizationStatistic,
@@ -94,7 +94,7 @@ export function SmpVtmpTab({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SmpVtmpMapLibre facilities={filteredFacilities} className="w-full" />
+          <SmpVtmpMapbox className="w-full" />
         </CardContent>
         <CardFooter className="flex-col items-start gap-2 text-sm">
           <div className="flex gap-2 leading-none font-medium">
@@ -259,9 +259,9 @@ export function SmpVtmpTab({
                   content={<ChartTooltipContent />}
                   formatter={(value: any, name: string) => {
                     if (name === "smp")
-                      return [formatNumber(Number(value)), "СМП поступлений"];
+                      return [formatNumber(Number(value)), " СМП поступлений"];
                     if (name === "vtmp")
-                      return [formatNumber(Number(value)), "ВТМП поступлений"];
+                      return [formatNumber(Number(value)), " ВТМП поступлений"];
                     if (name === "hospitals")
                       return [Number(value), "Количество больниц"];
                     return [`${value}%`, "Загруженность"];

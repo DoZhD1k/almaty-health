@@ -3,14 +3,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import { useMapInitialization } from "@/hooks/use-map-initialization";
-import { FacilityStatistic } from "@/types/healthcare";
 import { GEOJSON_LAYERS, loadGeoJSON, GeoJSONLayer } from "@/lib/utils/geojson";
 import { LayerControlPanel } from "./LayerControlPanel";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 
 interface SmpVtmpMapLibreProps {
-  facilities?: FacilityStatistic[];
   className?: string;
 }
 
@@ -26,15 +24,8 @@ interface DistrictFeature {
   };
 }
 
-export function SmpVtmpMapLibre({
-  facilities = [],
-  className = "",
-}: SmpVtmpMapLibreProps) {
-  console.log(
-    "SmpVtmpMapLibre: Component rendered with",
-    facilities.length,
-    "facilities"
-  );
+export function SmpVtmpMapLibre({ className = "" }: SmpVtmpMapLibreProps) {
+  console.log("SmpVtmpMapLibre: Component rendered");
   const containerRef = useRef<HTMLDivElement>(null);
   console.log("SmpVtmpMapLibre: containerRef.current:", !!containerRef.current);
 
@@ -50,7 +41,6 @@ export function SmpVtmpMapLibre({
   const markersRef = useRef<maplibregl.Marker[]>([]);
   const [districts, setDistricts] = useState<DistrictFeature[]>([]);
   const [layers, setLayers] = useState<GeoJSONLayer[]>(GEOJSON_LAYERS);
-  const [showApiFacilities, setShowApiFacilities] = useState(true);
   const [mapReady, setMapReady] = useState(false);
 
   // Отслеживаем изменения containerRef
@@ -133,7 +123,12 @@ export function SmpVtmpMapLibre({
       districts.length
     );
 
-    if (!mapRef.current || !mapReady || districts.length === 0) {
+    if (
+      !mapRef.current ||
+      !mapReady ||
+      districts.length === 0 ||
+      !mapRef.current.isStyleLoaded()
+    ) {
       console.log("SmpVtmpMapLibre: Not ready to add districts layer");
       return;
     }
@@ -144,20 +139,29 @@ export function SmpVtmpMapLibre({
     try {
       console.log("SmpVtmpMapLibre: Starting to add districts layers");
 
-      // Удаляем существующие слои и источники
-      if (map.getLayer("districts-fill")) {
-        console.log("SmpVtmpMapLibre: Removing existing districts-fill layer");
-        map.removeLayer("districts-fill");
-      }
-      if (map.getLayer("districts-stroke")) {
-        console.log(
-          "SmpVtmpMapLibre: Removing existing districts-stroke layer"
+      // Безопасно удаляем существующие слои и источники
+      try {
+        if (map.getLayer("districts-fill")) {
+          console.log(
+            "SmpVtmpMapLibre: Removing existing districts-fill layer"
+          );
+          map.removeLayer("districts-fill");
+        }
+        if (map.getLayer("districts-stroke")) {
+          console.log(
+            "SmpVtmpMapLibre: Removing existing districts-stroke layer"
+          );
+          map.removeLayer("districts-stroke");
+        }
+        if (map.getSource("districts")) {
+          console.log("SmpVtmpMapLibre: Removing existing districts source");
+          map.removeSource("districts");
+        }
+      } catch (removeError) {
+        console.warn(
+          "SmpVtmpMapLibre: Error removing existing districts layers:",
+          removeError
         );
-        map.removeLayer("districts-stroke");
-      }
-      if (map.getSource("districts")) {
-        console.log("SmpVtmpMapLibre: Removing existing districts source");
-        map.removeSource("districts");
       }
 
       // Добавляем источник данных
@@ -211,7 +215,7 @@ export function SmpVtmpMapLibre({
 
   // Загружаем и отображаем GeoJSON слои
   useEffect(() => {
-    if (!mapRef.current || !mapReady) return;
+    if (!mapRef.current || !mapReady || !mapRef.current.isStyleLoaded()) return;
 
     const map = mapRef.current;
 
@@ -220,15 +224,35 @@ export function SmpVtmpMapLibre({
         if (!layer.visible) continue;
 
         try {
+          // Дополнительная проверка перед загрузкой слоя
+          if (!map.isStyleLoaded()) {
+            console.warn(
+              `Map style not loaded when trying to add layer ${layer.name}`
+            );
+            return;
+          }
+
           const data = await loadGeoJSON(layer.url);
-          if (!data) continue;
+          if (!data) {
+            console.warn(`No data loaded for layer ${layer.name}`);
+            continue;
+          }
 
           const sourceId = `layer-${layer.id}`;
           const layerId = `layer-${layer.id}-layer`;
 
-          // Удаляем существующие слои
-          if (map.getLayer(layerId)) map.removeLayer(layerId);
-          if (map.getSource(sourceId)) map.removeSource(sourceId);
+          // Безопасно удаляем существующие слои
+          try {
+            if (map.getLayer(layerId)) map.removeLayer(layerId);
+            if (map.getLayer(`${layerId}-stroke`))
+              map.removeLayer(`${layerId}-stroke`);
+            if (map.getSource(sourceId)) map.removeSource(sourceId);
+          } catch (removeError) {
+            console.warn(
+              `Error removing existing layer ${layer.name}:`,
+              removeError
+            );
+          }
 
           // Добавляем источник
           map.addSource(sourceId, {
@@ -276,7 +300,7 @@ export function SmpVtmpMapLibre({
             });
           }
 
-          console.log(`Layer ${layer.name} added to map`);
+          console.log(`Layer ${layer.name} added to map successfully`);
         } catch (error) {
           console.error(`Error loading layer ${layer.name}:`, error);
         }
@@ -286,65 +310,12 @@ export function SmpVtmpMapLibre({
     loadLayers();
   }, [mapRef, mapReady, layers]);
 
-  // Добавляем маркеры медучреждений
-  useEffect(() => {
-    if (!mapRef.current || !mapReady || !showApiFacilities) return;
-
-    const map = mapRef.current;
-
-    // Очищаем существующие маркеры
-    markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current = [];
-
-    // Добавляем новые маркеры
-    facilities.forEach((facility) => {
-      if (facility.latitude && facility.longitude) {
-        const el = document.createElement("div");
-        el.className = "facility-marker";
-        el.style.cssText = `
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          background-color: #dc2626;
-          border: 2px solid white;
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        `;
-
-        const popup = new maplibregl.Popup({ offset: 25 }).setHTML(`
-          <div class="p-2">
-            <h3 class="font-semibold text-sm">${
-              facility.medical_organization
-            }</h3>
-            <p class="text-xs text-gray-600 mt-1">
-              Всего коек: ${facility.beds_deployed_withdrawn_for_rep || 0}<br>
-              Загрузка: ${facility.occupancy_rate_percent || 0}%
-            </p>
-          </div>
-        `);
-
-        const marker = new maplibregl.Marker(el)
-          .setLngLat([facility.longitude, facility.latitude])
-          .setPopup(popup)
-          .addTo(map);
-
-        markersRef.current.push(marker);
-      }
-    });
-
-    console.log(`Added ${markersRef.current.length} facility markers`);
-  }, [mapRef, mapReady, facilities, showApiFacilities]);
-
   const toggleLayer = (layerId: string) => {
     setLayers((prev) =>
       prev.map((layer) =>
         layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
       )
     );
-  };
-
-  const toggleApiFacilities = () => {
-    setShowApiFacilities(!showApiFacilities);
   };
 
   console.log(
@@ -388,7 +359,6 @@ export function SmpVtmpMapLibre({
             Style Loaded: {mapRef.current?.isStyleLoaded() ? "✅ Yes" : "❌ No"}
           </div>
           <div>Districts: {districts.length}</div>
-          <div>Facilities: {facilities.length}</div>
           <div>Markers: {markersRef.current?.length || 0}</div>
           <div>
             Has Districts Source:{" "}
@@ -401,9 +371,6 @@ export function SmpVtmpMapLibre({
           <div>
             Has Stroke Layer:{" "}
             {mapRef.current?.getLayer("districts-stroke") ? "✅ Yes" : "❌ No"}
-          </div>
-          <div>
-            Show API Facilities: {showApiFacilities ? "✅ Yes" : "❌ No"}
           </div>
         </div>
       </div>
@@ -423,12 +390,7 @@ export function SmpVtmpMapLibre({
 
       {/* Панель управления слоями */}
       <div className="absolute top-20 left-4 z-10">
-        <LayerControlPanel
-          layers={layers}
-          onLayerToggle={toggleLayer}
-          showApiFacilities={showApiFacilities}
-          onApiFacilitiesToggle={toggleApiFacilities}
-        />
+        <LayerControlPanel layers={layers} onLayerToggle={toggleLayer} />
       </div>
     </div>
   );

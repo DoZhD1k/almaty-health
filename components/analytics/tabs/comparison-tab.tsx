@@ -125,8 +125,9 @@ export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
           bValue = b.bed_count_2025 || 0;
           break;
         case "reduction":
-          aValue = a.bed_reduction || 0;
-          bValue = b.bed_reduction || 0;
+          // Вычисляем сокращение коек самостоятельно для сортировки
+          aValue = (a.bed_count_2024 || 0) - (a.bed_count_2025 || 0);
+          bValue = (b.bed_count_2024 || 0) - (b.bed_count_2025 || 0);
           break;
         default:
           return 0;
@@ -201,39 +202,38 @@ export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
                   <TableRow>
                     <TableHead className="w-12">#</TableHead>
                     <TableHead
-                      className="cursor-pointer hover:bg-muted/50 select-none"
+                      className="cursor-pointer hover:bg-muted/50 select-none w-2/5"
                       onClick={() => handleSort("name")}
                     >
                       <div className="flex items-center">
-                        Медицинская организация
+                        Организация
                         {getSortIcon("name")}
                       </div>
                     </TableHead>
                     <TableHead
-                      className="text-center cursor-pointer hover:bg-muted/50 select-none"
+                      className="text-center cursor-pointer hover:bg-muted/50 select-none w-20"
                       onClick={() => handleSort("beds2024")}
                     >
                       <div className="flex items-center justify-center">
-                        Койки 2024
+                        2024
                         {getSortIcon("beds2024")}
                       </div>
                     </TableHead>
                     <TableHead
-                      className="text-center cursor-pointer hover:bg-muted/50 select-none"
+                      className="text-center cursor-pointer hover:bg-muted/50 select-none w-20"
                       onClick={() => handleSort("beds2025")}
                     >
                       <div className="flex items-center justify-center">
-                        Койки 2025
+                        2025
                         {getSortIcon("beds2025")}
                       </div>
                     </TableHead>
                     <TableHead
-                      className="text-right cursor-pointer hover:bg-muted/50 select-none"
+                      className="text-right cursor-pointer hover:bg-muted/50 select-none w-24"
                       onClick={() => handleSort("reduction")}
                     >
                       <div className="flex items-center justify-end">
-                        Сокращение коек
-                        {getSortIcon("reduction")}
+                        Δ{getSortIcon("reduction")}
                       </div>
                     </TableHead>
                   </TableRow>
@@ -269,9 +269,11 @@ export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
                     }
 
                     return sortedOrganizations.map((organization, index) => {
-                      const bedReduction = Math.abs(
-                        organization.bed_reduction || 0
-                      );
+                      // Вычисляем сокращение коек самостоятельно
+                      const calculatedReduction =
+                        (organization.bed_count_2024 || 0) -
+                        (organization.bed_count_2025 || 0);
+                      const bedReduction = Math.abs(calculatedReduction);
                       const hasReduction = bedReduction > 0;
 
                       return (
@@ -283,53 +285,40 @@ export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
                               : ""
                           }
                         >
-                          <TableCell className="font-medium">
+                          <TableCell className="font-medium w-12">
                             {index + 1}
                           </TableCell>
-                          <TableCell className="max-w-xs">
-                            <div className="space-y-1">
-                              <div
-                                className="font-medium truncate"
-                                title={organization.full_name}
-                              >
-                                {organization.short_name}
-                              </div>
-                              <div
-                                className="text-xs text-muted-foreground truncate"
-                                title={organization.full_name}
-                              >
-                                {organization.full_name}
-                              </div>
+                          <TableCell className="w-2/5">
+                            <div
+                              className="font-medium truncate cursor-help"
+                              title={organization.full_name}
+                            >
+                              {organization.short_name}
                             </div>
                           </TableCell>
-                          <TableCell className="text-center">
-                            <span className="font-semibold text-lg text-blue-600">
+                          <TableCell className="text-center w-20">
+                            <span className="font-medium text-blue-600">
                               {formatNumber(organization.bed_count_2024 || 0)}
                             </span>
                           </TableCell>
-                          <TableCell className="text-center">
-                            <span className="font-semibold text-lg text-green-600">
+                          <TableCell className="text-center w-20">
+                            <span className="font-medium text-green-600">
                               {formatNumber(organization.bed_count_2025 || 0)}
                             </span>
                           </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex flex-col items-end">
-                              <span
-                                className={`font-semibold text-lg ${
-                                  hasReduction
-                                    ? index < 3
-                                      ? "text-red-600"
-                                      : "text-orange-600"
-                                    : "text-gray-500"
-                                }`}
-                              >
-                                {hasReduction ? "-" : ""}
-                                {formatNumber(bedReduction)}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {hasReduction ? "сокращено" : "без изменений"}
-                              </span>
-                            </div>
+                          <TableCell className="text-right w-24">
+                            <span
+                              className={`font-medium ${
+                                hasReduction
+                                  ? index < 3
+                                    ? "text-red-600"
+                                    : "text-orange-600"
+                                  : "text-gray-500"
+                              }`}
+                            >
+                              {hasReduction ? "-" : ""}
+                              {formatNumber(bedReduction)}
+                            </span>
                           </TableCell>
                         </TableRow>
                       );
@@ -350,8 +339,12 @@ export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
             <div className="text-xs text-muted-foreground mt-2">
               Всего организаций: {cityOrganizations.length} | С сокращениями:{" "}
               {
-                cityOrganizations.filter((org) => (org.bed_reduction || 0) > 0)
-                  .length
+                cityOrganizations.filter((org) => {
+                  // Вычисляем сокращение коек самостоятельно для фильтрации
+                  const calculatedReduction =
+                    (org.bed_count_2024 || 0) - (org.bed_count_2025 || 0);
+                  return calculatedReduction > 0;
+                }).length
               }
             </div>
           </CardFooter>

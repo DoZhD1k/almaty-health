@@ -113,10 +113,8 @@ export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
               <ChartTooltip
                 content={<ChartTooltipContent />}
                 formatter={(value: any, name: string, props: any) => [
-                  `${formatNumber(Number(value))} (${
-                    props.payload.percentage
-                  }%)`,
-                  "Пациентов",
+                  `${formatNumber(Number(value))}`,
+                  " Пациентов",
                 ]}
               />
               <Bar dataKey="patients" fill="#3b82f6" radius={4}>
@@ -277,7 +275,6 @@ export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
               <ChartTooltip
                 content={<ChartTooltipContent />}
                 formatter={(value: any, name: string, props: any) => [
-                  `${value}%`,
                   `Смертность (${formatNumber(
                     props.payload.deaths
                   )} из ${formatNumber(props.payload.treated)})`,
