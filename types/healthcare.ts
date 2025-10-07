@@ -154,3 +154,52 @@ export interface ApiError {
   message: string;
   timestamp: string;
 }
+
+// Интерфейсы для медицинских фильтров
+export interface MedicalFilterState {
+  district: string;
+  facilityTypes: string[];
+  bedProfiles: string[];
+  loadLevels: string[];
+  searchQuery: string;
+}
+
+export interface FacilityType {
+  id: string;
+  label: string;
+}
+
+export interface BedProfile {
+  id: string;
+  label: string;
+}
+
+export interface LoadLevel {
+  id: string;
+  label: string;
+  minOccupancy: number;
+  maxOccupancy: number;
+}
+
+// Интерфейсы для инфраструктурных фильтров (сохраняем для совместимости)
+export interface InfrastructureFilterState {
+  district: string;
+  engineeringNodes: string[];
+  socialObjects: string[];
+  buildingCategories: string[];
+}
+
+export interface EngineeringNode {
+  id: string;
+  label: string;
+}
+
+export interface SocialObject {
+  id: string;
+  label: string;
+}
+
+export interface BuildingCategory {
+  id: string;
+  label: string;
+}

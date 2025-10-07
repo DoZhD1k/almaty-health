@@ -2,9 +2,8 @@
 
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { SideFilterPanel } from "@/components/side-filter-panel";
-import { QuickSummary } from "@/components/quick-summary";
-import { FacilityStatistic } from "@/types/healthcare";
+import { MedicalFilterPanel } from "@/components/medical-filter-panel";
+import { FacilityStatistic, MedicalFilterState } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 
 // Dynamically import the MapLibre map component to prevent SSR issues
@@ -28,26 +27,16 @@ const MapLibreFacilityMap = dynamic(
   }
 );
 
-interface FilterState {
-  search: string;
-  district: string;
-  facilityType: string;
-  profile: string;
-  loadStatus: string[];
-  bedRange: [number, number];
-}
-
 export default function HomePage() {
   const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<FilterState>({
-    search: "",
+  const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
-    facilityType: "Все типы",
-    profile: "Все профили",
-    loadStatus: [],
-    bedRange: [0, 1000],
+    facilityTypes: [],
+    bedProfiles: [],
+    loadLevels: [],
+    searchQuery: "",
   });
 
   useEffect(() => {
@@ -85,11 +74,10 @@ export default function HomePage() {
     return facilities.filter((facility) => {
       // Search filter
       if (
-        filters.search &&
-        facility.medical_organization &&
+        filters.searchQuery &&
         !facility.medical_organization
           .toLowerCase()
-          .includes(filters.search.toLowerCase())
+          .includes(filters.searchQuery.toLowerCase())
       ) {
         return false;
       }
@@ -104,43 +92,38 @@ export default function HomePage() {
 
       // Facility type filter
       if (
-        filters.facilityType !== "Все типы" &&
-        facility.facility_type !== filters.facilityType
+        filters.facilityTypes.length > 0 &&
+        !filters.facilityTypes.includes(facility.facility_type)
       ) {
         return false;
       }
 
-      // Profile filter
+      // Bed profile filter
       if (
-        filters.profile !== "Все профили" &&
-        facility.bed_profile !== filters.profile
+        filters.bedProfiles.length > 0 &&
+        !filters.bedProfiles.includes(facility.bed_profile)
       ) {
         return false;
       }
 
-      // Load status filter
-      if (filters.loadStatus.length > 0) {
-        const occupancyRate = facility.occupancy_rate_percent || 0;
-        const facilityLoadStatus =
-          occupancyRate > 0.95
-            ? "critical"
-            : occupancyRate > 0.8
-            ? "high"
-            : occupancyRate > 0.5
-            ? "normal"
-            : "low";
+      // Load level filter
+      if (filters.loadLevels.length > 0) {
+        const loadLevelOptions = [
+          { id: "low", minOccupancy: 0, maxOccupancy: 0.5 },
+          { id: "normal", minOccupancy: 0.5, maxOccupancy: 0.8 },
+          { id: "high", minOccupancy: 0.8, maxOccupancy: 0.95 },
+          { id: "critical", minOccupancy: 0.95, maxOccupancy: 1 },
+        ];
 
-        if (!filters.loadStatus.includes(facilityLoadStatus)) {
-          return false;
-        }
-      }
-
-      // Bed range filter - только если диапазон изменен от значений по умолчанию
-      if (filters.bedRange[0] > 0 || filters.bedRange[1] < 1000) {
-        const beds = facility.beds_deployed_withdrawn_for_rep || 0;
-        if (beds < filters.bedRange[0] || beds > filters.bedRange[1]) {
-          return false;
-        }
+        const matchesAnyLoadLevel = filters.loadLevels.some((loadLevelId) => {
+          const loadLevel = loadLevelOptions.find((l) => l.id === loadLevelId);
+          if (!loadLevel) return false;
+          return (
+            facility.occupancy_rate_percent >= loadLevel.minOccupancy &&
+            facility.occupancy_rate_percent < loadLevel.maxOccupancy
+          );
+        });
+        if (!matchesAnyLoadLevel) return false;
       }
 
       return true;
@@ -186,44 +169,23 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Sidebar - Overlaying the map on desktop */}
-      <aside className="hidden lg:flex lg:flex-col absolute left-0 top-0 bottom-0 w-[320px] bg-gradient-to-b from-[#4169E1] to-[#5B7FED] backdrop-blur-sm border-r border-white/20 shadow-2xl z-10">
-        <div className="flex-1 overflow-y-auto">
-          <div className="p-4">
-            {/* Sidebar Header */}
-            <div className="mb-4">
-              <h1 className="text-lg font-bold text-white mb-0.5">
-                Мониторинг МО
-              </h1>
-              <p className="text-xs text-white/80">
-                Система фильтрации медицинских организаций
-              </p>
-            </div>
-
-            <SideFilterPanel
-              onFiltersChange={setFilters}
-              facilities={facilities}
-              className="border-0 shadow-none bg-transparent"
-            />
-          </div>
-        </div>
-      </aside>
-
-      {/* Quick Summary - Overlaying on desktop, top-right */}
-      <div className="hidden lg:block absolute top-4 right-4 z-10 max-w-md">
-        <QuickSummary facilities={filteredFacilities} />
+      {/* Floating Filter Panel - Overlaying the map on desktop */}
+      <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
+        <MedicalFilterPanel
+          onFiltersChange={setFilters}
+          facilities={facilities}
+          className="shadow-lg"
+        />
       </div>
 
-      {/* Mobile Layout - Full width stacked */}
-      <div className="lg:hidden flex flex-col h-full">
-        <div className="bg-white p-4 shadow-md z-10">
-          <SideFilterPanel
+      {/* Mobile Layout - Floating panel */}
+      <div className="lg:hidden">
+        <div className="absolute top-4 left-4 right-4 z-10">
+          <MedicalFilterPanel
             onFiltersChange={setFilters}
             facilities={facilities}
+            className="shadow-lg"
           />
-        </div>
-        <div className="flex-1 overflow-hidden">
-          <QuickSummary facilities={filteredFacilities} />
         </div>
       </div>
     </div>
