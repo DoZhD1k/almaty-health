@@ -28,6 +28,7 @@ export interface FacilityStatistic {
   occupancy_status_color: string;
   emergency_mo: string | null;
   patient_bed_days_conducted: number;
+  med_fk?: number;
 }
 
 export interface HospitalizationStatistic {

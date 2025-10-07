@@ -84,31 +84,23 @@ export function SmpVtmpTab({
   };
   return (
     <div className="space-y-4">
-      {/* Карта СМП/ВТМП */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Карта медицинских организаций СМП и ВТМП</CardTitle>
-          <CardDescription>
-            Интерактивная карта размещения учреждений, оказывающих скорую и
-            высокотехнологичную медицинскую помощь
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SmpVtmpMapbox className="w-full" />
-        </CardContent>
-        <CardFooter className="flex-col items-start gap-2 text-sm">
-          <div className="flex gap-2 leading-none font-medium">
-            Интерактивная карта СМП/ВТМП <TrendingUp className="h-4 w-4" />
-          </div>
-          <div className="text-muted-foreground leading-none">
-            Синие маркеры - преобладает СМП, зеленые - ВТМП. Цвет границы
-            показывает загруженность учреждения.
-          </div>
-        </CardFooter>
-      </Card>
+      {/* Сетка: карта на 2 колонки, графики по 1 колонке */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Карта СМП/ВТМП - занимает 2 колонки из 3 */}
+        <Card className="lg:col-span-2 lg:row-span-2 flex flex-col">
+          <CardHeader>
+            <CardTitle>Карта медицинских организаций СМП и ВТМП</CardTitle>
+            <CardDescription>
+              Интерактивная карта размещения учреждений, оказывающих скорую и
+              высокотехнологичную медицинскую помощь
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1">
+            <SmpVtmpMapbox className="w-full h-full" />
+          </CardContent>
+        </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Круговая диаграмма соотношения госпитализированных СМП и ВТМП */}
+        {/* Круговая диаграмма - правая колонка, верх */}
         <Card className="flex flex-col">
           <CardHeader className="items-center pb-0">
             <CardTitle>Соотношение госпитализированных СМП и ВТМП</CardTitle>
@@ -134,10 +126,10 @@ export function SmpVtmpTab({
                   },
                 },
               ]}
-              radius={["40%", "80%"]}
+              radius={["40%", "70%"]}
               height={300}
               showLegend={true}
-              legendPosition="bottom"
+              legendPosition="right"
               className="mx-auto"
             />
           </CardContent>
@@ -155,8 +147,8 @@ export function SmpVtmpTab({
           </CardFooter>
         </Card>
 
-        {/* График корреляции СМП и ВТМП с двумя осями */}
-        <Card className="lg:col-span-1">
+        {/* График корреляции - правая колонка, низ */}
+        <Card>
           <CardHeader>
             <CardTitle>
               Корреляция СМП/ВТМП: Загруженность vs Количество больниц
@@ -166,7 +158,7 @@ export function SmpVtmpTab({
               по районам
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="overflow-hidden">
             <ChartContainer
               config={{
                 smp: {
@@ -182,7 +174,7 @@ export function SmpVtmpTab({
                   color: "#ef4444",
                 },
               }}
-              className="h-[400px]"
+              className="h-[400px] w-full"
             >
               <LineChart
                 data={[
@@ -228,7 +220,8 @@ export function SmpVtmpTab({
                     vtmp: totalVtmp,
                   };
                 })}
-                margin={{ left: 20, right: 20, top: 20, bottom: 50 }}
+                margin={{ left: 10, right: 10, top: 20, bottom: 50 }}
+                width={undefined}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis

@@ -30,11 +30,11 @@ export function EChartsPieChart({
   data,
   title,
   subtitle,
-  height = 300,
-  radius = "50%",
-  center = ["50%", "50%"],
+  height = 400,
+  radius = "60%",
+  center = ["50%", "55%"],
   showLegend = true,
-  legendPosition = "right",
+  legendPosition = "bottom",
   className = "",
   onChartReady,
 }: EChartsPieChartProps) {
@@ -57,19 +57,32 @@ export function EChartsPieChart({
             text: title,
             subtext: subtitle,
             left: "center",
+            top: "5%",
             textStyle: {
-              fontSize: 16,
-              fontWeight: "normal",
+              fontSize: 18,
+              fontWeight: 600,
+              color: "#1F2937",
             },
             subtextStyle: {
-              fontSize: 12,
-              color: "#666",
+              fontSize: 14,
+              color: "#6B7280",
+              lineHeight: 20,
             },
           }
         : undefined,
       tooltip: {
         trigger: "item",
-        formatter: "{a} <br/>{b} : {c} ({d}%)",
+        formatter: "{b}: {c} ({d}%)",
+        backgroundColor: "rgba(255, 255, 255, 0.95)",
+        borderColor: "#E5E7EB",
+        borderWidth: 1,
+        borderRadius: 8,
+        textStyle: {
+          color: "#374151",
+          fontSize: 13,
+        },
+        extraCssText:
+          "box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);",
       },
       legend: showLegend
         ? {
@@ -85,13 +98,17 @@ export function EChartsPieChart({
                 : "center",
             top:
               legendPosition === "top"
-                ? "top"
+                ? "10%"
                 : legendPosition === "bottom"
-                ? "bottom"
+                ? "85%"
                 : "middle",
             textStyle: {
-              fontSize: 12,
+              fontSize: 13,
+              color: "#374151",
             },
+            itemWidth: 12,
+            itemHeight: 12,
+            itemGap: 15,
           }
         : undefined,
       series: [
@@ -103,21 +120,49 @@ export function EChartsPieChart({
           data: data.map((item) => ({
             value: item.value,
             name: item.name,
-            itemStyle: item.itemStyle,
+            itemStyle: {
+              ...item.itemStyle,
+              borderWidth: 2,
+              borderColor: "#ffffff",
+              shadowBlur: 8,
+              shadowColor: "rgba(0, 0, 0, 0.1)",
+            },
           })),
           emphasis: {
             itemStyle: {
-              shadowBlur: 10,
+              shadowBlur: 15,
               shadowOffsetX: 0,
-              shadowColor: "rgba(0, 0, 0, 0.5)",
+              shadowColor: "rgba(0, 0, 0, 0.3)",
+              borderWidth: 3,
+              borderColor: "#ffffff",
+            },
+            label: {
+              show: true,
+              fontSize: 14,
+              fontWeight: 600,
             },
           },
           label: {
             show: true,
-            formatter: "{b}: {d}%",
+            formatter: "{d}%",
+            fontSize: 12,
+            fontWeight: 500,
+            color: "#374151",
           },
           labelLine: {
             show: true,
+            smooth: true,
+            length: 15,
+            length2: 8,
+            lineStyle: {
+              color: "#9CA3AF",
+              width: 1,
+            },
+          },
+          animationType: "scale",
+          animationEasing: "elasticOut",
+          animationDelay: function (idx: number) {
+            return Math.random() * 200;
           },
         },
       ],
@@ -157,7 +202,13 @@ export function EChartsPieChart({
           data: data.map((item) => ({
             value: item.value,
             name: item.name,
-            itemStyle: item.itemStyle,
+            itemStyle: {
+              ...item.itemStyle,
+              borderWidth: 2,
+              borderColor: "#ffffff",
+              shadowBlur: 8,
+              shadowColor: "rgba(0, 0, 0, 0.1)",
+            },
           })),
         },
       ],
@@ -166,5 +217,11 @@ export function EChartsPieChart({
     chartInstance.current.setOption(option);
   }, [data]);
 
-  return <div ref={chartRef} className={`w-full h-[300px] ${className}`} />;
+  return (
+    <div
+      ref={chartRef}
+      className={`w-full ${className}`}
+      style={{ height: `${height}px` }}
+    />
+  );
 }

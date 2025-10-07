@@ -26,6 +26,7 @@ export function AnalyticsDashboard() {
     []
   );
   const [selectedBedProfiles, setSelectedBedProfiles] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,23 +56,43 @@ export function AnalyticsDashboard() {
 
   const filteredFacilities = useMemo(() => {
     return facilities.filter((facility) => {
+      // Фильтр по районам
       if (
         selectedDistricts.length > 0 &&
         !selectedDistricts.includes(facility.district || "")
       ) {
         return false;
       }
+      // Фильтр по типам учреждений
       if (
         selectedFacilityTypes.length > 0 &&
         !selectedFacilityTypes.includes(facility.facility_type || "")
       ) {
         return false;
       }
+      // Фильтр по профилям коек
       if (
         selectedBedProfiles.length > 0 &&
         !selectedBedProfiles.includes(facility.bed_profile || "")
       ) {
         return false;
+      }
+      // Поиск по всем текстовым полям
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const searchFields = [
+          facility.medical_organization,
+          facility.district,
+          facility.facility_type,
+          facility.bed_profile,
+          facility.ownership_type,
+          facility.address,
+          facility.emergency_mo,
+        ];
+        const matches = searchFields.some((field) =>
+          field?.toLowerCase().includes(query)
+        );
+        if (!matches) return false;
       }
       return true;
     });
@@ -79,6 +100,7 @@ export function AnalyticsDashboard() {
     facilities,
     selectedDistricts,
     selectedFacilityTypes,
+    searchQuery,
     selectedBedProfiles,
   ]);
 
@@ -98,50 +120,79 @@ export function AnalyticsDashboard() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">
-          Аналитическая панель здравоохранения
+    <div className="p-3 space-y-3">
+      <div className="mb-2">
+        <h1 className="text-lg font-bold text-gray-800 mb-0.5">
+          Аналитическая панель
         </h1>
+        <p className="text-[11px] text-gray-600">
+          Комплексный анализ медицинских учреждений Алматы
+        </p>
       </div>
 
-      <AnalyticsFilters
-        facilities={facilities}
-        selectedDistricts={selectedDistricts}
-        selectedFacilityTypes={selectedFacilityTypes}
-        selectedBedProfiles={selectedBedProfiles}
-        onDistrictsChange={setSelectedDistricts}
-        onFacilityTypesChange={setSelectedFacilityTypes}
-        onBedProfilesChange={setSelectedBedProfiles}
-      />
-
-      <KeyMetrics
-        filteredFacilities={filteredFacilities}
-        hospitalizations={hospitalizations}
-      />
-
-      <Tabs defaultValue="comparison" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-fit">
-          <TabsTrigger value="comparison">Сравнение</TabsTrigger>
-          <TabsTrigger value="smp-vtmp">СМП/ВТМП</TabsTrigger>
-          <TabsTrigger value="districts">Районы</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="comparison">
-          <ComparisonTab filteredFacilities={filteredFacilities} />
-        </TabsContent>
-
-        <TabsContent value="smp-vtmp">
-          <SmpVtmpTab
-            filteredFacilities={filteredFacilities}
-            hospitalizations={hospitalizations}
+      {/* Объединенная панель: Фильтры + KPI */}
+      <div className="rounded-lg p-2.5 border border-[rgb(var(--blue-light-active))] bg-gradient-to-r from-[rgb(var(--blue-light))] to-[rgb(var(--blue-light-hover))]">
+        {/* Верхний ряд: Фильтры */}
+        <div className="mb-2">
+          <AnalyticsFilters
+            facilities={facilities}
+            selectedDistricts={selectedDistricts}
+            selectedFacilityTypes={selectedFacilityTypes}
+            selectedBedProfiles={selectedBedProfiles}
+            searchQuery={searchQuery}
+            onDistrictsChange={setSelectedDistricts}
+            onFacilityTypesChange={setSelectedFacilityTypes}
+            onBedProfilesChange={setSelectedBedProfiles}
+            onSearchChange={setSearchQuery}
           />
-        </TabsContent>
+        </div>
 
-        <TabsContent value="districts">
-          <DistrictsTab filteredFacilities={filteredFacilities} />
-        </TabsContent>
-      </Tabs>
+        {/* Нижний ряд: Компактные KPI метрики */}
+        <KeyMetrics
+          filteredFacilities={filteredFacilities}
+          hospitalizations={hospitalizations}
+        />
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+        <Tabs defaultValue="comparison" className="p-3">
+          <TabsList className="grid grid-cols-3 w-fit bg-gray-100 p-1 rounded-lg mb-3">
+            <TabsTrigger
+              value="comparison"
+              className="rounded-md px-3 py-1 text-xs font-medium"
+            >
+              Сравнение
+            </TabsTrigger>
+            <TabsTrigger
+              value="smp-vtmp"
+              className="rounded-md px-3 py-1 text-xs font-medium"
+            >
+              СМП/ВТМП
+            </TabsTrigger>
+            <TabsTrigger
+              value="districts"
+              className="rounded-md px-3 py-1 text-xs font-medium"
+            >
+              Районы
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="comparison" className="mt-0">
+            <ComparisonTab filteredFacilities={filteredFacilities} />
+          </TabsContent>
+
+          <TabsContent value="smp-vtmp" className="mt-0">
+            <SmpVtmpTab
+              filteredFacilities={filteredFacilities}
+              hospitalizations={hospitalizations}
+            />
+          </TabsContent>
+
+          <TabsContent value="districts" className="mt-0">
+            <DistrictsTab filteredFacilities={filteredFacilities} />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

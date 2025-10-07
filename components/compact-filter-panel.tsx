@@ -105,105 +105,121 @@ export function CompactFilterPanel({
   };
 
   return (
-    <Card className={`${className} mb-4`}>
-      <CardContent className="p-4">
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Search */}
-          <div className="relative min-w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Поиск по названию МО..."
-              value={filters.search}
-              onChange={(e) => updateFilters({ search: e.target.value })}
-              className="pl-10 h-9"
-            />
-          </div>
-
-          {/* District Filter */}
-          <Select
-            value={filters.district}
-            onValueChange={(value) => updateFilters({ district: value })}
-          >
-            <SelectTrigger className="w-40 h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {districts.map((district) => (
-                <SelectItem key={district} value={district}>
-                  {district}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Facility Type Filter */}
-          <Select
-            value={filters.facilityType}
-            onValueChange={(value) => updateFilters({ facilityType: value })}
-          >
-            <SelectTrigger className="w-44 h-9">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {facilityTypes.map((type) => (
-                <SelectItem key={type} value={type}>
-                  {type}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
-          {/* Load Status Filter */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9">
-                <Filter className="h-4 w-4 mr-2" />
-                Загруженность
-                {filters.loadStatus.length > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {filters.loadStatus.length}
-                  </Badge>
-                )}
-                <ChevronDown className="h-4 w-4 ml-2" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48">
-              {loadStatuses.map((status) => (
-                <DropdownMenuCheckboxItem
-                  key={status.id}
-                  checked={filters.loadStatus.includes(status.id)}
-                  onCheckedChange={(checked) =>
-                    handleLoadStatusChange(status.id, checked)
-                  }
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${status.color}`} />
-                    {status.label}
-                  </div>
-                </DropdownMenuCheckboxItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* Active Filters Badge */}
-          {activeFiltersCount > 0 && (
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">
-                <Filter className="h-3 w-3 mr-1" />
-                Фильтров: {activeFiltersCount}
-              </Badge>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={clearFilters}
-                className="h-7 px-2"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
+    <div
+      className={`${className} mb-6 bg-white rounded-2xl shadow-lg border border-gray-100 p-6`}
+    >
+      <div className="flex flex-wrap items-center gap-4">
+        {/* Search */}
+        <div className="relative min-w-72">
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <Input
+            placeholder="Поиск по названию МО..."
+            value={filters.search}
+            onChange={(e) => updateFilters({ search: e.target.value })}
+            className="pl-12 h-12 bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-200 rounded-xl text-sm"
+          />
         </div>
-      </CardContent>
-    </Card>
+
+        {/* District Filter */}
+        <Select
+          value={filters.district}
+          onValueChange={(value) => updateFilters({ district: value })}
+        >
+          <SelectTrigger className="w-48 h-12 bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-200 rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-white border border-gray-200 shadow-xl rounded-xl">
+            {districts.map((district) => (
+              <SelectItem
+                key={district}
+                value={district}
+                className="hover:bg-blue-50 focus:bg-blue-50"
+              >
+                {district}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Facility Type Filter */}
+        <Select
+          value={filters.facilityType}
+          onValueChange={(value) => updateFilters({ facilityType: value })}
+        >
+          <SelectTrigger className="w-52 h-12 bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-200 rounded-xl">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-white border border-gray-200 shadow-xl rounded-xl">
+            {facilityTypes.map((type) => (
+              <SelectItem
+                key={type}
+                value={type}
+                className="hover:bg-blue-50 focus:bg-blue-50"
+              >
+                {type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Load Status Filter */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="h-12 px-4 bg-gray-50 border-gray-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl shadow-sm"
+            >
+              <Filter className="h-5 w-5 mr-2 text-gray-500" />
+              <span className="font-medium">Загруженность</span>
+              {filters.loadStatus.length > 0 && (
+                <Badge className="ml-2 bg-blue-500 text-white px-2 py-1 text-xs">
+                  {filters.loadStatus.length} выбрано
+                </Badge>
+              )}
+              <ChevronDown className="h-4 w-4 ml-2 text-gray-400" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-56 bg-white border border-gray-200 shadow-xl rounded-xl p-2">
+            {loadStatuses.map((status) => (
+              <DropdownMenuCheckboxItem
+                key={status.id}
+                checked={filters.loadStatus.includes(status.id)}
+                onCheckedChange={(checked) =>
+                  handleLoadStatusChange(status.id, checked)
+                }
+                className="rounded-lg hover:bg-gray-50 py-3 px-3"
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-4 h-4 rounded-full ${status.color} shadow-sm`}
+                  />
+                  <span className="font-medium text-gray-700">
+                    {status.label}
+                  </span>
+                </div>
+              </DropdownMenuCheckboxItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Active Filters Badge */}
+        {activeFiltersCount > 0 && (
+          <div className="flex items-center gap-3 ml-auto">
+            <Badge className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-3 py-2 shadow-lg">
+              <Filter className="h-4 w-4 mr-2" />
+              Активных фильтров: {activeFiltersCount}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-10 w-10 p-0 hover:bg-red-50 hover:text-red-600 rounded-xl border border-gray-200"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

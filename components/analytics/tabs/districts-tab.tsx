@@ -40,25 +40,29 @@ const formatNumber = (num: number) => {
 
 export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Столбчатая диаграмма - количество пациентов по районам */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Количество пациентов по районам</CardTitle>
-          <CardDescription>
-            Общее количество госпитализаций с процентами
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              patients: {
-                label: "Пациентов",
-                color: "#3b82f6",
-              },
-            }}
-            className="h-[300px]"
-          >
+    <div className="space-y-4">
+      {/* Верхний ряд: Количество пациентов и Средняя загрузка */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Столбчатая диаграмма - количество пациентов по районам */}
+        <Card>
+          <CardHeader className="pb-2 pt-3">
+            <CardTitle className="text-sm">
+              Количество пациентов по районам
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Общее количество госпитализаций с процентами
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <ChartContainer
+              config={{
+                patients: {
+                  label: "Пациентов",
+                  color: "#3772ff",
+                },
+              }}
+              className="h-[350px]"
+            >
             <BarChart
               data={(() => {
                 const districts = [
@@ -117,7 +121,7 @@ export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
                   " Пациентов",
                 ]}
               />
-              <Bar dataKey="patients" fill="#3b82f6" radius={4}>
+              <Bar dataKey="patients" fill="#3772ff" radius={4}>
                 <LabelList
                   dataKey="percentage"
                   position="top"
@@ -127,29 +131,29 @@ export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
                   formatter={(value: any) => `${value}%`}
                 />
               </Bar>
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
-      {/* Столбчатая диаграмма - средняя загрузка по районам */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Средняя загрузка по районам</CardTitle>
-          <CardDescription>
-            Процент загрузки медицинских учреждений
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              occupancy: {
-                label: "Загрузка %",
-                color: "#f59e0b",
-              },
-            }}
-            className="h-[300px]"
-          >
+        {/* Столбчатая диаграмма - средняя загрузка по районам */}
+        <Card>
+          <CardHeader className="pb-2 pt-3">
+            <CardTitle className="text-sm">Средняя загрузка по районам</CardTitle>
+            <CardDescription className="text-xs">
+              Процент загрузки медицинских учреждений
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <ChartContainer
+              config={{
+                occupancy: {
+                  label: "Загрузка %",
+                  color: "#2c5bcc",
+                },
+              }}
+              className="h-[350px]"
+            >
             <BarChart
               data={[
                 "Алмалинский",
@@ -190,7 +194,7 @@ export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
               />
               <YAxis domain={[0, 100]} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="occupancy" fill="#f59e0b" radius={4}>
+              <Bar dataKey="occupancy" fill="#2c5bcc" radius={4}>
                 <LabelList
                   position="top"
                   offset={12}
@@ -199,29 +203,32 @@ export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
                   formatter={(value: any) => `${value}%`}
                 />
               </Bar>
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Столбчатая диаграмма - смертность по районам */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Смертность по районам</CardTitle>
-          <CardDescription>
-            Процент летальности (смертей/общ кол-во пролеченных)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              mortalityRate: {
-                label: "Смертность %",
-                color: "#ef4444",
-              },
-            }}
-            className="h-[300px]"
-          >
+      {/* Нижний ряд: Смертность и Распределение учреждений */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Столбчатая диаграмма - смертность по районам */}
+        <Card>
+          <CardHeader className="pb-2 pt-3">
+            <CardTitle className="text-sm">Смертность по районам</CardTitle>
+            <CardDescription className="text-xs">
+              Процент летальности (смертей/общ кол-во пролеченных)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pb-2">
+            <ChartContainer
+              config={{
+                mortalityRate: {
+                  label: "Смертность %",
+                  color: "#214499",
+                },
+              }}
+              className="h-[350px]"
+            >
             <BarChart
               data={[
                 "Алмалинский",
@@ -280,7 +287,7 @@ export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
                   )} из ${formatNumber(props.payload.treated)})`,
                 ]}
               />
-              <Bar dataKey="mortalityRate" fill="#ef4444" radius={4}>
+              <Bar dataKey="mortalityRate" fill="#214499" radius={4}>
                 <LabelList
                   position="top"
                   offset={12}
@@ -289,83 +296,68 @@ export function DistrictsTab({ filteredFacilities }: DistrictsTabProps) {
                   formatter={(value: any) => `${value}%`}
                 />
               </Bar>
-            </BarChart>
-          </ChartContainer>
-        </CardContent>
-        <CardFooter className="flex-col items-start gap-2 text-sm">
-          <div className="flex gap-2 leading-none font-medium">
-            Анализ летальности по районам <TrendingUp className="h-4 w-4" />
-          </div>
-          <div className="text-muted-foreground leading-none">
-            Показатель рассчитывается как отношение количества смертей к общему
-            количеству пролеченных пациентов
-          </div>
-        </CardFooter>
-      </Card>
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
 
-      {/* Круговая диаграмма - распределение учреждений по районам */}
-      <Card className="flex flex-col">
-        <CardHeader className="items-center pb-0">
-          <CardTitle>Распределение учреждений по районам</CardTitle>
-          <CardDescription>
-            Количество медицинских организаций с процентами
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex-1 pb-0">
-          <EChartsPieChart
-            data={(() => {
-              const districts = [
-                "Алмалинский",
-                "Ауэзовский",
-                "Бостандыкский",
-                "Медеуский",
-                "Наурызбайский",
-                "Турксибский",
-                "Алатауский",
-                "Жетысуский",
-              ];
+        {/* Круговая диаграмма - распределение учреждений по районам */}
+        <Card className="flex flex-col">
+          <CardHeader className="items-center pb-2 pt-3">
+            <CardTitle className="text-sm">
+              Распределение учреждений по районам
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Количество медицинских организаций с процентами
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex-1 pb-2">
+            <EChartsPieChart
+              data={(() => {
+                const districts = [
+                  "Алмалинский",
+                  "Ауэзовский",
+                  "Бостандыкский",
+                  "Медеуский",
+                  "Наурызбайский",
+                  "Турксибский",
+                  "Алатауский",
+                  "Жетысуский",
+                ];
 
-              const colors = [
-                "#3b82f6",
-                "#ef4444",
-                "#22c55e",
-                "#f59e0b",
-                "#8b5cf6",
-                "#06b6d4",
-                "#ec4899",
-                "#84cc16",
-              ];
+                // Используем blue palette градиент от светлого к темному
+                const colors = [
+                  "#3772ff", // Normal
+                  "#2c5bcc", // Normal :active
+                  "#2956bf", // Dark
+                  "#214499", // Dark :hover
+                  "#193373", // Dark :active
+                  "#132859", // Darker
+                  "#c1d3ff", // Light :active
+                  "#e1eaff", // Light :hover
+                ];
 
-              return districts.map((district, index) => {
-                const districtFacilities = filteredFacilities.filter((f) =>
-                  f.district?.includes(district)
-                );
-                return {
-                  name: district,
-                  value: districtFacilities.length,
-                  itemStyle: {
-                    color: colors[index % colors.length],
-                  },
-                };
-              });
-            })()}
-            height={250}
-            showLegend={true}
-            legendPosition="right"
-            className="mx-auto"
-          />
-        </CardContent>
-        <CardFooter className="flex-col gap-2 text-sm">
-          <div className="flex items-center gap-2 leading-none font-medium">
-            Всего учреждений: {filteredFacilities.length}{" "}
-            <TrendingUp className="h-4 w-4" />
-          </div>
-          <div className="text-muted-foreground leading-none">
-            Распределение медицинских организаций по районам города с указанием
-            процентов
-          </div>
-        </CardFooter>
-      </Card>
+                return districts.map((district, index) => {
+                  const districtFacilities = filteredFacilities.filter((f) =>
+                    f.district?.includes(district)
+                  );
+                  return {
+                    name: district,
+                    value: districtFacilities.length,
+                    itemStyle: {
+                      color: colors[index % colors.length],
+                    },
+                  };
+                });
+              })()}
+              height={300}
+              showLegend={true}
+              legendPosition="right"
+              className="mx-auto"
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

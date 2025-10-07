@@ -108,16 +108,16 @@ export function SideFilterPanel({
   return (
     <div className={className}>
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-white/20">
-              <Filter className="h-4 w-4 text-white" />
+            <div className="p-1.5 rounded-lg bg-white/20">
+              <Filter className="h-3.5 w-3.5 text-white" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-white">Фильтры</h2>
+              <h2 className="text-sm font-semibold text-white">Фильтры</h2>
               {activeFiltersCount > 0 && (
-                <span className="text-xs text-white/70">
+                <span className="text-[10px] text-white/70">
                   {activeFiltersCount} активных
                 </span>
               )}
@@ -128,46 +128,46 @@ export function SideFilterPanel({
               variant="ghost"
               size="sm"
               onClick={clearFilters}
-              className="gap-1.5 text-white/80 hover:text-white hover:bg-white/20 h-8"
+              className="gap-1 text-white/80 hover:text-white hover:bg-white/20 h-7 text-xs px-2"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-3 w-3" />
               Сбросить
             </Button>
           )}
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         {/* Search */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
           <Label
             htmlFor="search"
-            className="text-sm font-medium text-white mb-3 block"
+            className="text-xs font-medium text-white mb-2 block"
           >
             Поиск по названию
           </Label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/60" />
+            <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-white/60" />
             <Input
               id="search"
               placeholder="Введите название МО..."
               value={filters.search}
               onChange={(e) => updateFilters({ search: e.target.value })}
-              className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white focus:ring-white/50"
+              className="pl-9 h-8 text-sm bg-white/20 border-white/30 text-white placeholder:text-white/50 focus:border-white focus:ring-white/50"
             />
           </div>
         </div>
 
         {/* District Filter */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <Label className="text-sm font-medium text-white mb-3 block">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+          <Label className="text-xs font-medium text-white mb-2 block">
             Район
           </Label>
           <Select
             value={filters.district}
             onValueChange={(value) => updateFilters({ district: value })}
           >
-            <SelectTrigger className="bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50">
+            <SelectTrigger className="h-8 text-sm bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -181,15 +181,15 @@ export function SideFilterPanel({
         </div>
 
         {/* Facility Type Filter */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <Label className="text-sm font-medium text-white mb-3 block">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+          <Label className="text-xs font-medium text-white mb-2 block">
             Тип медицинской организации
           </Label>
           <Select
             value={filters.facilityType}
             onValueChange={(value) => updateFilters({ facilityType: value })}
           >
-            <SelectTrigger className="bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50">
+            <SelectTrigger className="h-8 text-sm bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -203,15 +203,15 @@ export function SideFilterPanel({
         </div>
 
         {/* Profile Filter */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <Label className="text-sm font-medium text-white mb-3 block">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+          <Label className="text-xs font-medium text-white mb-2 block">
             Профиль коек
           </Label>
           <Select
             value={filters.profile}
             onValueChange={(value) => updateFilters({ profile: value })}
           >
-            <SelectTrigger className="bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50">
+            <SelectTrigger className="h-8 text-sm bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -225,13 +225,13 @@ export function SideFilterPanel({
         </div>
 
         {/* Load Status Filter */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <Label className="text-sm font-medium text-white mb-3 block">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+          <Label className="text-xs font-medium text-white mb-2 block">
             Уровень загруженности
           </Label>
-          <div className="space-y-2.5">
+          <div className="space-y-2">
             {loadStatuses.map((status) => (
-              <div key={status.id} className="flex items-center space-x-2.5">
+              <div key={status.id} className="flex items-center space-x-2">
                 <Checkbox
                   id={status.id}
                   checked={filters.loadStatus.includes(status.id)}
@@ -240,11 +240,11 @@ export function SideFilterPanel({
                   }
                   className="border-white/40 data-[state=checked]:bg-white data-[state=checked]:border-white data-[state=checked]:text-[#4169E1]"
                 />
-                <div className="flex items-center gap-2 flex-1">
-                  <div className={`w-3 h-3 rounded-full ${status.color}`} />
+                <div className="flex items-center gap-1.5 flex-1">
+                  <div className={`w-2.5 h-2.5 rounded-full ${status.color}`} />
                   <Label
                     htmlFor={status.id}
-                    className="text-sm font-normal cursor-pointer text-white"
+                    className="text-xs font-normal cursor-pointer text-white"
                   >
                     {status.label}
                   </Label>
@@ -255,13 +255,13 @@ export function SideFilterPanel({
         </div>
 
         {/* Bed Range Filter */}
-        <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
-          <Label className="text-sm font-medium text-white mb-3 block">
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+          <Label className="text-xs font-medium text-white mb-2 block">
             Количество коек
           </Label>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label htmlFor="bedMin" className="text-xs text-white/70">
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="bedMin" className="text-[10px] text-white/70">
                 От
               </Label>
               <Input
@@ -278,11 +278,11 @@ export function SideFilterPanel({
                     ],
                   })
                 }
-                className="bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50"
+                className="h-8 text-sm bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50"
               />
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="bedMax" className="text-xs text-white/70">
+            <div className="space-y-1">
+              <Label htmlFor="bedMax" className="text-[10px] text-white/70">
                 До
               </Label>
               <Input
@@ -299,7 +299,7 @@ export function SideFilterPanel({
                     ],
                   })
                 }
-                className="bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50"
+                className="h-8 text-sm bg-white/20 border-white/30 text-white focus:border-white focus:ring-white/50"
               />
             </div>
           </div>

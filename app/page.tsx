@@ -187,15 +187,15 @@ export default function HomePage() {
       </div>
 
       {/* Sidebar - Overlaying the map on desktop */}
-      <aside className="hidden lg:flex lg:flex-col absolute left-0 top-0 bottom-0 w-[340px] bg-gradient-to-b from-[#4169E1] to-[#5B7FED] backdrop-blur-sm border-r border-white/20 shadow-2xl z-10">
+      <aside className="hidden lg:flex lg:flex-col absolute left-0 top-0 bottom-0 w-[320px] bg-gradient-to-b from-[#4169E1] to-[#5B7FED] backdrop-blur-sm border-r border-white/20 shadow-2xl z-10">
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6">
+          <div className="p-4">
             {/* Sidebar Header */}
-            <div className="mb-6">
-              <h1 className="text-xl font-bold text-white mb-1">
+            <div className="mb-4">
+              <h1 className="text-lg font-bold text-white mb-0.5">
                 Мониторинг МО
               </h1>
-              <p className="text-sm text-white/80">
+              <p className="text-xs text-white/80">
                 Система фильтрации медицинских организаций
               </p>
             </div>
@@ -210,7 +210,7 @@ export default function HomePage() {
       </aside>
 
       {/* Quick Summary - Overlaying on desktop, top-right */}
-      <div className="hidden lg:block absolute top-6 right-6 z-10 max-w-md">
+      <div className="hidden lg:block absolute top-4 right-4 z-10 max-w-md">
         <QuickSummary facilities={filteredFacilities} />
       </div>
 
