@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "katex/dist/katex.min.css";
 import { Navbar } from "@/components/navbar";
 export const metadata: Metadata = {
   title: "MedMonitor",

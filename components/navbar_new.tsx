@@ -201,13 +201,9 @@ export function Navbar() {
                       <h4 className="font-semibold text-gray-900 mb-2">
                         Расчёт смертности:
                       </h4>
-                      <div className="text-center">
-                        <BlockMath>
-                          {
-                            "\\text{Смертность} = \\frac{\\text{Умерло}}{\\text{Выписано всего}} \\times 100\\%"
-                          }
-                        </BlockMath>
-                      </div>
+                      <p className="text-center">
+                        Смертность = (Умерло / Выписано всего) × 100%
+                      </p>
                     </div>
                   </div>
 
@@ -478,13 +474,9 @@ export function Navbar() {
                       <h4 className="font-semibold text-gray-900 mb-2">
                         Расчёт смертности:
                       </h4>
-                      <div className="text-center">
-                        <BlockMath>
-                          {
-                            "\\text{Смертность} = \\frac{\\text{Умерло}}{\\text{Выписано всего}} \\times 100\\%"
-                          }
-                        </BlockMath>
-                      </div>
+                      <p className="text-center">
+                        Смертность = (Умерло / Выписано всего) × 100%
+                      </p>
                     </div>
                   </div>
 
@@ -615,3 +607,7 @@ export function Navbar() {
     </header>
   );
 }
+
+
+
+

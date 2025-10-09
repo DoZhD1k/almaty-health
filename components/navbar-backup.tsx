@@ -112,7 +112,7 @@ export function Navbar() {
                   </span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="min-w-[90vh] max-h-[80vh] overflow-y-auto">
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2 text-xl">
                     <BookOpen className="h-5 w-5" />
@@ -201,13 +201,9 @@ export function Navbar() {
                       <h4 className="font-semibold text-gray-900 mb-2">
                         Расчёт смертности:
                       </h4>
-                      <div className="text-center">
-                        <BlockMath>
-                          {
-                            "\\text{Смертность} = \\frac{\\text{Умерло}}{\\text{Выписано всего}} \\times 100\\%"
-                          }
-                        </BlockMath>
-                      </div>
+                      <p className="font-mono text-center text-gray-800">
+                        Смертность = (Умерло / Выписано всего) × 100%
+                      </p>
                     </div>
                   </div>
 
@@ -289,7 +285,7 @@ export function Navbar() {
                       использовались:
                     </p>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-center">
+                      <p className="font-mono text-center text-gray-800">
                         Простой коек = ((Развернутые койки × Дни периода) -
                         Койко-дни) / (Развернутые койки × Дни периода) × 100%
                       </p>
@@ -413,7 +409,7 @@ export function Navbar() {
                       Расчёт загруженности стационаров
                     </h3>
                     <div className="bg-gray-50 p-4 rounded-lg mb-3">
-                      <p className="text-center">
+                      <p className="font-mono text-center text-gray-800">
                         Загруженность = (Койко-дни / (Развернутые койки ×
                         Количество дней периода)) × 100%
                       </p>
@@ -478,13 +474,9 @@ export function Navbar() {
                       <h4 className="font-semibold text-gray-900 mb-2">
                         Расчёт смертности:
                       </h4>
-                      <div className="text-center">
-                        <BlockMath>
-                          {
-                            "\\text{Смертность} = \\frac{\\text{Умерло}}{\\text{Выписано всего}} \\times 100\\%"
-                          }
-                        </BlockMath>
-                      </div>
+                      <p className="font-mono text-center text-gray-800">
+                        Смертность = (Умерло / Выписано всего) × 100%
+                      </p>
                     </div>
                   </div>
 
@@ -566,7 +558,7 @@ export function Navbar() {
                       использовались:
                     </p>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-center">
+                      <p className="font-mono text-center text-gray-800">
                         Простой коек = ((Развернутые койки × Дни периода) -
                         Койко-дни) / (Развернутые койки × Дни периода) × 100%
                       </p>
