@@ -52,46 +52,47 @@ const AVAILABLE_LAYERS: GeoJSONLayer[] = [
     id: "districts",
     name: "Районы",
     url: "/geo-files/districts.geojson",
-    color: "#627BC1",
+    // color: "#627BC1",
+    color: "#e04a3a",
     visible: true,
     type: "polygon",
     icon: "🏛️",
-  },
-  {
-    id: "green_10min",
-    name: "Зеленые зоны (10 мин)",
-    url: "/geo-files/10min_green.geojson",
-    color: "#22c55e",
-    visible: false,
-    type: "polygon",
-    icon: "🌳",
-  },
-  {
-    id: "accessibility_15min",
-    name: "Доступность (15 мин)",
-    url: "/geo-files/15min.geojson",
-    color: "#3b82f6",
-    visible: false,
-    type: "polygon",
-    icon: "🚶",
-  },
-  {
-    id: "accessibility_30min",
-    name: "Доступность (30 мин)",
-    url: "/geo-files/30min.geojson",
-    color: "#8b5cf6",
-    visible: false,
-    type: "polygon",
-    icon: "🚗",
   },
   {
     id: "population_grid",
     name: "Сетка населения",
     url: "/geo-files/pop_grids.geojson",
     color: "#f59e0b",
-    visible: false,
+    visible: true,
     type: "polygon",
     icon: "👥",
+  },
+  {
+    id: "accessibility_30min",
+    name: "Доступность (30 мин)",
+    url: "/geo-files/30min.geojson",
+    color: "#ff9a48",
+    visible: true,
+    type: "polygon",
+    icon: "🚗",
+  },
+  {
+    id: "accessibility_15min",
+    name: "Доступность (15 мин)",
+    url: "/geo-files/15min.geojson",
+    color: "#eedf25",
+    visible: true,
+    type: "polygon",
+    icon: "🚶",
+  },
+  {
+    id: "green_10min",
+    name: " (10 мин)",
+    url: "/geo-files/10min_green.geojson",
+    color: "#26bf32",
+    visible: true,
+    type: "polygon",
+    icon: "🌳",
   },
 ];
 
@@ -370,7 +371,7 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
                 paint: {
                   "line-color": layer.color,
                   "line-width": 2,
-                  "line-opacity": 0.8,
+                  "line-opacity": 1,
                 },
               },
               "facilities-layer"
@@ -497,14 +498,14 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
 
       {/* Контролы масштаба */}
       <div className="absolute top-4 right-4 flex flex-col space-y-2 z-10">
-        <Button
+        {/* <Button
           variant="outline"
           size="sm"
           onClick={() => setShowLayerPanel(!showLayerPanel)}
           className={showLayerPanel ? "bg-blue-100" : ""}
         >
           <Layers className="h-4 w-4" />
-        </Button>
+        </Button> */}
         <Button variant="outline" size="sm" onClick={zoomIn}>
           <ZoomIn className="h-4 w-4" />
         </Button>
@@ -517,7 +518,7 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
       </div>
 
       {/* Панель управления слоями */}
-      {showLayerPanel && (
+      {/* {showLayerPanel && (
         <div className="absolute top-4 right-20 bg-white/95 backdrop-blur-sm rounded-lg p-3 shadow-lg max-w-xs z-10">
           <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
             <Layers className="h-4 w-4" />
@@ -563,7 +564,7 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
             {layers.length}
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }

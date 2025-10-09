@@ -110,190 +110,197 @@ export function InfrastructureFilterPanel({
 
   return (
     <div
-      className={`bg-white/95 rounded-lg border border-gray-200 p-4 backdrop-blur-sm shadow-xl ${className}`}
+      className={`bg-white/95 rounded-lg border border-gray-200 backdrop-blur-sm shadow-xl flex flex-col h-fit max-h-[calc(100vh-32px)] ${className}`}
     >
-      {/* Заголовок */}
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 mb-1">Фильтры</h2>
+      {/* Заголовок - фиксированный */}
+      <div className="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-100">
+        <h2 className="text-lg font-semibold text-gray-900">Фильтры</h2>
       </div>
 
-      <div className="space-y-4">
-        {/* Выбор района */}
-        <div>
-          <Select
-            value={filters.district}
-            onValueChange={(value) => updateFilters({ district: value })}
-          >
-            <SelectTrigger className="w-full h-10 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-              <SelectValue placeholder="Выберите район" />
-            </SelectTrigger>
-            <SelectContent>
-              {districts.map((district) => (
-                <SelectItem key={district} value={district}>
-                  {district}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      {/* Скроллируемый контент */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="space-y-4 px-4 py-4">
+          {/* Выбор района */}
+          <div>
+            <Select
+              value={filters.district}
+              onValueChange={(value) => updateFilters({ district: value })}
+            >
+              <SelectTrigger className="w-full h-10 text-sm border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <SelectValue placeholder="Выберите район" />
+              </SelectTrigger>
+              <SelectContent>
+                {districts.map((district) => (
+                  <SelectItem key={district} value={district}>
+                    {district}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Инженерные узлы */}
-        <div className="border border-gray-200 rounded-lg">
-          <button
-            onClick={() => toggleSection("engineeringNodes")}
-            className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
-          >
-            <span className="font-medium text-gray-900">Инженерные узлы:</span>
-            {expandedSections.engineeringNodes ? (
-              <ChevronUp className="h-4 w-4 text-gray-500" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
+          {/* Инженерные узлы */}
+          <div className="border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection("engineeringNodes")}
+              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+            >
+              <span className="font-medium text-gray-900">
+                Инженерные узлы:
+              </span>
+              {expandedSections.engineeringNodes ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              )}
+            </button>
+            {expandedSections.engineeringNodes && (
+              <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
+                {engineeringNodeOptions.map((option) => (
+                  <div key={option.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`engineering-${option.id}`}
+                      checked={filters.engineeringNodes.includes(option.id)}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange(
+                          "engineeringNodes",
+                          option.id,
+                          checked as boolean
+                        )
+                      }
+                      className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    />
+                    <Label
+                      htmlFor={`engineering-${option.id}`}
+                      className="text-sm font-normal cursor-pointer text-gray-700"
+                    >
+                      {option.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             )}
-          </button>
-          {expandedSections.engineeringNodes && (
-            <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
-              {engineeringNodeOptions.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`engineering-${option.id}`}
-                    checked={filters.engineeringNodes.includes(option.id)}
-                    onCheckedChange={(checked) =>
-                      handleCheckboxChange(
-                        "engineeringNodes",
-                        option.id,
-                        checked as boolean
-                      )
-                    }
-                    className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                  />
-                  <Label
-                    htmlFor={`engineering-${option.id}`}
-                    className="text-sm font-normal cursor-pointer text-gray-700"
-                  >
-                    {option.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
 
-        {/* Социальные объекты */}
-        <div className="border border-gray-200 rounded-lg">
-          <button
-            onClick={() => toggleSection("socialObjects")}
-            className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
-          >
-            <span className="font-medium text-gray-900">
-              Социальные объекты:
-            </span>
-            {expandedSections.socialObjects ? (
-              <ChevronUp className="h-4 w-4 text-gray-500" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
+          {/* Социальные объекты */}
+          <div className="border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection("socialObjects")}
+              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+            >
+              <span className="font-medium text-gray-900">
+                Социальные объекты:
+              </span>
+              {expandedSections.socialObjects ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              )}
+            </button>
+            {expandedSections.socialObjects && (
+              <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
+                {socialObjectOptions.map((option) => (
+                  <div key={option.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`social-${option.id}`}
+                      checked={filters.socialObjects.includes(option.id)}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange(
+                          "socialObjects",
+                          option.id,
+                          checked as boolean
+                        )
+                      }
+                      className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    />
+                    <Label
+                      htmlFor={`social-${option.id}`}
+                      className="text-sm font-normal cursor-pointer text-gray-700"
+                    >
+                      {option.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             )}
-          </button>
-          {expandedSections.socialObjects && (
-            <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
-              {socialObjectOptions.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`social-${option.id}`}
-                    checked={filters.socialObjects.includes(option.id)}
-                    onCheckedChange={(checked) =>
-                      handleCheckboxChange(
-                        "socialObjects",
-                        option.id,
-                        checked as boolean
-                      )
-                    }
-                    className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                  />
-                  <Label
-                    htmlFor={`social-${option.id}`}
-                    className="text-sm font-normal cursor-pointer text-gray-700"
-                  >
-                    {option.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
 
-        {/* Категория зданий */}
-        <div className="border border-gray-200 rounded-lg">
-          <button
-            onClick={() => toggleSection("buildingCategories")}
-            className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
-          >
-            <span className="font-medium text-gray-900">Категория зданий:</span>
-            {expandedSections.buildingCategories ? (
-              <ChevronUp className="h-4 w-4 text-gray-500" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-gray-500" />
+          {/* Категория зданий */}
+          <div className="border border-gray-200 rounded-lg">
+            <button
+              onClick={() => toggleSection("buildingCategories")}
+              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+            >
+              <span className="font-medium text-gray-900">
+                Категория зданий:
+              </span>
+              {expandedSections.buildingCategories ? (
+                <ChevronUp className="h-4 w-4 text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-500" />
+              )}
+            </button>
+            {expandedSections.buildingCategories && (
+              <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
+                {buildingCategoryOptions.map((option) => (
+                  <div key={option.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`building-${option.id}`}
+                      checked={filters.buildingCategories.includes(option.id)}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange(
+                          "buildingCategories",
+                          option.id,
+                          checked as boolean
+                        )
+                      }
+                      className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    />
+                    <Label
+                      htmlFor={`building-${option.id}`}
+                      className="text-sm font-normal cursor-pointer text-gray-700 leading-tight"
+                    >
+                      {option.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             )}
-          </button>
-          {expandedSections.buildingCategories && (
-            <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
-              {buildingCategoryOptions.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`building-${option.id}`}
-                    checked={filters.buildingCategories.includes(option.id)}
-                    onCheckedChange={(checked) =>
-                      handleCheckboxChange(
-                        "buildingCategories",
-                        option.id,
-                        checked as boolean
-                      )
-                    }
-                    className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                  />
-                  <Label
-                    htmlFor={`building-${option.id}`}
-                    className="text-sm font-normal cursor-pointer text-gray-700 leading-tight"
-                  >
-                    {option.label}
-                  </Label>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
 
-        {/* Население */}
-        <div className="space-y-2">
-          <h3 className="font-medium text-gray-900">Население:</h3>
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div>
-              <div className="text-gray-600">Высокий</div>
-              <div className="font-medium">57 020 - 2.49%</div>
-            </div>
-            <div>
-              <div className="text-gray-600">Средний</div>
-              <div className="font-medium">454 666 - 77.68%</div>
-            </div>
-            <div>
-              <div className="text-gray-600">Низкий</div>
-              <div className="font-medium">130 159 - 19.83%</div>
+          {/* Население */}
+          <div className="space-y-2">
+            <h3 className="font-medium text-gray-900">Население:</h3>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <div className="text-gray-600">Высокий</div>
+                <div className="font-medium">57 020 - 2.49%</div>
+              </div>
+              <div>
+                <div className="text-gray-600">Средний</div>
+                <div className="font-medium">454 666 - 77.68%</div>
+              </div>
+              <div>
+                <div className="text-gray-600">Низкий</div>
+                <div className="font-medium">130 159 - 19.83%</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Статистика */}
-        <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {incompatibleBuildings.toLocaleString()}
+          {/* Статистика */}
+          <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">
+                {incompatibleBuildings.toLocaleString()}
+              </div>
+              <div className="text-xs text-gray-600">Несовместимых зданий</div>
             </div>
-            <div className="text-xs text-gray-600">Несовместимых зданий</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-red-600">
-              {passportObjects.toLocaleString()}
+            <div className="text-center">
+              <div className="text-2xl font-bold text-red-600">
+                {passportObjects.toLocaleString()}
+              </div>
+              <div className="text-xs text-gray-600">Объекты паспортизации</div>
             </div>
-            <div className="text-xs text-gray-600">Объекты паспортизации</div>
           </div>
         </div>
       </div>

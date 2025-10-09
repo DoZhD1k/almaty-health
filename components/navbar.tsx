@@ -62,9 +62,6 @@ export function Navbar() {
             </span>
             <div className="hidden flex-col leading-tight sm:flex">
               <span className="text-lg font-semibold text-[#4169E1]">
-                MedMonitor
-              </span>
-              <span className="text-xs font-medium uppercase tracking-[0.35em] text-gray-600">
                 Мониторинг госпитализаций и коечной мощности
               </span>
             </div>

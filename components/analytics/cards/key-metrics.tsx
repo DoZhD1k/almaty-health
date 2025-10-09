@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Building, BedSingle, Users, Percent } from "lucide-react";
+import { Building, BedSingle, Users, Percent, Activity } from "lucide-react";
 import {
   FacilityStatistic,
   HospitalizationStatistic,
@@ -35,25 +35,43 @@ export function KeyMetrics({
   // Расчет средней загруженности (как в таблице)
   const avgBedDayPercentage = useMemo(() => {
     const facilitiesWithData = filteredFacilities.filter(
-      (f) => f.total_inpatient_bed_days && f.beds_deployed_withdrawn_for_rep_avg_annual
+      (f) =>
+        f.total_inpatient_bed_days &&
+        f.beds_deployed_withdrawn_for_rep_avg_annual
     );
 
     if (facilitiesWithData.length === 0) return 0;
 
     // Используем 240 рабочих дней для расчета загруженности (как в таблице)
     const totalPercentage = facilitiesWithData.reduce((sum, f) => {
-      const facticalBedDays = 240 * f.beds_deployed_withdrawn_for_rep_avg_annual;
-      const percentage = facticalBedDays > 0
-        ? (f.total_inpatient_bed_days / facticalBedDays) * 100
-        : 0;
+      const facticalBedDays =
+        240 * f.beds_deployed_withdrawn_for_rep_avg_annual;
+      const percentage =
+        facticalBedDays > 0
+          ? (f.total_inpatient_bed_days / facticalBedDays) * 100
+          : 0;
       return sum + percentage;
     }, 0);
 
     return totalPercentage / facilitiesWithData.length;
   }, [filteredFacilities]);
 
+  // Расчет средней смертности
+  const avgMortalityRate = useMemo(() => {
+    const totalDeaths = filteredFacilities.reduce(
+      (sum, f) => sum + (f.death_smp || 0) + (f.death_vtmp || 0),
+      0
+    );
+    const totalAdmitted = filteredFacilities.reduce(
+      (sum, f) => sum + (f.total_admitted_patients || 0),
+      0
+    );
+
+    return totalAdmitted > 0 ? (totalDeaths / totalAdmitted) * 100 : 0;
+  }, [filteredFacilities]);
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
       <div className="flex items-center gap-2 p-2 rounded-lg bg-white/60 border border-[rgb(var(--blue-light-active))]/50">
         <div className="p-1.5 rounded-md bg-[rgb(var(--blue-light))]">
           <Building className="h-3 w-3 text-[rgb(var(--blue-normal))]" />
@@ -142,6 +160,52 @@ export function KeyMetrics({
             }`}
           >
             {Math.round(avgBedDayPercentage)}%
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={`flex items-center gap-2 p-2 rounded-lg bg-white/60 border ${
+          avgMortalityRate <= 1
+            ? "border-emerald-500/50"
+            : avgMortalityRate <= 3
+            ? "border-orange-500/50"
+            : "border-red-500/50"
+        }`}
+      >
+        <div
+          className={`p-1.5 rounded-md ${
+            avgMortalityRate <= 1
+              ? "bg-emerald-100"
+              : avgMortalityRate <= 3
+              ? "bg-orange-100"
+              : "bg-red-100"
+          }`}
+        >
+          <Activity
+            className={`h-3 w-3 ${
+              avgMortalityRate <= 1
+                ? "text-emerald-600"
+                : avgMortalityRate <= 3
+                ? "text-orange-600"
+                : "text-red-600"
+            }`}
+          />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[10px] font-medium text-gray-600">
+            Смертность
+          </div>
+          <div
+            className={`text-base font-bold ${
+              avgMortalityRate <= 1
+                ? "text-emerald-600"
+                : avgMortalityRate <= 3
+                ? "text-orange-600"
+                : "text-red-600"
+            }`}
+          >
+            {avgMortalityRate.toFixed(1)}%
           </div>
         </div>
       </div>

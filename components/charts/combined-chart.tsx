@@ -1,8 +1,15 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { EChartsHorizontalBar } from "@/components/charts/echarts-horizontal-bar";
 import { FacilityStatistic } from "@/types/healthcare";
+import { FilterDisplay } from "@/components/analytics/filters/filter-display";
 import {
   BarChart,
   Bar,
@@ -17,9 +24,19 @@ import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
 interface CombinedChartProps {
   filteredFacilities: FacilityStatistic[];
+  selectedDistricts: string[];
+  selectedFacilityTypes: string[];
+  selectedBedProfiles: string[];
+  searchQuery: string;
 }
 
-export function CombinedChart({ filteredFacilities }: CombinedChartProps) {
+export function CombinedChart({
+  filteredFacilities,
+  selectedDistricts,
+  selectedFacilityTypes,
+  selectedBedProfiles,
+  searchQuery,
+}: CombinedChartProps) {
   // Показатели смертности по профилям коек
   const mortalityByProfile = (() => {
     const profileData = [
@@ -58,14 +75,17 @@ export function CombinedChart({ filteredFacilities }: CombinedChartProps) {
         (f) => f.facility_type === type
       );
 
-      const avgIdle = facilities.reduce((sum, f) => {
-        const facticalBedDays = 240 * (f.beds_deployed_withdrawn_for_rep_avg_annual || 0);
-        const bedDaysPercentage = facticalBedDays > 0
-          ? ((f.total_inpatient_bed_days || 0) / facticalBedDays) * 100
-          : 0;
-        const idlePercentage = 100 - bedDaysPercentage;
-        return sum + (idlePercentage > 0 ? idlePercentage : 0);
-      }, 0) / (facilities.length || 1);
+      const avgIdle =
+        facilities.reduce((sum, f) => {
+          const facticalBedDays =
+            240 * (f.beds_deployed_withdrawn_for_rep_avg_annual || 0);
+          const bedDaysPercentage =
+            facticalBedDays > 0
+              ? ((f.total_inpatient_bed_days || 0) / facticalBedDays) * 100
+              : 0;
+          const idlePercentage = 100 - bedDaysPercentage;
+          return sum + (idlePercentage > 0 ? idlePercentage : 0);
+        }, 0) / (facilities.length || 1);
 
       return {
         name: type || "Не указан",
@@ -81,7 +101,15 @@ export function CombinedChart({ filteredFacilities }: CombinedChartProps) {
       {/* Показатели смертности по профилям коек */}
       <Card>
         <CardHeader>
-          <CardTitle>Показатели смертности по профилям коек</CardTitle>
+          <CardTitle className="flex flex-col gap-1">
+            <span>Показатели смертности по профилям коек</span>
+            <FilterDisplay
+              selectedDistricts={selectedDistricts}
+              selectedFacilityTypes={selectedFacilityTypes}
+              selectedBedProfiles={selectedBedProfiles}
+              searchQuery={searchQuery}
+            />
+          </CardTitle>
           <CardDescription>
             Средний процент летальности (смертей/общ кол-во пролеченных)
           </CardDescription>
@@ -111,10 +139,7 @@ export function CombinedChart({ filteredFacilities }: CombinedChartProps) {
                 axisLine={false}
                 interval={0}
               />
-              <YAxis
-                tickFormatter={(value) => `${value}%`}
-                fontSize={11}
-              />
+              <YAxis tickFormatter={(value) => `${value}%`} fontSize={11} />
               <Tooltip
                 content={<ChartTooltipContent />}
                 formatter={(value: any) => [`${value}%`, "Смертность"]}
@@ -136,7 +161,15 @@ export function CombinedChart({ filteredFacilities }: CombinedChartProps) {
       {/* Простой коек в разрезе по типам */}
       <Card>
         <CardHeader>
-          <CardTitle>Простой коек в разрезе по типам</CardTitle>
+          <CardTitle className="flex flex-col gap-1">
+            <span>Простой коек в разрезе по типам</span>
+            <FilterDisplay
+              selectedDistricts={selectedDistricts}
+              selectedFacilityTypes={selectedFacilityTypes}
+              selectedBedProfiles={selectedBedProfiles}
+              searchQuery={searchQuery}
+            />
+          </CardTitle>
           <CardDescription>
             Анализ недогрузки коечного фонда по типам медицинских отделений
           </CardDescription>

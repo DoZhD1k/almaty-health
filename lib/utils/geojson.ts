@@ -32,7 +32,7 @@ export const GEOJSON_LAYERS: GeoJSONLayer[] = [
       fillColor: "#e2e8f0", // Светло-серая заливка
       weight: 1.5,
       opacity: 0.6,
-      fillOpacity: 0.05, // Очень прозрачная заливка
+      fillOpacity: 1, // Очень прозрачная заливка
     },
   },
   {
@@ -45,7 +45,7 @@ export const GEOJSON_LAYERS: GeoJSONLayer[] = [
       fillColor: "#dcfce7", // Светло-зеленая заливка
       weight: 1,
       opacity: 0.5,
-      fillOpacity: 0.15, // Уменьшенная прозрачность
+      fillOpacity: 1, // Уменьшенная прозрачность
     },
   },
   {
@@ -58,7 +58,7 @@ export const GEOJSON_LAYERS: GeoJSONLayer[] = [
       fillColor: "#fef3c7", // Светло-оранжевая заливка
       weight: 1,
       opacity: 0.5,
-      fillOpacity: 0.1, // Очень прозрачная заливка
+      fillOpacity: 1, // Очень прозрачная заливка
     },
   },
   {
@@ -71,7 +71,7 @@ export const GEOJSON_LAYERS: GeoJSONLayer[] = [
       fillColor: "#fecaca", // Светло-красная заливка
       weight: 1,
       opacity: 0.5,
-      fillOpacity: 0.1, // Очень прозрачная заливка
+      fillOpacity: 1, // Очень прозрачная заливка
     },
   },
   {
@@ -84,7 +84,7 @@ export const GEOJSON_LAYERS: GeoJSONLayer[] = [
       fillColor: "#dc2626",
       weight: 2,
       opacity: 0.8, // Уменьшаем непрозрачность
-      fillOpacity: 0.6, // Уменьшаем заливку
+      fillOpacity: 1, // Уменьшаем заливку
     },
   },
   {
@@ -97,7 +97,7 @@ export const GEOJSON_LAYERS: GeoJSONLayer[] = [
       fillColor: "#e0e7ff", // Более светлая заливка
       weight: 0.5, // Очень тонкие линии
       opacity: 0.3, // Очень прозрачные линии
-      fillOpacity: 0.05, // Очень прозрачная заливка
+      fillOpacity: 1, // Очень прозрачная заливка
     },
   },
 ];

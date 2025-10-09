@@ -13,6 +13,7 @@ import { ComparisonTab } from "./analytics/tabs/comparison-tab";
 import { SmpVtmpTab } from "./analytics/tabs/smp-vtmp-tab";
 import { DistrictsTab } from "./analytics/tabs/districts-tab";
 import { DetailedFacilitiesTable } from "./analytics/cards/detailed-facilities-table";
+import { ProblemsAlert } from "./analytics/problems-alert";
 
 export function AnalyticsDashboard() {
   const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
@@ -154,6 +155,9 @@ export function AnalyticsDashboard() {
         />
       </div>
 
+      {/* Анализ проблем и рекомендации */}
+      <ProblemsAlert filteredFacilities={filteredFacilities} />
+
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <Tabs defaultValue="comparison" className="p-3">
           <TabsList className="grid grid-cols-3 w-fit bg-gray-100 p-1 rounded-lg mb-3">
@@ -178,18 +182,34 @@ export function AnalyticsDashboard() {
           </TabsList>
 
           <TabsContent value="comparison" className="mt-0">
-            <ComparisonTab filteredFacilities={filteredFacilities} />
+            <ComparisonTab
+              filteredFacilities={filteredFacilities}
+              selectedDistricts={selectedDistricts}
+              selectedFacilityTypes={selectedFacilityTypes}
+              selectedBedProfiles={selectedBedProfiles}
+              searchQuery={searchQuery}
+            />
           </TabsContent>
 
           <TabsContent value="smp-vtmp" className="mt-0">
             <SmpVtmpTab
               filteredFacilities={filteredFacilities}
               hospitalizations={hospitalizations}
+              selectedDistricts={selectedDistricts}
+              selectedFacilityTypes={selectedFacilityTypes}
+              selectedBedProfiles={selectedBedProfiles}
+              searchQuery={searchQuery}
             />
           </TabsContent>
 
           <TabsContent value="districts" className="mt-0">
-            <DistrictsTab filteredFacilities={filteredFacilities} />
+            <DistrictsTab
+              filteredFacilities={filteredFacilities}
+              selectedDistricts={selectedDistricts}
+              selectedFacilityTypes={selectedFacilityTypes}
+              selectedBedProfiles={selectedBedProfiles}
+              searchQuery={searchQuery}
+            />
           </TabsContent>
         </Tabs>
       </div>

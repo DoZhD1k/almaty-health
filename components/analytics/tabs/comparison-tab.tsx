@@ -16,12 +16,23 @@ import { EChartsHorizontalBar } from "@/components/charts/echarts-horizontal-bar
 import { FacilityStatistic, CityMedicalOrganization } from "@/types/healthcare";
 import { CombinedChart } from "@/components/charts/combined-chart";
 import { DetailedFacilitiesTable } from "../cards/detailed-facilities-table";
+import { FilterDisplay } from "../filters/filter-display";
 
 interface ComparisonTabProps {
   filteredFacilities: FacilityStatistic[];
+  selectedDistricts: string[];
+  selectedFacilityTypes: string[];
+  selectedBedProfiles: string[];
+  searchQuery: string;
 }
 
-export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
+export function ComparisonTab({
+  filteredFacilities,
+  selectedDistricts,
+  selectedFacilityTypes,
+  selectedBedProfiles,
+  searchQuery,
+}: ComparisonTabProps) {
   const [cityOrganizations, setCityOrganizations] = useState<
     CityMedicalOrganization[]
   >([]);
@@ -59,7 +70,15 @@ export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
         {/* Кольцевая диаграмма сравнения по профилям коек */}
         <Card>
           <CardHeader>
-            <CardTitle>Сравнение по профилям коек</CardTitle>
+            <CardTitle className="flex flex-col gap-1">
+              <span>Сравнение по профилям коек</span>
+              <FilterDisplay
+                selectedDistricts={selectedDistricts}
+                selectedFacilityTypes={selectedFacilityTypes}
+                selectedBedProfiles={selectedBedProfiles}
+                searchQuery={searchQuery}
+              />
+            </CardTitle>
             <CardDescription>
               Распределение медицинских организаций по профилям коек
             </CardDescription>
@@ -93,9 +112,18 @@ export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
         {/* График иногородних пациентов по типу профиля (facility_type) - ТОП 10 */}
         <Card>
           <CardHeader>
-            <CardTitle>Иногородние пациенты по типу профиля (ТОП-10)</CardTitle>
+            <CardTitle className="flex flex-col gap-1">
+              <span>Иногородние пациенты по типу профиля (ТОП-10)</span>
+              <FilterDisplay
+                selectedDistricts={selectedDistricts}
+                selectedFacilityTypes={selectedFacilityTypes}
+                selectedBedProfiles={selectedBedProfiles}
+                searchQuery={searchQuery}
+              />
+            </CardTitle>
             <CardDescription>
-              Топ-10 типов медицинских профилей по количеству иногородних пациентов
+              Топ-10 типов медицинских профилей по количеству иногородних
+              пациентов
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -152,7 +180,13 @@ export function ComparisonTab({ filteredFacilities }: ComparisonTabProps) {
       </div>
 
       {/* Графики смертности и простоя коек */}
-      <CombinedChart filteredFacilities={filteredFacilities} />
+      <CombinedChart
+        filteredFacilities={filteredFacilities}
+        selectedDistricts={selectedDistricts}
+        selectedFacilityTypes={selectedFacilityTypes}
+        selectedBedProfiles={selectedBedProfiles}
+        searchQuery={searchQuery}
+      />
     </div>
   );
 }

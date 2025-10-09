@@ -34,10 +34,15 @@ import {
   FacilityStatistic,
   HospitalizationStatistic,
 } from "@/types/healthcare";
+import { FilterDisplay } from "../filters/filter-display";
 
 interface SmpVtmpTabProps {
   filteredFacilities: FacilityStatistic[];
   hospitalizations: HospitalizationStatistic[];
+  selectedDistricts: string[];
+  selectedFacilityTypes: string[];
+  selectedBedProfiles: string[];
+  searchQuery: string;
 }
 
 // Функция для форматирования чисел с пробелами
@@ -48,6 +53,10 @@ const formatNumber = (num: number) => {
 export function SmpVtmpTab({
   filteredFacilities,
   hospitalizations,
+  selectedDistricts,
+  selectedFacilityTypes,
+  selectedBedProfiles,
+  searchQuery,
 }: SmpVtmpTabProps) {
   // Вычисляем статистику из данных
   const smpStats = {
@@ -89,7 +98,15 @@ export function SmpVtmpTab({
         {/* Карта СМП/ВТМП - занимает 2 колонки из 3 */}
         <Card className="lg:col-span-2 lg:row-span-2 flex flex-col">
           <CardHeader>
-            <CardTitle>Карта медицинских организаций СМП и ВТМП</CardTitle>
+            <CardTitle className="flex flex-col gap-1">
+              <span>Карта медицинских организаций СМП и ВТМП</span>
+              <FilterDisplay
+                selectedDistricts={selectedDistricts}
+                selectedFacilityTypes={selectedFacilityTypes}
+                selectedBedProfiles={selectedBedProfiles}
+                searchQuery={searchQuery}
+              />
+            </CardTitle>
             <CardDescription>
               Интерактивная карта размещения учреждений, оказывающих скорую и
               высокотехнологичную медицинскую помощь
@@ -103,7 +120,15 @@ export function SmpVtmpTab({
         {/* Круговая диаграмма - правая колонка, верх */}
         <Card className="flex flex-col">
           <CardHeader className="items-center pb-0">
-            <CardTitle>Соотношение госпитализированных СМП и ВТМП</CardTitle>
+            <CardTitle className="flex flex-col gap-1 text-center">
+              <span>Соотношение госпитализированных СМП и ВТМП</span>
+              <FilterDisplay
+                selectedDistricts={selectedDistricts}
+                selectedFacilityTypes={selectedFacilityTypes}
+                selectedBedProfiles={selectedBedProfiles}
+                searchQuery={searchQuery}
+              />
+            </CardTitle>
             <CardDescription>
               Круговая диаграмма распределения пациентов
             </CardDescription>
@@ -150,8 +175,16 @@ export function SmpVtmpTab({
         {/* График корреляции - правая колонка, низ */}
         <Card>
           <CardHeader>
-            <CardTitle>
-              Корреляция СМП/ВТМП: Загруженность vs Количество больниц
+            <CardTitle className="flex flex-col gap-1">
+              <span>
+                Корреляция СМП/ВТМП: Загруженность vs Количество больниц
+              </span>
+              <FilterDisplay
+                selectedDistricts={selectedDistricts}
+                selectedFacilityTypes={selectedFacilityTypes}
+                selectedBedProfiles={selectedBedProfiles}
+                searchQuery={searchQuery}
+              />
             </CardTitle>
             <CardDescription>
               Анализ зависимости между загруженностью и количеством учреждений
