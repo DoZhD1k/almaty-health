@@ -39,8 +39,7 @@ type SortKey =
   | "occupancy"
   | "bedDays"
   | "idle"
-  | "beds2024"
-  | "beds2025"
+  | "totalMortality"
   | "reduction";
 type SortDirection = "asc" | "desc";
 
@@ -121,17 +120,9 @@ export function DetailedFacilitiesTable({
           aValue = a.beds_deployed_withdrawn_for_rep_avg_annual || 0;
           bValue = b.beds_deployed_withdrawn_for_rep_avg_annual || 0;
           break;
-        case "beds2024":
-          const cityOrgA = findCityOrg(a);
-          const cityOrgB = findCityOrg(b);
-          aValue = cityOrgA?.bed_count_2024 || 0;
-          bValue = cityOrgB?.bed_count_2024 || 0;
-          break;
-        case "beds2025":
-          const cityOrgA2 = findCityOrg(a);
-          const cityOrgB2 = findCityOrg(b);
-          aValue = cityOrgA2?.bed_count_2025 || 0;
-          bValue = cityOrgB2?.bed_count_2025 || 0;
+        case "totalMortality":
+          aValue = (a.death_smp || 0) + (a.death_vtmp || 0);
+          bValue = (b.death_smp || 0) + (b.death_vtmp || 0);
           break;
         case "reduction":
           const cityOrgA3 = findCityOrg(a);
@@ -207,10 +198,11 @@ export function DetailedFacilitiesTable({
     <Card className="lg:col-span-3">
       <CardHeader>
         <CardTitle>
-          Объединенная таблица МО: эффективность и сокращение коек
+          Объединенная таблица МО: эффективность и показатели смертности
         </CardTitle>
         <CardDescription>
-          Все учреждения с данными загруженности и сокращения коек 2024-2025
+          Все учреждения с данными загруженности и показателями смертности
+          СМП/ВТМП
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -248,20 +240,11 @@ export function DetailedFacilitiesTable({
                 </TableHead>
                 <TableHead
                   className="text-center cursor-pointer hover:bg-muted/50 select-none"
-                  onClick={() => handleSort("beds2024")}
+                  onClick={() => handleSort("totalMortality")}
                 >
                   <div className="flex items-center justify-center">
-                    2024
-                    {getSortIcon("beds2024")}
-                  </div>
-                </TableHead>
-                <TableHead
-                  className="text-center cursor-pointer hover:bg-muted/50 select-none"
-                  onClick={() => handleSort("beds2025")}
-                >
-                  <div className="flex items-center justify-center">
-                    2025
-                    {getSortIcon("beds2025")}
+                    Смертность
+                    {getSortIcon("totalMortality")}
                   </div>
                 </TableHead>
                 <TableHead
@@ -269,7 +252,8 @@ export function DetailedFacilitiesTable({
                   onClick={() => handleSort("reduction")}
                 >
                   <div className="flex items-center justify-center">
-                    Δ{getSortIcon("reduction")}
+                    Разница коек 2024-2025
+                    {getSortIcon("reduction")}
                   </div>
                 </TableHead>
                 <TableHead
@@ -307,7 +291,7 @@ export function DetailedFacilitiesTable({
                   return (
                     <TableRow>
                       <TableCell
-                        colSpan={10}
+                        colSpan={9}
                         className="text-center py-8 text-muted-foreground"
                       >
                         Загрузка данных...
@@ -322,7 +306,7 @@ export function DetailedFacilitiesTable({
                   return (
                     <TableRow>
                       <TableCell
-                        colSpan={10}
+                        colSpan={9}
                         className="text-center py-8 text-muted-foreground"
                       >
                         Нет данных о загруженности
@@ -373,26 +357,10 @@ export function DetailedFacilitiesTable({
                         </span>
                       </TableCell>
                       <TableCell className="text-center">
-                        {cityOrg ? (
-                          <span className="font-medium text-xs text-blue-600">
-                            {formatNumber(cityOrg.bed_count_2024 || 0)}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            —
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-center">
-                        {cityOrg ? (
-                          <span className="font-medium text-xs text-green-600">
-                            {formatNumber(cityOrg.bed_count_2025 || 0)}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-muted-foreground">
-                            —
-                          </span>
-                        )}
+                        <span className="font-medium text-xs text-red-600">
+                          {(facility.death_smp || 0) +
+                            (facility.death_vtmp || 0)}
+                        </span>
                       </TableCell>
                       <TableCell className="text-center">
                         {cityOrg ? (
@@ -488,12 +456,13 @@ export function DetailedFacilitiesTable({
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 leading-none font-medium">
-          Комплексный анализ эффективности <TrendingUp className="h-4 w-4" />
+          Комплексный анализ эффективности и смертности{" "}
+          <TrendingUp className="h-4 w-4" />
         </div>
         <div className="text-muted-foreground leading-none text-xs">
-          Объединенные данные о загруженности и сокращении коек. Организации с
-          сокращением &gt;50 коек выделены красным, топ-3 по загруженности —
-          желтым.
+          Объединенные данные о загруженности и общей смертности (СМП + ВТМП).
+          Столбец "Разница коек 2024-2025" показывает изменение количества коек
+          между годами.
         </div>
         <div className="text-xs text-muted-foreground mt-2">
           Всего МО с данными загруженности:{" "}
@@ -504,18 +473,17 @@ export function DetailedFacilitiesTable({
                 f.occupancy_rate_percent > 0
             ).length
           }{" "}
-          | Городских МО загружено: {cityOrganizations.length} | С сокращениями:{" "}
-          {
-            cityOrganizations.filter(
-              (org) => (org.bed_count_2024 || 0) - (org.bed_count_2025 || 0) > 0
-            ).length
-          }{" "}
-          | Совпадений найдено:{" "}
+          | МО с данными смертности:{" "}
           {
             filteredFacilities.filter(
-              (f) => findCityOrg(f) !== null
+              (f) => (f.death_smp || 0) + (f.death_vtmp || 0) > 0
             ).length
-          }
+          }{" "}
+          | Общая смертность:{" "}
+          {filteredFacilities.reduce(
+            (sum, f) => sum + (f.death_smp || 0) + (f.death_vtmp || 0),
+            0
+          )}
         </div>
       </CardFooter>
     </Card>

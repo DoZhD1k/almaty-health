@@ -289,10 +289,13 @@ export function Navbar() {
                       использовались:
                     </p>
                     <div className="bg-gray-50 p-4 rounded-lg">
-                      <p className="text-center">
-                        Простой коек = ((Развернутые койки × Дни периода) -
-                        Койко-дни) / (Развернутые койки × Дни периода) × 100%
-                      </p>
+                      <div className="text-center">
+                        <BlockMath>
+                          {
+                            "\text{Простой коек (%)} = \frac{(\text{Развернутые койки} \times \text{Дни периода}) - \text{Койко-дни}}{\text{Развернутые койки} \times \text{Дни периода}} \times 100%"
+                          }
+                        </BlockMath>
+                      </div>
                     </div>
                   </div>
 

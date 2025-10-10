@@ -120,19 +120,19 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
         description: `Максимальная смертность ${maxMortality.toFixed(1)}%`,
         details: [
           districtMortality.length > 0
-            ? `районы (макс): ${districtMortality
+            ? `• **районы** (макс): ${districtMortality
                 .slice(0, 3)
                 .map((d) => `${d.district} (${d.mortality.toFixed(1)}%)`)
                 .join(", ")}`
             : "нет данных по районам",
           profileMortality.length > 0
-            ? `профили (макс): ${profileMortality
+            ? `• **профили** (макс): ${profileMortality
                 .slice(0, 2)
                 .map((p) => `${p.profile} (${p.mortality.toFixed(1)}%)`)
                 .join(", ")}`
             : "нет данных по профилям",
           ownershipMortality.length > 0
-            ? `собственность (макс): ${ownershipMortality
+            ? `• **собственность** (макс): ${ownershipMortality
                 .map((o) => `${o.ownership} (${o.mortality.toFixed(1)}%)`)
                 .join(", ")}`
             : "нет данных по собственности",
@@ -189,15 +189,15 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
         type: "Перегруженные (95%+)",
         description: `${formatNumber(overloadedFacilities.length)} МО`,
         details: [
-          `типы: ${overloadedByType
+          `• **типы**: ${overloadedByType
             .slice(0, 3)
             .map((t) => `${t.type} (${t.count})`)
             .join(", ")}`,
-          `районы: ${overloadedByDistrict
+          `• **районы**: ${overloadedByDistrict
             .slice(0, 3)
             .map((d) => `${d.district} (${d.count})`)
             .join(", ")}`,
-          `профили: ${overloadedByProfile
+          `• **профили**: ${overloadedByProfile
             .slice(0, 2)
             .map((p) => `${p.profile} (${p.count})`)
             .join(", ")}`,
@@ -254,15 +254,15 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
         type: "Недогруженные (<50%)",
         description: `${formatNumber(underloadedFacilities.length)} МО`,
         details: [
-          `типы: ${underloadedByType
+          `• **типы**: ${underloadedByType
             .slice(0, 3)
             .map((t) => `${t.type} (${t.count})`)
             .join(", ")}`,
-          `районы: ${underloadedByDistrict
+          `• **районы**: ${underloadedByDistrict
             .slice(0, 3)
             .map((d) => `${d.district} (${d.count})`)
             .join(", ")}`,
-          `профили: ${underloadedByProfile
+          `• **профили**: ${underloadedByProfile
             .slice(0, 2)
             .map((p) => `${p.profile} (${p.count})`)
             .join(", ")}`,
@@ -307,10 +307,14 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
                   {problem.details.map((detail, detailIndex) => (
                     <div
                       key={detailIndex}
-                      className="text-xs text-orange-700 leading-relaxed"
-                    >
-                      • {detail}
-                    </div>
+                      className="text-sm font-light tracking-tight text-orange-700 leading-relaxed"
+                      dangerouslySetInnerHTML={{
+                        __html: detail.replace(
+                          /\*\*([^*]+)\*\*/g,
+                          "<strong>$1</strong>"
+                        ),
+                      }}
+                    />
                   ))}
                 </div>
               </div>

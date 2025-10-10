@@ -160,7 +160,7 @@ export function AnalyticsDashboard() {
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <Tabs defaultValue="comparison" className="p-3">
-          <TabsList className="grid grid-cols-3 w-fit bg-gray-100 p-1 rounded-lg mb-3">
+          <TabsList className="grid grid-cols-2 w-fit bg-gray-100 p-1 rounded-lg mb-3">
             <TabsTrigger
               value="comparison"
               className="rounded-md px-3 py-1 text-xs font-medium"
@@ -172,12 +172,6 @@ export function AnalyticsDashboard() {
               className="rounded-md px-3 py-1 text-xs font-medium"
             >
               СМП/ВТМП
-            </TabsTrigger>
-            <TabsTrigger
-              value="districts"
-              className="rounded-md px-3 py-1 text-xs font-medium"
-            >
-              Районы
             </TabsTrigger>
           </TabsList>
 
@@ -195,16 +189,6 @@ export function AnalyticsDashboard() {
             <SmpVtmpTab
               filteredFacilities={filteredFacilities}
               hospitalizations={hospitalizations}
-              selectedDistricts={selectedDistricts}
-              selectedFacilityTypes={selectedFacilityTypes}
-              selectedBedProfiles={selectedBedProfiles}
-              searchQuery={searchQuery}
-            />
-          </TabsContent>
-
-          <TabsContent value="districts" className="mt-0">
-            <DistrictsTab
-              filteredFacilities={filteredFacilities}
               selectedDistricts={selectedDistricts}
               selectedFacilityTypes={selectedFacilityTypes}
               selectedBedProfiles={selectedBedProfiles}

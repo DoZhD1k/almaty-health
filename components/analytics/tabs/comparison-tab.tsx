@@ -15,6 +15,7 @@ import { EChartsPieChart } from "@/components/charts/echarts-pie-chart";
 import { EChartsHorizontalBar } from "@/components/charts/echarts-horizontal-bar";
 import { FacilityStatistic, CityMedicalOrganization } from "@/types/healthcare";
 import { CombinedChart } from "@/components/charts/combined-chart";
+import { DistrictMortalityHospitalsChart } from "@/components/charts/district-mortality-hospitals-chart";
 import { DetailedFacilitiesTable } from "../cards/detailed-facilities-table";
 import { FilterDisplay } from "../filters/filter-display";
 
@@ -187,6 +188,38 @@ export function ComparisonTab({
         selectedBedProfiles={selectedBedProfiles}
         searchQuery={searchQuery}
       />
+
+      {/* Новый график: Смертность и количество стационаров по районам */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex flex-col gap-1">
+            <span>Смертность и количество стационаров по районам</span>
+            <FilterDisplay
+              selectedDistricts={selectedDistricts}
+              selectedFacilityTypes={selectedFacilityTypes}
+              selectedBedProfiles={selectedBedProfiles}
+              searchQuery={searchQuery}
+            />
+          </CardTitle>
+          <CardDescription>
+            Сравнение показателей смертности (линия) и количества стационаров
+            (столбцы) по районам Алматы
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <DistrictMortalityHospitalsChart
+            filteredFacilities={filteredFacilities}
+            height={400}
+          />
+        </CardContent>
+        <CardFooter className="pt-0">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <TrendingUp className="h-3 w-3" />
+            Анализ корреляции между количеством медицинских учреждений и
+            показателями смертности
+          </div>
+        </CardFooter>
+      </Card>
     </div>
   );
 }
