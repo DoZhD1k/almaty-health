@@ -490,19 +490,19 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
         </div> */}
         <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+            <div className="w-3 h-3 bg-green-600"></div>
             <span>10 минут</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-green-600"></div>
+            <div className="w-3 h-3 bg-yellow-400"></div>
             <span>15 минут</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-orange-600"></div>
+            <div className="w-3 h-3 bg-orange-600"></div>
             <span>30 минут</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-red-600"></div>
+            <div className="w-3 h-3 bg-red-600"></div>
             <span>60 минут</span>
           </div>
         </div>
