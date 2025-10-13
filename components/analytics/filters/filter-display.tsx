@@ -5,6 +5,7 @@ interface FilterDisplayProps {
   selectedFacilityTypes: string[];
   selectedBedProfiles: string[];
   searchQuery: string;
+  defaultText?: string;
 }
 
 export function FilterDisplay({
@@ -12,6 +13,7 @@ export function FilterDisplay({
   selectedFacilityTypes,
   selectedBedProfiles,
   searchQuery,
+  defaultText = "(все стационары)",
 }: FilterDisplayProps) {
   const hasFilters =
     selectedDistricts.length > 0 ||
@@ -21,9 +23,7 @@ export function FilterDisplay({
 
   if (!hasFilters) {
     return (
-      <span className="text-xs text-gray-500 font-normal">
-        (все стационары)
-      </span>
+      <span className="text-xs text-gray-500 font-normal">{defaultText}</span>
     );
   }
 

@@ -469,8 +469,8 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
 
       {/* Легенда */}
       <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm rounded-lg p-3">
-        <h4 className="text-xs font-semibold mb-2">Загруженность коек</h4>
-        <div className="space-y-1 text-xs">
+        <h4 className="text-xs font-semibold mb-2">Мобильная доступность</h4>
+        {/* <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-gray-500"></div>
             <span>Низкая (&lt; 50%)</span>
@@ -487,11 +487,23 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
             <div className="w-3 h-3 rounded-full bg-red-600"></div>
             <span>Критическая (&gt; 95%)</span>
           </div>
-        </div>
-        <div className="mt-2 pt-2 border-t border-gray-200">
+        </div> */}
+        <div className="space-y-1 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-gray-600"></div>
-            <span>Частные (меньший размер)</span>
+            <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+            <span>10 минут</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-green-600"></div>
+            <span>15 минут</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-orange-600"></div>
+            <span>30 минут</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-red-600"></div>
+            <span>60 минут</span>
           </div>
         </div>
       </div>

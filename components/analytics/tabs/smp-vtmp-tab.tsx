@@ -99,17 +99,18 @@ export function SmpVtmpTab({
         <Card className="lg:col-span-2 lg:row-span-2 flex flex-col">
           <CardHeader>
             <CardTitle className="flex flex-col gap-1">
-              <span>Карта медицинских организаций СМП и ВТМП</span>
+              <span>Карта мобильной доступности учреждений СМП</span>
               <FilterDisplay
                 selectedDistricts={selectedDistricts}
                 selectedFacilityTypes={selectedFacilityTypes}
                 selectedBedProfiles={selectedBedProfiles}
                 searchQuery={searchQuery}
+                defaultText="(все стационары СМП)"
               />
             </CardTitle>
             <CardDescription>
-              Интерактивная карта размещения учреждений, оказывающих скорую и
-              высокотехнологичную медицинскую помощь
+              Интерактивная карта размещения учреждений, оказывающих скорую
+              помощь
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1">
