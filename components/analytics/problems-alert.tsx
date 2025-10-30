@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, CheckCircle, Clock } from "lucide-react";
 import { FacilityStatistic } from "@/types/healthcare";
 
 interface ProblemsAlertProps {
@@ -137,6 +137,11 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
                 .join(", ")}`
             : "нет данных по собственности",
         ].filter(Boolean),
+        icon: "warning",
+        bgColor: "bg-red-50",
+        borderColor: "border-red-200",
+        textColor: "text-red-800",
+        titleColor: "text-red-900",
       });
     }
 
@@ -202,6 +207,11 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
             .map((p) => `${p.profile} (${p.count})`)
             .join(", ")}`,
         ],
+        icon: "warning",
+        bgColor: "bg-yellow-50",
+        borderColor: "border-yellow-200",
+        textColor: "text-yellow-800",
+        titleColor: "text-yellow-900",
       });
     }
 
@@ -267,16 +277,35 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
             .map((p) => `${p.profile} (${p.count})`)
             .join(", ")}`,
         ],
+        icon: "success",
+        bgColor: "bg-green-50",
+        borderColor: "border-green-200",
+        textColor: "text-green-800",
+        titleColor: "text-green-900",
       });
     }
 
     return issues;
   }, [filteredFacilities]);
 
+  // Функция для получения иконки
+  const getIcon = (iconType: string) => {
+    switch (iconType) {
+      case "warning":
+        return <AlertTriangle className="h-4 w-4" />;
+      case "success":
+        return <CheckCircle className="h-4 w-4" />;
+      case "info":
+        return <Clock className="h-4 w-4" />;
+      default:
+        return <AlertTriangle className="h-4 w-4" />;
+    }
+  };
+
   if (problems.length === 0) {
     return (
       <Alert className="border-green-200 bg-green-50">
-        <AlertTriangle className="h-4 w-4 text-green-600" />
+        <CheckCircle className="h-4 w-4 text-green-600" />
         <AlertDescription className="text-green-800">
           <strong>Нет данных для анализа.</strong> Недостаточно данных для
           формирования отчета.
@@ -287,7 +316,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
 
   return (
     <Alert className="border-orange-200 bg-orange-50">
-      <AlertTriangle className="h-4 w-4 text-orange-600" />
+      {/* <AlertTriangle className="h-4 w-4 text-orange-600" /> */}
       <AlertDescription className="text-orange-800">
         <div className="space-y-3">
           <strong>Выявленные проблемы:</strong>
@@ -295,19 +324,26 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
             {problems.map((problem, index) => (
               <div
                 key={index}
-                className="bg-white/50 p-3 rounded-lg border border-orange-200"
+                className={`${problem.bgColor} p-3 rounded-lg border ${problem.borderColor}`}
               >
-                <div className="font-medium text-sm mb-2 text-orange-900">
-                  {problem.type}
+                <div className="flex items-start gap-2 mb-2">
+                  <div className={problem.textColor}>
+                    {getIcon(problem.icon)}
+                  </div>
+                  <div className={`font-medium text-sm ${problem.titleColor}`}>
+                    {problem.type}
+                  </div>
                 </div>
-                <div className="text-sm font-semibold mb-2 text-orange-800">
+                <div
+                  className={`text-sm font-semibold mb-2 ${problem.titleColor}`}
+                >
                   {problem.description}
                 </div>
                 <div className="space-y-1">
                   {problem.details.map((detail, detailIndex) => (
                     <div
                       key={detailIndex}
-                      className="text-sm font-light tracking-tight text-orange-700 leading-relaxed"
+                      className={`text-sm font-light tracking-tight ${problem.textColor} leading-relaxed`}
                       dangerouslySetInnerHTML={{
                         __html: detail.replace(
                           /\*\*([^*]+)\*\*/g,

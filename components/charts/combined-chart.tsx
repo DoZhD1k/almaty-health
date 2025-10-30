@@ -19,6 +19,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   LabelList,
+  Cell,
 } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 
@@ -37,6 +38,40 @@ export function CombinedChart({
   selectedBedProfiles,
   searchQuery,
 }: CombinedChartProps) {
+  // Функция для генерации цветов на основе позиции в отсортированном массиве
+  const generateColors = (data: any[], baseColor: string) => {
+    if (data.length === 0) return data;
+
+    return data.map((item, index) => {
+      // Для красного базового цвета (смертность)
+      if (baseColor === "red") {
+        const redColors = ["#970900", "#C40D01", "#FF4033", "#FF8C84"];
+
+        // Просто берем цвет по индексу (данные уже отсортированы по убыванию)
+        const colorIndex = Math.min(index, redColors.length - 1);
+
+        return {
+          ...item,
+          color: redColors[colorIndex],
+        };
+      }
+
+      // Для синего базового цвета (простой коек)
+      if (baseColor === "blue") {
+        const blueColors = ["#1D4ED8", "#2563EB", "#3B82F6", "#60A5FA"];
+
+        // Просто берем цвет по индексу (данные уже отсортированы по убыванию)
+        const colorIndex = Math.min(index, blueColors.length - 1);
+
+        return {
+          ...item,
+          color: blueColors[colorIndex],
+        };
+      }
+
+      return item;
+    });
+  };
   // Показатели смертности по профилям коек
   const mortalityByProfile = (() => {
     const profileData = [
@@ -59,11 +94,13 @@ export function CombinedChart({
       return {
         name: profile || "Не указан",
         value: Number(mortalityRate.toFixed(2)),
-        color: "#214499",
       };
     });
 
-    return profileData.sort((a, b) => b.value - a.value).slice(0, 10);
+    const sortedData = profileData
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 10);
+    return generateColors(sortedData, "red");
   })();
 
   // Простой коек в разрезе по типам
@@ -90,11 +127,11 @@ export function CombinedChart({
       return {
         name: type || "Не указан",
         value: Number(avgIdle.toFixed(1)),
-        color: "#2c5bcc",
       };
     });
 
-    return typeData.sort((a, b) => b.value - a.value).slice(0, 10);
+    const sortedData = typeData.sort((a, b) => b.value - a.value).slice(0, 10);
+    return generateColors(sortedData, "blue");
   })();
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -119,7 +156,7 @@ export function CombinedChart({
             config={{
               mortality: {
                 label: "Смертность %",
-                color: "#214499",
+                color: "#8B0000",
               },
             }}
             className="h-[350px]"
@@ -144,7 +181,10 @@ export function CombinedChart({
                 content={<ChartTooltipContent />}
                 formatter={(value: any) => [`${value}%`, "Смертность"]}
               />
-              <Bar dataKey="value" fill="#214499" radius={[4, 4, 0, 0]}>
+              <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                {mortalityByProfile.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
                 <LabelList
                   dataKey="value"
                   position="top"

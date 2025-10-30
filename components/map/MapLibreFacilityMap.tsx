@@ -37,6 +37,111 @@ const getStatusText = (occupancyRate: number) => {
   return "Низкая";
 };
 
+// Добавь рядом с твоими util-функциями (один раз на модуль)
+let _popupCssInjected = false;
+const injectPopupCss = () => {
+  if (_popupCssInjected) return;
+  _popupCssInjected = true;
+  const css = `
+  .ml-card{max-width:420px;min-width:260px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;
+    box-shadow:0 6px 16px rgba(0,0,0,.06);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .ml-hd{padding:12px 14px 8px}
+  .ml-hd > div{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+  .ml-ttl{margin:0;font-weight:600;font-size:14px;line-height:1.25;color:#111;flex:1;min-width:0}
+  .ml-chip{flex-shrink:0;border-radius:999px;padding:2px 8px;font-weight:700;font-size:11px;white-space:nowrap}
+  .ml-chip.low{background:rgba(107,114,128,.15);color:#374151}
+  .ml-chip.normal{background:rgba(16,185,129,.15);color:#065f46}
+  .ml-chip.high{background:rgba(245,158,11,.15);color:#92400e}
+  .ml-chip.critical{background:rgba(239,68,68,.15);color:#7f1d1d}
+  .ml-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .ml-pill{background:#f3f4f6;border-radius:6px;padding:3px 6px;font-size:11px;color:#4b5563}
+  .ml-bd{padding:0 14px 14px}
+  .ml-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .ml-box{background:#f9fafb;border-radius:10px;padding:8px}
+  .ml-cap{font-size:11px;color:#6b7280}
+  .ml-val{font-weight:600;color:#111}
+  .ml-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin:10px 0 6px;color:#6b7280}
+  .ml-bar{height:8px;width:100%;background:#f3f4f6;border-radius:999px;overflow:hidden}
+  .ml-bar>i{display:block;height:100%}
+  .ml-addr{margin-top:10px;font-size:11px;color:#6b7280}
+  .ml-addr b{color:#374151}
+  `;
+  const style = document.createElement("style");
+  style.textContent = css;
+  document.head.appendChild(style);
+};
+
+const fmt = (v: number | string) =>
+  new Intl.NumberFormat("ru-RU").format(Number(v ?? 0));
+
+const statusColor = (rate01: number) => {
+  // использую твои пороги, только ещё возвращаю класс чипа
+  if (rate01 > 0.95)
+    return { hex: "#dc2626", chip: "critical", label: "Критическая" };
+  if (rate01 > 0.8) return { hex: "#ea580c", chip: "high", label: "Высокая" };
+  if (rate01 >= 0.5)
+    return { hex: "#16a34a", chip: "normal", label: "Нормальная" };
+  return { hex: "#6b7280", chip: "low", label: "Низкая" };
+};
+
+function buildFacilityPopup(facility: any) {
+  injectPopupCss();
+
+  const occ = Number(facility.occupancy_rate_percent ?? 0);
+  const pct = Math.max(0, Math.min(100, +(occ * 100).toFixed(1)));
+  const col = statusColor(occ);
+  const beds = Number(facility.beds_deployed_withdrawn_for_rep ?? 0);
+  const freeEst = Math.max(0, Math.round(beds * (1 - occ)));
+
+  return `
+  <div class="ml-card" role="group" aria-label="Информация о медорганизации">
+    <div class="ml-hd">
+      <div>
+        <h3 class="ml-ttl">${
+          facility.medical_organization ?? "Неизвестная организация"
+        }</h3>
+        <span class="ml-chip ${col.chip}">${col.label} • ${pct}%</span>
+      </div>
+      <div class="ml-meta">
+        <span class="ml-pill">${facility.district ?? "Без района"}</span>
+        <span class="ml-pill">${
+          facility.facility_type ?? "Тип не указан"
+        }</span>
+        <span class="ml-pill">${
+          facility.bed_profile ?? "Профиль не указан"
+        }</span>
+      </div>
+    </div>
+
+    <div class="ml-bd">
+      <div class="ml-kpi">
+        <div class="ml-box">
+          <div class="ml-cap">Коек развернуто</div>
+          <div class="ml-val">${fmt(beds)}</div>
+        </div>
+        <div class="ml-box">
+          <div class="ml-cap">Свободно (оценка)</div>
+          <div class="ml-val">${fmt(freeEst)}</div>
+        </div>
+      </div>
+
+      <div class="ml-row">
+        <span>Загруженность</span>
+        <b style="color:${col.hex}">${pct}%</b>
+      </div>
+      <div class="ml-bar" aria-hidden="true">
+        <i style="width:${pct}%; background:${col.hex}"></i>
+      </div>
+
+      ${
+        facility.address
+          ? `<div class="ml-addr"><b>Адрес:</b> ${facility.address}</div>`
+          : ""
+      }
+    </div>
+  </div>`;
+}
+
 export function MapLibreFacilityMap({
   facilities = [],
   className = "",
@@ -253,30 +358,37 @@ export function MapLibreFacilityMap({
       const color = getStatusColor(occupancyRate);
 
       // Create popup content
-      const popupContent = `
-        <div class="min-w-[250px] p-2">
-          <h3 class="font-bold text-sm mb-2">${
-            facility.medical_organization || "Неизвестно"
-          }</h3>
-          <div class="space-y-1 text-xs">
-            <p><strong>Район:</strong> ${facility.district || "Неизвестно"}</p>
-            <p><strong>Тип:</strong> ${
-              facility.facility_type || "Неизвестно"
-            }</p>
-            <p><strong>Профиль:</strong> ${
-              facility.bed_profile || "Неизвестно"
-            }</p>
-            <p><strong>Коек развернуто:</strong> ${
-              facility.beds_deployed_withdrawn_for_rep || 0
-            }</p>
-            <p><strong>Загруженность:</strong> <span style="color: ${color}; font-weight: bold;">${getStatusText(
-        occupancyRate
-      )} (${(occupancyRate * 100).toFixed(1)}%)</span></p>
-          </div>
-        </div>
-      `;
+      // const popupContent = `
+      //   <div class="min-w-[250px] p-2">
+      //     <h3 class="font-bold text-sm mb-2">${
+      //       facility.medical_organization || "Неизвестно"
+      //     }</h3>
+      //     <div class="space-y-1 text-xs">
+      //       <p><strong>Район:</strong> ${facility.district || "Неизвестно"}</p>
+      //       <p><strong>Тип:</strong> ${
+      //         facility.facility_type || "Неизвестно"
+      //       }</p>
+      //       <p><strong>Профиль:</strong> ${
+      //         facility.bed_profile || "Неизвестно"
+      //       }</p>
+      //       <p><strong>Коек развернуто:</strong> ${
+      //         facility.beds_deployed_withdrawn_for_rep || 0
+      //       }</p>
+      //       <p><strong>Загруженность:</strong> <span style="color: ${color}; font-weight: bold;">${getStatusText(
+      //   occupancyRate
+      // )} (${(occupancyRate * 100).toFixed(1)}%)</span></p>
+      //     </div>
+      //   </div>
+      // `;
+      const popupContent = buildFacilityPopup(facility);
 
-      const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
+      // const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
+      const popup = new maplibregl.Popup({
+        offset: 25,
+        anchor: "bottom",
+        closeButton: true,
+        maxWidth: "320px",
+      }).setHTML(popupContent);
 
       // Create marker element
       const el = document.createElement("div");

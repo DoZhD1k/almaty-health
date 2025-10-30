@@ -61,13 +61,6 @@ export function ComparisonTab({
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Объединенная таблица */}
-        <DetailedFacilitiesTable
-          filteredFacilities={filteredFacilities}
-          cityOrganizations={cityOrganizations}
-          isLoading={isLoading}
-        />
-
         {/* Кольцевая диаграмма сравнения по профилям коек */}
         <Card>
           <CardHeader>
@@ -220,6 +213,13 @@ export function ComparisonTab({
           </div>
         </CardFooter>
       </Card>
+
+      {/* Объединенная таблица */}
+      <DetailedFacilitiesTable
+        filteredFacilities={filteredFacilities}
+        cityOrganizations={cityOrganizations}
+        isLoading={isLoading}
+      />
     </div>
   );
 }
