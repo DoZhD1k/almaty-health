@@ -115,7 +115,6 @@ export function OverloadAlerts() {
         )} пациентов в соседние МО`
       );
       recommendations.push("Активировать дополнительные койки в коридорах");
-      recommendations.push("Ускорить выписку стабильных пациентов");
     } else if (occupancyRate > 0.8) {
       recommendations.push(
         `Перенаправить ${Math.round(
@@ -123,7 +122,6 @@ export function OverloadAlerts() {
         )} пациентов в региональные центры`
       );
       recommendations.push("Оптимизировать график операций");
-      recommendations.push("Рассмотреть досрочную выписку под наблюдение");
     } else {
       recommendations.push("Подготовить план перенаправления пациентов");
       recommendations.push(

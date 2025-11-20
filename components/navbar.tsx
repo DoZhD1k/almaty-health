@@ -33,6 +33,11 @@ const navigation = [
     href: "/analytics",
     icon: BarChart3,
   },
+  {
+    name: "Рекомендации",
+    href: "/recommendations",
+    icon: BarChart3,
+  },
 ];
 
 export function Navbar() {
