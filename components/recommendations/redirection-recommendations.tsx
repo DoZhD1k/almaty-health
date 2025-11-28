@@ -21,8 +21,9 @@ import {
   findNearbyAlternatives,
   calculateRedirectionCount,
   AlternativeFacility,
+  isCompatibleFacilityType,
 } from "@/lib/utils/distance";
-import { FormulaInfoDialog } from "./formula-info-dialog";
+// import { FormulaInfoDialog } from "./formula-info-dialog";
 
 interface RedirectionData {
   source: FacilityStatistic;
@@ -31,11 +32,16 @@ interface RedirectionData {
 }
 
 interface RedirectionRecommendationsProps {
-  onShowRoute?: (source: FacilityStatistic, target: FacilityStatistic) => void;
+  onSelectFacility?: (
+    source: FacilityStatistic,
+    alternatives: FacilityStatistic[]
+  ) => void;
+  selectedSourceId?: number;
 }
 
 export function RedirectionRecommendations({
-  onShowRoute,
+  onSelectFacility,
+  selectedSourceId,
 }: RedirectionRecommendationsProps) {
   const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
   const [redirections, setRedirections] = useState<RedirectionData[]>([]);
@@ -125,7 +131,7 @@ export function RedirectionRecommendations({
   return (
     <div className="space-y-6">
       {/* Информационная подсказка */}
-      <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+      {/* <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3 flex-1">
@@ -137,9 +143,10 @@ export function RedirectionRecommendations({
                 <p className="text-sm text-blue-700 dark:text-blue-300">
                   Расстояния рассчитываются по{" "}
                   <strong>формуле Гаверсинусов</strong> с учетом кривизны Земли.
-                  Нажмите <strong>&quot;На карте&quot;</strong> чтобы увидеть
-                  визуальный маршрут перенаправления между медицинскими
-                  организациями.
+                  <strong className="block mt-1">
+                    💡 Нажмите на карточку перегруженной больницы ниже
+                  </strong>{" "}
+                  чтобы увидеть все маршруты перенаправления на карте слева.
                 </p>
               </div>
             </div>
@@ -154,21 +161,21 @@ export function RedirectionRecommendations({
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Formula Info Dialog */}
-      <FormulaInfoDialog
+      {/* <FormulaInfoDialog
         open={isFormulaDialogOpen}
         onOpenChange={setIsFormulaDialogOpen}
-      />
+      /> */}
 
       {/* Заголовок с статистикой */}
       <Card className="border-orange-200 bg-orange-50/50 dark:bg-orange-950/20">
-        <CardContent className="p-6">
+        <CardContent>
           <div className="flex items-center gap-4">
             <AlertTriangle className="h-8 w-8 text-orange-600" />
             <div>
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-sm font-semibold">
                 Обнаружено {redirections.length} перегруженных МО
               </h3>
               <p className="text-sm text-muted-foreground">
@@ -181,7 +188,7 @@ export function RedirectionRecommendations({
       </Card>
 
       {/* Карточки с рекомендациями */}
-      <div className="space-y-6">
+      <div className="space-y-3">
         {redirections.map((redirection, index) => {
           const risk = getRiskLevel(redirection.source.occupancy_rate_percent);
           const currentLoad = Math.round(
@@ -191,177 +198,149 @@ export function RedirectionRecommendations({
           return (
             <Card
               key={redirection.source.id}
-              className="overflow-hidden border-l-4 border-l-orange-500"
+              className={`overflow-hidden border-l-4 border-l-orange-500 cursor-pointer transition-all ${
+                selectedSourceId === redirection.source.id
+                  ? "ring-2 ring-primary shadow-lg"
+                  : "hover:shadow-md"
+              }`}
+              onClick={() => {
+                if (onSelectFacility) {
+                  onSelectFacility(
+                    redirection.source,
+                    redirection.alternatives.map((alt) => alt.facility)
+                  );
+                }
+              }}
             >
               <CardHeader className="bg-muted/50">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <Badge className={`${risk.color} text-white`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Badge
+                        className={`${risk.color} text-white text-xs px-2 py-0.5`}
+                      >
                         {risk.label}
                       </Badge>
-                      <span className="text-2xl font-bold text-red-600">
+                      <span className="text-xl font-bold text-red-600">
                         {currentLoad}%
                       </span>
                     </div>
-                    <CardTitle className="text-xl">
+                    <CardTitle className="text-base leading-tight truncate pr-2">
                       {redirection.source.medical_organization}
                     </CardTitle>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                      <MapPin className="h-4 w-4" />
-                      {redirection.source.district} район
-                      <span className="mx-2">•</span>
-                      <Bed className="h-4 w-4" />
-                      {redirection.source.beds_deployed_withdrawn_for_rep} коек
+                    <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {redirection.source.district} район
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Bed className="h-3 w-3" />
+                        {
+                          redirection.source.beds_deployed_withdrawn_for_rep
+                        }{" "}
+                        коек
+                      </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-1 bg-muted/30 px-2 py-1 rounded">
+                      <span className="font-medium">Тип:</span>{" "}
+                      {redirection.source.facility_type}
                     </div>
                   </div>
                 </div>
               </CardHeader>
 
-              <CardContent className="p-6 space-y-6">
-                {/* Рекомендация по перенаправлению */}
-                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-start gap-3">
-                    <Navigation className="h-5 w-5 text-blue-600 mt-0.5" />
-                    <div>
-                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-1">
-                        Рекомендуется перенаправить {redirection.redirectCount}{" "}
-                        пациентов
-                      </h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        Это снизит загруженность до оптимального уровня 85%
-                      </p>
+              <CardContent className="space-y-2">
+                {/* Компактная рекомендация */}
+                <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2">
+                    <Navigation className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                    <div className="text-sm">
+                      <span className="font-medium text-blue-900 dark:text-blue-100">
+                        Перенаправить {redirection.redirectCount} пациентов
+                      </span>
+                      <span className="text-blue-700 dark:text-blue-300 block">
+                        → загруженность до 85%
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Альтернативные МО */}
+                {/* Компактные альтернативы */}
                 {redirection.alternatives.length > 0 ? (
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-muted-foreground uppercase">
-                      Рекомендованные альтернативы
+                  <div className="space-y-2">
+                    <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                      {redirection.alternatives.length} альтернатив
                     </h4>
 
-                    <div className="grid gap-3">
-                      {redirection.alternatives.map((alt, altIndex) => {
-                        const altLoad = Math.round(
-                          alt.facility.occupancy_rate_percent * 100
-                        );
+                    <div className="space-y-1.5">
+                      {redirection.alternatives
+                        .slice(0, 5)
+                        .map((alt, altIndex) => {
+                          const altLoad = Math.round(
+                            alt.facility.occupancy_rate_percent * 100
+                          );
 
-                        return (
-                          <div
-                            key={alt.facility.id}
-                            className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                          >
-                            {/* Номер альтернативы */}
-                            <div className="flex-shrink-0">
-                              <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
+                          return (
+                            <div
+                              key={alt.facility.id}
+                              className="flex items-center gap-2 p-2 border rounded text-sm hover:bg-muted/30 transition-colors"
+                            >
+                              {/* Номер */}
+                              <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold flex-shrink-0">
                                 {altIndex + 1}
                               </div>
-                            </div>
 
-                            {/* Информация об МО */}
-                            <div className="flex-1 min-w-0">
-                              <h5 className="font-medium truncate">
-                                {alt.facility.medical_organization}
-                              </h5>
-                              <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                                <div className="flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {alt.distance.toFixed(1)} км
+                              {/* Название */}
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-xs truncate">
+                                  {alt.facility.medical_organization}
+                                </p>
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <span>{alt.distance.toFixed(1)}км</span>
+                                  <span>•</span>
+                                  <span>~{alt.travelTime}мин</span>
+                                  <span>•</span>
+                                  <span>{alt.availableBeds}коек</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />~{alt.travelTime}{" "}
-                                  мин
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <Bed className="h-3 w-3" />
-                                  {alt.availableBeds} своб. коек
+                                <div className="text-xs text-blue-600 dark:text-blue-400 truncate mt-0.5">
+                                  {alt.facility.facility_type}
                                 </div>
                               </div>
-                            </div>
 
-                            {/* Загруженность */}
-                            <div className="flex-shrink-0 text-right">
-                              <div className="text-sm font-medium mb-1">
-                                {altLoad}%
-                              </div>
-                              <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                              {/* Загруженность */}
+                              <div className="text-right flex-shrink-0">
                                 <div
-                                  className={`h-full ${getLoadColor(
-                                    alt.facility.occupancy_rate_percent
-                                  )} transition-all progress-${
-                                    Math.round(altLoad / 5) * 5
+                                  className={`text-xs font-medium ${
+                                    altLoad < 50
+                                      ? "text-green-600"
+                                      : altLoad < 70
+                                      ? "text-blue-600"
+                                      : "text-gray-600"
                                   }`}
-                                />
+                                >
+                                  {altLoad}%
+                                </div>
                               </div>
                             </div>
-
-                            {/* Кнопка карты */}
-                            {onShowRoute && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  onShowRoute(redirection.source, alt.facility)
-                                }
-                                className="flex-shrink-0"
-                              >
-                                <Navigation className="h-4 w-4 mr-2" />
-                                На карте
-                              </Button>
-                            )}
-                          </div>
-                        );
-                      })}
+                          );
+                        })}
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-yellow-50 dark:bg-yellow-950/20 p-4 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5" />
-                      <div>
-                        <h4 className="font-semibold text-yellow-900 dark:text-yellow-100 mb-1">
+                  <div className="bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded border border-yellow-200 dark:border-yellow-800">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
+                      <div className="text-sm">
+                        <span className="font-medium text-yellow-900 dark:text-yellow-100">
                           Альтернативы не найдены
-                        </h4>
-                        <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                          В радиусе 15 км нет менее загруженных МО с доступными
-                          койками
-                        </p>
+                        </span>
+                        <span className="text-yellow-700 dark:text-yellow-300 block">
+                          Нет МО в радиусе 15 км
+                        </span>
                       </div>
                     </div>
                   </div>
                 )}
-
-                {/* Дополнительные рекомендации */}
-                <div className="border-t pt-4 mt-4">
-                  <h4 className="font-semibold text-sm mb-3">
-                    Дополнительные меры:
-                  </h4>
-                  <ul className="space-y-2 text-sm">
-                    <li className="flex items-start gap-2">
-                      <ArrowRight className="h-4 w-4 mt-0.5 text-primary" />
-                      <span>
-                        Оптимизировать график выписки пациентов для освобождения
-                        коек
-                      </span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <ArrowRight className="h-4 w-4 mt-0.5 text-primary" />
-                      <span>
-                        Координация с СМП для перенаправления новых вызовов
-                      </span>
-                    </li>
-                    {currentLoad > 90 && (
-                      <li className="flex items-start gap-2">
-                        <ArrowRight className="h-4 w-4 mt-0.5 text-primary" />
-                        <span className="text-red-600 font-medium">
-                          Активировать резервные койки и дополнительный персонал
-                        </span>
-                      </li>
-                    )}
-                  </ul>
-                </div>
               </CardContent>
             </Card>
           );

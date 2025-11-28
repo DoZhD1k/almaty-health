@@ -3,6 +3,7 @@
  */
 
 import { FacilityStatistic } from "@/types/healthcare";
+import facilityTypesMap from "./facility-types.json";
 
 /**
  * Вычисляет расстояние между двумя точками по координатам (формула гаверсинусов)
@@ -51,6 +52,41 @@ function toRad(deg: number): number {
 }
 
 /**
+ * Проверяет, может ли больница быть альтернативой для другой больницы
+ * на основе их профилей (типов медицинских учреждений)
+ * @param sourceFacilityType - тип источника (перегруженной больницы)
+ * @param targetFacilityType - тип потенциальной альтернативы
+ * @returns true, если может быть альтернативой
+ */
+export function isCompatibleFacilityType(
+  sourceFacilityType: string,
+  targetFacilityType: string
+): boolean {
+  // Если точное совпадение
+  if (sourceFacilityType === targetFacilityType) {
+    return true;
+  }
+
+  // Ищем в справочнике совместимых типов
+  const compatibleTypes =
+    facilityTypesMap[sourceFacilityType as keyof typeof facilityTypesMap];
+
+  if (compatibleTypes) {
+    return compatibleTypes.includes(targetFacilityType);
+  }
+
+  // Если нет в справочнике, проверяем обратную совместимость
+  const reverseCompatibleTypes =
+    facilityTypesMap[targetFacilityType as keyof typeof facilityTypesMap];
+  if (reverseCompatibleTypes) {
+    return reverseCompatibleTypes.includes(sourceFacilityType);
+  }
+
+  // Если ничего не найдено, возвращаем false (не совместимы)
+  return false;
+}
+
+/**
  * Интерфейс для альтернативного МО с расстоянием
  */
 export interface AlternativeFacility {
@@ -74,7 +110,7 @@ export function findNearbyAlternatives(
   maxDistance: number = 15,
   limit: number = 5
 ): AlternativeFacility[] {
-  // Фильтруем МО: исключаем источник, берём с загрузкой < 70%, того же типа
+  // Фильтруем МО: исключаем источник, берём с загрузкой < 70%, совместимого типа
   const alternatives = allFacilities
     .filter((facility) => {
       // Исключаем само МО
@@ -83,9 +119,15 @@ export function findNearbyAlternatives(
       // Только с достаточной загрузкой (меньше 70%)
       if (facility.occupancy_rate_percent >= 0.7) return false;
 
-      // Желательно того же профиля коек
-      // (можно убрать это условие если хотим показать все МО)
-      // if (facility.bed_profile !== sourceFacility.bed_profile) return false;
+      // Проверяем совместимость профилей больниц
+      if (
+        !isCompatibleFacilityType(
+          sourceFacility.facility_type,
+          facility.facility_type
+        )
+      ) {
+        return false;
+      }
 
       // Должны быть координаты
       if (!facility.latitude || !facility.longitude) return false;
