@@ -64,7 +64,7 @@ export function RedirectionRecommendations({
 
         // Находим перегруженные МО (> 70%)
         const overloaded = allFacilities
-          .filter((f) => f.occupancy_rate_percent > 0.7)
+          .filter((f) => f.occupancy_rate_percent > 0.85)
           .sort((a, b) => b.occupancy_rate_percent - a.occupancy_rate_percent);
 
         // Для каждого перегруженного МО находим альтернативы
