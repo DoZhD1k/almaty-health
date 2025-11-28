@@ -100,6 +100,28 @@ export function RedirectionRecommendations({
     return "bg-gray-500";
   };
 
+  // Функция для расчета требуемых дополнительных коек
+  const calculateRequiredBeds = (facility: FacilityStatistic) => {
+    const currentBeds = facility.beds_deployed_withdrawn_for_rep || 0;
+    const currentOccupancy = facility.occupancy_rate_percent;
+    const targetOccupancy = 0.85; // Желаемая загруженность 85%
+
+    // Текущее количество занятых коек
+    const occupiedBeds = Math.round(currentBeds * currentOccupancy);
+
+    // Требуемое общее количество коек для 85% загруженности
+    const requiredTotalBeds = Math.ceil(occupiedBeds / targetOccupancy);
+
+    // Дополнительные койки, которые нужно добавить
+    const additionalBeds = requiredTotalBeds - currentBeds;
+
+    return {
+      occupiedBeds,
+      requiredTotalBeds,
+      additionalBeds: Math.max(0, additionalBeds),
+    };
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -327,17 +349,33 @@ export function RedirectionRecommendations({
                     </div>
                   </div>
                 ) : (
-                  <div className="bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded border border-yellow-200 dark:border-yellow-800">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-yellow-600 flex-shrink-0" />
-                      <div className="text-sm">
-                        <span className="font-medium text-yellow-900 dark:text-yellow-100">
+                  <div className="bg-red-50 dark:bg-red-950/20 p-3 rounded border border-red-200 dark:border-red-800">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
+                        <span className="font-medium text-red-900 dark:text-red-100 text-sm">
                           Альтернативы не найдены
                         </span>
-                        <span className="text-yellow-700 dark:text-yellow-300 block">
-                          Нет МО в радиусе 15 км
-                        </span>
                       </div>
+
+                      {(() => {
+                        const bedCalc = calculateRequiredBeds(
+                          redirection.source
+                        );
+                        return (
+                          <div className="ml-6 space-y-1 text-sm">
+                            <p className="text-red-700 dark:text-red-300">
+                              Нет совместимых МО в радиусе 15 км
+                            </p>
+                            <div className="bg-red-100 dark:bg-red-900/30 p-2 rounded border">
+                              <p className="font-medium text-red-900 dark:text-red-100">
+                                Для загруженности 85% требуется увеличение на{" "}
+                                {bedCalc.additionalBeds} коек
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 )}
