@@ -483,36 +483,20 @@ export function RedirectionMap({
       {/* Show info/instructions when no selection */}
       {(!source || !targets || targets.length === 0) && (
         <Card className="border-dashed border-2 flex-shrink-0">
-          <CardContent className="flex items-center justify-center text-center p-6">
-            <div>
-              <Navigation className="h-12 w-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-              <h3 className="text-base font-semibold mb-1">
-                Карта больниц Алматы
-              </h3>
-              <p className="text-xs text-muted-foreground mb-2">
-                <strong>Красные точки</strong> (перегруженные) - нажмите для
-                поиска куда перенаправить
-                <br />
-                <strong>Зеленые точки</strong> (доступные) - нажмите чтобы
-                увидеть откуда могут направлять
-              </p>
-              <div className="flex justify-center gap-4 mt-4 text-xs">
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-red-600"></div>
-                  <span>Критическая</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-orange-600"></div>
-                  <span>Высокая</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-green-600"></div>
-                  <span>Нормальная</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-                  <span>Низкая</span>
-                </div>
+          <CardContent>
+            <div className="flex items-center gap-3">
+              <Navigation className="h-5 w-5 text-muted-foreground opacity-50 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold mb-1">
+                  Карта больниц Алматы
+                </h3>
+                <p className="text-xs text-muted-foreground leading-tight">
+                  <span className="font-semibold">Красные точки</span>{" "}
+                  (перегруженные) - нажмите для поиска куда перенаправить
+                  <br />
+                  <span className="font-semibold">Зеленые точки</span>{" "}
+                  (доступные) - нажмите чтобы увидеть откуда могут направлять
+                </p>
               </div>
             </div>
           </CardContent>
