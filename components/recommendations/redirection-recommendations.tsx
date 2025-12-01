@@ -291,7 +291,7 @@ export function RedirectionRecommendations({
                 {redirection.alternatives.length > 0 ? (
                   <div className="space-y-2">
                     <h4 className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      {redirection.alternatives.length} альтернатив
+                      Альтернативы: {redirection.alternatives.length}
                     </h4>
 
                     <div className="space-y-1.5">
@@ -322,7 +322,15 @@ export function RedirectionRecommendations({
                                   <span>•</span>
                                   <span>~{alt.travelTime}мин</span>
                                   <span>•</span>
-                                  <span>{alt.availableBeds}коек</span>
+                                  <span>
+                                    {
+                                      alt.facility
+                                        .beds_deployed_withdrawn_for_rep
+                                    }
+                                    коек
+                                  </span>
+                                  <span>•</span>
+                                  <span>{alt.availableBeds}своб</span>
                                 </div>
                                 <div className="text-xs text-blue-600 dark:text-blue-400 truncate mt-0.5">
                                   {alt.facility.facility_type}
@@ -330,7 +338,7 @@ export function RedirectionRecommendations({
                               </div>
 
                               {/* Загруженность */}
-                              <div className="text-right flex-shrink-0">
+                              <div className="text-right flex-shrink-0 min-w-[60px]">
                                 <div
                                   className={`text-xs font-medium ${
                                     altLoad < 50
@@ -341,6 +349,9 @@ export function RedirectionRecommendations({
                                   }`}
                                 >
                                   {altLoad}%
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  загруженность
                                 </div>
                               </div>
                             </div>

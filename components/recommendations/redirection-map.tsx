@@ -34,6 +34,7 @@ export function RedirectionMap({
 }: RedirectionMapProps) {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<maplibregl.Map | null>(null);
+  const currentPopup = useRef<maplibregl.Popup | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [isFormulaDialogOpen, setIsFormulaDialogOpen] = useState(false);
 
@@ -71,9 +72,51 @@ export function RedirectionMap({
 
     map.current.on("load", () => {
       setMapLoaded(true);
+
+      // Add custom popup styles
+      const style = document.createElement("style");
+      style.innerHTML = `
+        .custom-popup .maplibregl-popup-content {
+          padding: 0;
+          border-radius: 8px;
+          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+          border: 1px solid #e5e7eb;
+        }
+        .custom-popup .maplibregl-popup-close-button {
+          color: #6b7280;
+          font-size: 18px;
+          width: 24px;
+          height: 24px;
+          line-height: 20px;
+          border-radius: 50%;
+          background: #f9fafb;
+          border: 1px solid #e5e7eb;
+          right: 8px;
+          top: 8px;
+        }
+        .custom-popup .maplibregl-popup-close-button:hover {
+          background: #f3f4f6;
+          color: #374151;
+        }
+        .custom-popup .maplibregl-popup-tip {
+          border-top-color: #e5e7eb;
+        }
+      `;
+      document.head.appendChild(style);
     });
 
     return () => {
+      // Cleanup global functions
+      delete (window as any).analyzeOverloaded;
+      delete (window as any).analyzeUnderloaded;
+      delete (window as any).analyzeFacility;
+
+      // Close current popup if exists
+      if (currentPopup.current) {
+        currentPopup.current.remove();
+        currentPopup.current = null;
+      }
+
       map.current?.remove();
       map.current = null;
     };
@@ -136,17 +179,61 @@ export function RedirectionMap({
     )
       return;
 
+    // Add global functions for popup buttons (with current data)
+    (window as any).analyzeOverloaded = (facilityId: string) => {
+      const facility = allFacilities.find(
+        (f) => f.id.toString() === facilityId
+      );
+      if (facility && onSelectFacility) {
+        const alternativeResults = findNearbyAlternatives(
+          facility,
+          allFacilities
+        );
+        const alternatives = alternativeResults.map((alt) => alt.facility);
+        onSelectFacility(facility, alternatives);
+      }
+    };
+
+    (window as any).analyzeUnderloaded = (facilityId: string) => {
+      const facility = allFacilities.find(
+        (f) => f.id.toString() === facilityId
+      );
+      if (facility && onSelectFacility) {
+        const overloadedSources = findOverloadedSources(
+          facility,
+          allFacilities
+        );
+        if (overloadedSources.length > 0) {
+          onSelectFacility(facility, overloadedSources);
+        } else {
+          onSelectFacility(facility, []);
+        }
+      }
+    };
+
+    (window as any).analyzeFacility = (facilityId: string) => {
+      const facility = allFacilities.find(
+        (f) => f.id.toString() === facilityId
+      );
+      if (facility && onSelectFacility) {
+        onSelectFacility(facility, []);
+      }
+    };
+
     // Clear previous markers and routes
     const markersToRemove = document.querySelectorAll(".maplibregl-marker");
     markersToRemove.forEach((marker) => marker.remove());
+
+    // Close any open popup before recreating markers
+    if (currentPopup.current) {
+      currentPopup.current.remove();
+      currentPopup.current = null;
+    }
 
     // Remove old route layers
     for (let i = 0; i < 10; i++) {
       if (map.current.getLayer(`route-${i}`)) {
         map.current.removeLayer(`route-${i}`);
-      }
-      if (map.current.getLayer(`route-arrow-${i}`)) {
-        map.current.removeLayer(`route-arrow-${i}`);
       }
       if (map.current.getSource(`route-${i}`)) {
         map.current.removeSource(`route-${i}`);
@@ -310,75 +397,96 @@ export function RedirectionMap({
         el.style.cursor = "pointer";
       }
 
-      // Create popup content
+      // Calculate additional statistics
+      const totalBeds = facility.beds_deployed_withdrawn_for_rep || 0;
+      const occupancyPercent = Math.round(
+        facility.occupancy_rate_percent * 100
+      );
+      const availableBeds = Math.floor(
+        totalBeds * (1 - facility.occupancy_rate_percent)
+      );
+      const occupiedBeds = totalBeds - availableBeds;
+
+      // Create enhanced popup content
       const popupContent = `
-        <div style="font-family: system-ui; padding: 8px; max-width: 280px;">
-          <div style="font-weight: 600; margin-bottom: 6px; font-size: 14px;">
-            ${facility.medical_organization}
+        <div style="font-family: system-ui; padding: 12px; max-width: 320px; background: white; border-radius: 8px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);">
+          <div style="margin-bottom: 8px;">
+            <div style="font-weight: 700; margin-bottom: 4px; font-size: 15px; color: #1f2937; line-height: 1.2;">
+              ${facility.medical_organization}
+            </div>
+            <div style="display: inline-flex; align-items: center; background: ${color}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 6px;">
+              ${occupancyPercent}% ${status}
+            </div>
           </div>
-          <div style="margin-bottom: 4px;">
-            <span style="color: #666; font-size: 12px;">Район:</span>
-            <span style="font-size: 12px; margin-left: 4px;">${
-              facility.district
-            }</span>
+          
+          <div style="margin-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+              <span style="color: #6b7280; font-size: 12px;">📍</span>
+              <span style="font-size: 12px; color: #4b5563;">${
+                facility.district
+              } район</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
+              <span style="color: #6b7280; font-size: 12px;">🏥</span>
+              <span style="font-size: 12px; color: #4b5563;">${
+                facility.facility_type
+              }</span>
+            </div>
           </div>
-          <div style="margin-bottom: 4px;">
-            <span style="color: #666; font-size: 12px;">Загрузка:</span>
-            <span style="font-size: 12px; margin-left: 4px; font-weight: 600; color: ${color};">
-              ${Math.round(facility.occupancy_rate_percent * 100)}% (${status})
-            </span>
+
+          <div style="background: #f9fafb; border-radius: 6px; padding: 8px; margin-bottom: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 11px; color: #6b7280; font-weight: 500;">🛏️ ВСЕГО КОЕК</span>
+              <span style="font-size: 13px; font-weight: 600; color: #1f2937;">${totalBeds}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-size: 11px; color: #6b7280;">🔴 Занято</span>
+              <span style="font-size: 12px; color: #dc2626; font-weight: 600;">${occupiedBeds}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="font-size: 11px; color: #6b7280;">🟢 Свободно</span>
+              <span style="font-size: 12px; color: #16a34a; font-weight: 600;">${availableBeds}</span>
+            </div>
           </div>
+
           ${
             isSelected
-              ? '<div style="font-size: 11px; color: #dc2626; font-weight: 600; margin-top: 6px;">Выбрана для перенаправления</div>'
+              ? '<div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px; font-size: 11px; color: #dc2626; font-weight: 600; text-align: center;">🎯 Выбрана для анализа</div>'
               : facility.occupancy_rate_percent > 0.8
-              ? '<div style="font-size: 11px; color: #dc2626; margin-top: 6px; font-weight: 600;">🚨 Перегружена - нажмите для рекомендаций</div>'
+              ? `<button onclick="window.analyzeOverloaded('${facility.id}')" style="background: #dc2626; color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 11px; font-weight: 600; width: 100%; cursor: pointer; transition: background 0.2s;">🚨 Найти альтернативы для перенаправления</button>`
               : facility.occupancy_rate_percent < 0.7
-              ? '<div style="font-size: 11px; color: #16a34a; margin-top: 6px; font-weight: 600;">✅ Доступна - нажмите чтобы увидеть источники</div>'
-              : '<div style="font-size: 11px; color: #666; margin-top: 6px;">Нажмите для выбора</div>'
+              ? `<button onclick="window.analyzeUnderloaded('${facility.id}')" style="background: #16a34a; color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 11px; font-weight: 600; width: 100%; cursor: pointer; transition: background 0.2s;">✅ Найти источники перенаправления</button>`
+              : `<button onclick="window.analyzeFacility('${facility.id}')" style="background: #6b7280; color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 11px; font-weight: 600; width: 100%; cursor: pointer; transition: background 0.2s;">Анализировать больницу</button>`
           }
         </div>
       `;
 
       const popup = new maplibregl.Popup({
-        offset: 15,
-        maxWidth: "320px",
+        offset: 20,
+        maxWidth: "350px",
+        className: "custom-popup",
+        closeOnClick: false,
+        closeButton: true,
       }).setHTML(popupContent);
 
-      // Add click handler for facility selection
-      el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        if (onSelectFacility && !isSelected) {
-          // Для перегруженных больниц (загрузка > 80%) ищем альтернативы куда направить
-          if (facility.occupancy_rate_percent > 0.8) {
-            const alternativeResults = findNearbyAlternatives(
-              facility,
-              allFacilities
-            );
-            const alternatives = alternativeResults.map((alt) => alt.facility);
-            onSelectFacility(facility, alternatives);
-          } else {
-            // Для незагруженных больниц (загрузка < 70%) ищем откуда могут направлять
-            if (facility.occupancy_rate_percent < 0.7) {
-              const overloadedSources = findOverloadedSources(
-                facility,
-                allFacilities
-              );
-              if (overloadedSources.length > 0) {
-                // Показываем незагруженную больницу как "источник" и все перегруженные как "альтернативы"
-                // Это создаст обратные маршруты: от всех перегруженных к этой незагруженной
-                onSelectFacility(facility, overloadedSources);
-              } else {
-                // Если нет источников, просто выбираем больницу
-                onSelectFacility(facility, []);
-              }
-            } else {
-              // Для больниц со средней загрузкой просто выбираем
-              onSelectFacility(facility, []);
-            }
-          }
+      // Handle popup open event to close previous popup
+      popup.on("open", () => {
+        // Close current popup if exists
+        if (currentPopup.current && currentPopup.current !== popup) {
+          currentPopup.current.remove();
+        }
+        // Set this popup as current
+        currentPopup.current = popup;
+      });
+
+      // Handle popup close event
+      popup.on("close", () => {
+        if (currentPopup.current === popup) {
+          currentPopup.current = null;
         }
       });
+
+      // Remove click handler - now using buttons in popup instead
 
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([Number(facility.longitude), Number(facility.latitude)])
@@ -446,25 +554,8 @@ export function RedirectionMap({
           },
         });
 
-        // Add arrow symbol layer for direction
-        map.current!.addLayer({
-          id: `route-arrow-${index}`,
-          type: "symbol",
-          source: `route-${index}`,
-          layout: {
-            "symbol-placement": "line",
-            "text-field": "→",
-            "text-size": 20,
-            "symbol-spacing": 100,
-            "text-keep-upright": false,
-            "text-rotation-alignment": "map",
-          },
-          paint: {
-            "text-color": colors[index % colors.length],
-            "text-halo-color": "#ffffff",
-            "text-halo-width": 2,
-          },
-        });
+        // Add directional animated line (no arrows needed - direction is clear from source to target)
+        // The dashed line animation already shows direction
 
         // Extend bounds to include this target
         bounds.extend([target.longitude, target.latitude]);

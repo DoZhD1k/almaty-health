@@ -1,26 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { OverloadAlerts } from "@/components/recommendations/overload-alerts";
 import { RedirectionRecommendations } from "@/components/recommendations/redirection-recommendations";
 import { RedirectionMap } from "@/components/recommendations/redirection-map";
 import { SmpTab } from "./recommendations/smp-tab";
-import {
-  AlertTriangle,
-  Route,
-  RefreshCw,
-  Clock,
-  Navigation,
-} from "lucide-react";
+import { AlertTriangle, Route, Ambulance } from "lucide-react";
 import { FacilityStatistic } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 
@@ -95,7 +81,7 @@ export function RecommendationsEngine() {
             Рекомендации по перенаправлению
           </TabsTrigger>
           <TabsTrigger value="smp" className="gap-2">
-            <Route className="h-4 w-4" />
+            <Ambulance className="h-4 w-4" />
             Рекомендации по новым СМП
           </TabsTrigger>
         </TabsList>
