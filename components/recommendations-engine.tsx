@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -22,6 +22,7 @@ import {
   Navigation,
 } from "lucide-react";
 import { FacilityStatistic } from "@/types/healthcare";
+import { healthcareApi } from "@/lib/api/healthcare";
 
 export function RecommendationsEngine() {
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -31,11 +32,30 @@ export function RecommendationsEngine() {
   const [selectedAlternatives, setSelectedAlternatives] = useState<
     FacilityStatistic[]
   >([]);
+  const [allFacilities, setAllFacilities] = useState<FacilityStatistic[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadFacilities();
+  }, []);
+
+  const loadFacilities = async () => {
+    setLoading(true);
+    try {
+      const response = await healthcareApi.getFacilityStatistics();
+      if (response.results && response.results.length > 0) {
+        setAllFacilities(response.results);
+      }
+    } catch (error) {
+      console.error("Error loading facilities:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await loadFacilities();
     setLastUpdated(new Date());
     setIsRefreshing(false);
   };
@@ -88,7 +108,9 @@ export function RecommendationsEngine() {
               <RedirectionMap
                 source={selectedSource}
                 targets={selectedAlternatives}
+                allFacilities={allFacilities}
                 onClose={handleClearSelection}
+                onSelectFacility={handleSelectFacility}
               />
             </div>
 
