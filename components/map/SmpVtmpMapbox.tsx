@@ -5,6 +5,7 @@ import mapboxgl from "mapbox-gl";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCcw, Layers } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { createFacilityPopupHTML, popupStyles } from "@/lib/utils/popup-styles";
 
 // Токен Mapbox - нужно настроить в .env.local
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -129,6 +130,11 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
     });
 
     mapRef.current = map;
+
+    // Inject popup styles
+    const styleEl = document.createElement("style");
+    styleEl.textContent = popupStyles;
+    document.head.appendChild(styleEl);
 
     map.on("load", () => {
       console.log("Mapbox: Map loaded successfully");
@@ -318,35 +324,25 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
       const feature = e.features[0] as any;
       const props = feature.properties;
 
-      new mapboxgl.Popup()
+      // Parse Overload from "85%" string format to decimal
+      const overloadStr = props.Overload || "0%";
+      const occupancyRate = parseInt(overloadStr.replace("%", "")) / 100;
+      const totalBeds =
+        parseInt(props["Number_of_ beds_actually_deployed_closed"]) || 0;
+
+      const popupHTML = createFacilityPopupHTML({
+        name: props.medical_organization,
+        facilityType: props.type,
+        bedProfile: props.type2,
+        occupancyRate: occupancyRate,
+        totalBeds: totalBeds,
+        emergencyVisits:
+          parseInt(props["Patients admitted total"]) || undefined,
+      });
+
+      new mapboxgl.Popup({ maxWidth: "340px" })
         .setLngLat(e.lngLat)
-        .setHTML(
-          `
-          <div class="p-3 max-w-sm">
-            <h3 class="font-semibold text-sm mb-2">${
-              props.medical_organization
-            }</h3>
-            <div class="text-xs space-y-1">
-              <p><strong>Тип:</strong> ${props.type}</p>
-              <p><strong>Форма собственности:</strong> ${props.type2}</p>
-              <p><strong>Коек:</strong> ${
-                props["Number_of_ beds_actually_deployed_closed"] || "Н/Д"
-              }</p>
-              <p><strong>Загруженность:</strong> <span class="font-medium" style="color: ${getMarkerColor(
-                props.Overload
-              )}">${props.Overload} (${getStatusText(
-            props.Overload
-          )})</span></p>
-              <p><strong>Принято пациентов:</strong> ${
-                props["Patients admitted total"] || "Н/Д"
-              }</p>
-              <p><strong>Сельские жители:</strong> ${
-                props["Rural residents"] || "Н/Д"
-              }</p>
-            </div>
-          </div>
-        `
-        )
+        .setHTML(popupHTML)
         .addTo(map);
     });
 

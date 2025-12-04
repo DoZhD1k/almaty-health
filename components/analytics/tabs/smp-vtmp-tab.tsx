@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingUp, BarChart3, GitCommitVertical } from "lucide-react";
+import { TrendingUp, GitCommitVertical } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -9,20 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  PieChart,
-  Pie,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  LabelList,
-  Tooltip,
-  Legend,
-} from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,

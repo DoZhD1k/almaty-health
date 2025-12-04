@@ -5,6 +5,7 @@ import mapboxgl from "mapbox-gl";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCcw, Layers } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
+import { createFacilityPopupHTML, popupStyles } from "@/lib/utils/popup-styles";
 
 // Токен Mapbox
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -124,6 +125,11 @@ export function AnalyticsMap({
     });
 
     mapRef.current = map;
+
+    // Inject popup styles
+    const styleEl = document.createElement("style");
+    styleEl.textContent = popupStyles;
+    document.head.appendChild(styleEl);
 
     map.on("load", () => {
       console.log("Analytics Map: Map loaded successfully");
@@ -383,39 +389,19 @@ export function AnalyticsMap({
       const feature = e.features[0] as any;
       const props = feature.properties;
 
-      new mapboxgl.Popup()
+      const popupHTML = createFacilityPopupHTML({
+        name: `МО №${props.medical_organization}`,
+        district: props.district ? `${props.district} район` : undefined,
+        facilityType: props.facility_type,
+        bedProfile: props.bed_profile,
+        occupancyRate: props.occupancy_rate || 0,
+        totalBeds: props.beds_avg_annual || 0,
+        emergencyVisits: props.total_emergency_visits,
+      });
+
+      new mapboxgl.Popup({ maxWidth: "340px" })
         .setLngLat(e.lngLat)
-        .setHTML(
-          `
-          <div class="p-3 max-w-sm">
-            <h3 class="font-semibold text-sm mb-2">МО №${
-              props.medical_organization
-            }</h3>
-            <div class="text-xs space-y-1">
-              <p><strong>Тип:</strong> ${props.facility_type}</p>
-              <p><strong>Профиль коек:</strong> ${props.bed_profile}</p>
-              <p><strong>Район:</strong> ${props.district}</p>
-              <p><strong>Адрес:</strong> ${props.address}</p>
-              <p><strong>Коек:</strong> ${props.beds_avg_annual}</p>
-              <p><strong>Загруженность:</strong> <span class="font-medium" style="color: ${getMarkerColor(
-                props.occupancy_rate
-              )}">${(props.occupancy_rate * 100).toFixed(1)}% (${getStatusText(
-            props.occupancy_rate
-          )})</span></p>
-              <p><strong>Вызовы СМП:</strong> ${
-                props.total_emergency_visits
-              }</p>
-              <p><strong>Госпитализировано:</strong> ${
-                props.hospitalized_emerg
-              }</p>
-              <p><strong>Отказы в госпитализации:</strong> ${
-                props.hospitalization_denied
-              }</p>
-              <p><strong>Сельские жители:</strong> ${props.rural_patients}</p>
-            </div>
-          </div>
-        `
-        )
+        .setHTML(popupHTML)
         .addTo(map);
     });
 
@@ -479,30 +465,20 @@ export function AnalyticsMap({
         const feature = e.features[0] as any;
         const props = feature.properties;
 
-        new mapboxgl.Popup()
+        const popupHTML = createFacilityPopupHTML({
+          name: props.medical_organization || "Рекомендуемая МО",
+          district: props.district ? `${props.district} район` : undefined,
+          facilityType: props.facility_type,
+          bedProfile: props.bed_profile,
+          occupancyRate: props.occupancy_rate || 0,
+          totalBeds: props.beds_avg_annual || 0,
+          isRecommended: true,
+          recommendationType: "smp",
+        });
+
+        new mapboxgl.Popup({ maxWidth: "340px" })
           .setLngLat(e.lngLat)
-          .setHTML(
-            `
-            <div class="p-3 max-w-sm">
-              <div class="flex items-center gap-2 mb-2">
-                <span class="bg-emerald-100 text-emerald-700 text-xs px-2 py-0.5 rounded-full font-medium">
-                  Рекомендуемое СМП
-                </span>
-              </div>
-              <h3 class="font-semibold text-sm mb-2">${props.medical_organization}</h3>
-              <div class="text-xs space-y-1">
-                <p><strong>Тип:</strong> ${props.facility_type}</p>
-                <p><strong>Профиль коек:</strong> ${props.bed_profile}</p>
-                <p><strong>Район:</strong> ${props.district}</p>
-                <p><strong>Адрес:</strong> ${props.address}</p>
-                <p><strong>Планируемых коек:</strong> ${props.beds_avg_annual}</p>
-                <p class="text-emerald-600 font-medium mt-2">
-                  ✓ Улучшит покрытие района
-                </p>
-              </div>
-            </div>
-          `
-          )
+          .setHTML(popupHTML)
           .addTo(map);
       });
 
@@ -652,7 +628,7 @@ export function AnalyticsMap({
   };
 
   return (
-    <div className={`relative h-[500px] w-full ${className}`}>
+    <div className={`relative min-h-[500px] h-full w-full ${className}`}>
       {/* Контейнер карты */}
       <div
         ref={containerRef}

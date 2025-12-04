@@ -13,6 +13,10 @@ import {
   findNearbyAlternatives,
   isCompatibleFacilityType,
 } from "@/lib/utils/distance";
+import {
+  createFacilityPopupWithActionsHTML,
+  popupStyles,
+} from "@/lib/utils/popup-styles";
 
 interface RedirectionMapProps {
   source: FacilityStatistic | null;
@@ -73,35 +77,9 @@ export function RedirectionMap({
     map.current.on("load", () => {
       setMapLoaded(true);
 
-      // Add custom popup styles
+      // Add unified popup styles
       const style = document.createElement("style");
-      style.innerHTML = `
-        .custom-popup .maplibregl-popup-content {
-          padding: 0;
-          border-radius: 8px;
-          box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-          border: 1px solid #e5e7eb;
-        }
-        .custom-popup .maplibregl-popup-close-button {
-          color: #6b7280;
-          font-size: 18px;
-          width: 24px;
-          height: 24px;
-          line-height: 20px;
-          border-radius: 50%;
-          background: #f9fafb;
-          border: 1px solid #e5e7eb;
-          right: 8px;
-          top: 8px;
-        }
-        .custom-popup .maplibregl-popup-close-button:hover {
-          background: #f3f4f6;
-          color: #374151;
-        }
-        .custom-popup .maplibregl-popup-tip {
-          border-top-color: #e5e7eb;
-        }
-      `;
+      style.innerHTML = popupStyles;
       document.head.appendChild(style);
     });
 
@@ -407,64 +385,24 @@ export function RedirectionMap({
       );
       const occupiedBeds = totalBeds - availableBeds;
 
-      // Create enhanced popup content
-      const popupContent = `
-        <div style="font-family: system-ui; padding: 12px; max-width: 320px; background: white; border-radius: 8px; box-shadow: 0 8px 25px rgba(0,0,0,0.15);">
-          <div style="margin-bottom: 8px;">
-            <div style="font-weight: 700; margin-bottom: 4px; font-size: 15px; color: #1f2937; line-height: 1.2;">
-              ${facility.medical_organization}
-            </div>
-            <div style="display: inline-flex; align-items: center; background: ${color}; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-bottom: 6px;">
-              ${occupancyPercent}% ${status}
-            </div>
-          </div>
-          
-          <div style="margin-bottom: 8px;">
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-              <span style="color: #6b7280; font-size: 12px;">📍</span>
-              <span style="font-size: 12px; color: #4b5563;">${
-                facility.district
-              } район</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 3px;">
-              <span style="color: #6b7280; font-size: 12px;">🏥</span>
-              <span style="font-size: 12px; color: #4b5563;">${
-                facility.facility_type
-              }</span>
-            </div>
-          </div>
-
-          <div style="background: #f9fafb; border-radius: 6px; padding: 8px; margin-bottom: 8px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <span style="font-size: 11px; color: #6b7280; font-weight: 500;">🛏️ ВСЕГО КОЕК</span>
-              <span style="font-size: 13px; font-weight: 600; color: #1f2937;">${totalBeds}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-              <span style="font-size: 11px; color: #6b7280;">🔴 Занято</span>
-              <span style="font-size: 12px; color: #dc2626; font-weight: 600;">${occupiedBeds}</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <span style="font-size: 11px; color: #6b7280;">🟢 Свободно</span>
-              <span style="font-size: 12px; color: #16a34a; font-weight: 600;">${availableBeds}</span>
-            </div>
-          </div>
-
-          ${
-            isSelected
-              ? '<div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 6px; font-size: 11px; color: #dc2626; font-weight: 600; text-align: center;">🎯 Выбрана для анализа</div>'
-              : facility.occupancy_rate_percent > 0.8
-              ? `<button onclick="window.analyzeOverloaded('${facility.id}')" style="background: #dc2626; color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 11px; font-weight: 600; width: 100%; cursor: pointer; transition: background 0.2s;">🚨 Найти альтернативы для перенаправления</button>`
-              : facility.occupancy_rate_percent < 0.7
-              ? `<button onclick="window.analyzeUnderloaded('${facility.id}')" style="background: #16a34a; color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 11px; font-weight: 600; width: 100%; cursor: pointer; transition: background 0.2s;">✅ Найти источники перенаправления</button>`
-              : `<button onclick="window.analyzeFacility('${facility.id}')" style="background: #6b7280; color: white; border: none; border-radius: 6px; padding: 8px 12px; font-size: 11px; font-weight: 600; width: 100%; cursor: pointer; transition: background 0.2s;">Анализировать больницу</button>`
-          }
-        </div>
-      `;
+      // Create unified popup content with action buttons
+      const popupContent = createFacilityPopupWithActionsHTML({
+        name: facility.medical_organization,
+        district: facility.district ? `${facility.district} район` : undefined,
+        facilityType: facility.facility_type,
+        bedProfile: facility.bed_profile,
+        occupancyRate: facility.occupancy_rate_percent,
+        totalBeds: totalBeds,
+        id: facility.id.toString(),
+        isSelected: isSelected,
+        onAnalyzeOverloaded: `window.analyzeOverloaded('${facility.id}')`,
+        onAnalyzeUnderloaded: `window.analyzeUnderloaded('${facility.id}')`,
+        onAnalyze: `window.analyzeFacility('${facility.id}')`,
+      });
 
       const popup = new maplibregl.Popup({
         offset: 20,
         maxWidth: "350px",
-        className: "custom-popup",
         closeOnClick: false,
         closeButton: true,
       }).setHTML(popupContent);

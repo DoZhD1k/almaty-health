@@ -74,8 +74,8 @@ export function RecommendationsEngine() {
       </Alert>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="redirections" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
+      <Tabs defaultValue="redirections" className="p-3">
+        <TabsList className="grid grid-cols-2 w-fit bg-gray-100 p-1 rounded-lg mb-3">
           <TabsTrigger value="redirections" className="gap-2">
             <Route className="h-4 w-4" />
             Рекомендации по перенаправлению
