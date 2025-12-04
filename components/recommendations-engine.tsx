@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RedirectionRecommendations } from "@/components/recommendations/redirection-recommendations";
 import { RedirectionMap } from "@/components/recommendations/redirection-map";
-import { SmpTab } from "./recommendations/smp-tab";
+import { SmpTab } from "./recommendations/smp-tab-new";
 import { AlertTriangle, Route, Ambulance } from "lucide-react";
 import { FacilityStatistic } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";

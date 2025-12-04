@@ -152,8 +152,10 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
   useEffect(() => {
     const loadFacilities = async () => {
       try {
-        console.log("Loading Extra_MO_coord.geojson...");
-        const response = await fetch("/geo-files/Extra_MO_coord.geojson");
+        console.log("Loading medical facilities from API...");
+        const response = await fetch(
+          "https://admin.smartalmaty.kz/api/v1/healthcare/extra-mo-refusal/?limit=200"
+        );
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -162,11 +164,63 @@ export function SmpVtmpMapbox({ className = "" }: SmpVtmpMapboxProps) {
         const data = await response.json();
         console.log("Loaded facilities data:", data);
 
+        // Преобразуем данные API в формат GeoJSON если необходимо
         if (data.features && Array.isArray(data.features)) {
           setFacilities(data.features);
+        } else if (Array.isArray(data)) {
+          // Если API возвращает массив объектов, преобразуем в GeoJSON формат
+          const geoJsonFeatures: MedicalFacility[] = data.map(
+            (facility: any) => ({
+              type: "Feature" as const,
+              properties: {
+                medical_organization:
+                  facility.medical_organization || facility.name,
+                type: facility.type,
+                type2: facility.type2,
+                Overload: facility.Overload || facility.overload,
+                color: facility.color,
+                Number_of_beds_actually_deployed_closed:
+                  facility.Number_of_beds_actually_deployed_closed ||
+                  facility.beds,
+                "Patients admitted total":
+                  facility["Patients admitted total"] ||
+                  facility.patients_admitted,
+                "Rural residents":
+                  facility["Rural residents"] || facility.rural_residents,
+                ...facility,
+              },
+              geometry: {
+                type: "Point" as const,
+                coordinates: [
+                  facility.longitude ||
+                    facility.lng ||
+                    facility.coordinates?.[0],
+                  facility.latitude ||
+                    facility.lat ||
+                    facility.coordinates?.[1],
+                ],
+              },
+            })
+          );
+          setFacilities(geoJsonFeatures);
         }
       } catch (error) {
-        console.error("Error loading facilities:", error);
+        console.error("Error loading facilities from API:", error);
+        // Fallback к локальному файлу если API недоступен
+        try {
+          console.log("Trying fallback to local file...");
+          const fallbackResponse = await fetch(
+            "/geo-files/Extra_MO_coord.geojson"
+          );
+          if (fallbackResponse.ok) {
+            const fallbackData = await fallbackResponse.json();
+            if (fallbackData.features && Array.isArray(fallbackData.features)) {
+              setFacilities(fallbackData.features);
+            }
+          }
+        } catch (fallbackError) {
+          console.error("Fallback also failed:", fallbackError);
+        }
       }
     };
 

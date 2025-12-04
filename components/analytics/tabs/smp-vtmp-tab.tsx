@@ -29,7 +29,7 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { EChartsPieChart } from "@/components/charts/echarts-pie-chart";
-import { SmpVtmpMapbox } from "@/components/map/SmpVtmpMapbox";
+import { AnalyticsMap } from "@/components/map/AnalyticsMap";
 import {
   FacilityStatistic,
   HospitalizationStatistic,
@@ -114,7 +114,10 @@ export function SmpVtmpTab({
             </CardDescription>
           </CardHeader>
           <CardContent className="flex-1">
-            <SmpVtmpMapbox className="w-full h-full" />
+            <AnalyticsMap
+              className="w-full h-full"
+              filteredFacilities={filteredFacilities}
+            />
           </CardContent>
         </Card>
 
