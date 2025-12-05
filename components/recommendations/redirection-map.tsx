@@ -71,7 +71,7 @@ export function RedirectionMap({
         ],
       },
       center: [76.9286, 43.2566], // Almaty coordinates
-      zoom: 11,
+      zoom: 10,
     });
 
     map.current.on("load", () => {

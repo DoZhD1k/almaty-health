@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RedirectionRecommendations } from "@/components/recommendations/redirection-recommendations";
 import { RedirectionMap } from "@/components/recommendations/redirection-map";
 import { SmpTab } from "./recommendations/smp-tab-new";
+import { AnalyticsFilters } from "@/components/analytics/filters";
 import { AlertTriangle, Route, Ambulance } from "lucide-react";
 import { FacilityStatistic } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
@@ -20,6 +21,14 @@ export function RecommendationsEngine() {
   >([]);
   const [allFacilities, setAllFacilities] = useState<FacilityStatistic[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filter states
+  const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
+  const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>(
+    []
+  );
+  const [selectedBedProfiles, setSelectedBedProfiles] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     loadFacilities();
@@ -38,6 +47,57 @@ export function RecommendationsEngine() {
       setLoading(false);
     }
   };
+
+  // Filtered facilities based on selected filters
+  const filteredFacilities = useMemo(() => {
+    return allFacilities.filter((facility) => {
+      // Filter by districts
+      if (
+        selectedDistricts.length > 0 &&
+        !selectedDistricts.includes(facility.district || "")
+      ) {
+        return false;
+      }
+      // Filter by facility types
+      if (
+        selectedFacilityTypes.length > 0 &&
+        !selectedFacilityTypes.includes(facility.facility_type || "")
+      ) {
+        return false;
+      }
+      // Filter by bed profiles
+      if (
+        selectedBedProfiles.length > 0 &&
+        !selectedBedProfiles.includes(facility.bed_profile || "")
+      ) {
+        return false;
+      }
+      // Search by text fields
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const searchFields = [
+          facility.medical_organization,
+          facility.district,
+          facility.facility_type,
+          facility.bed_profile,
+          facility.ownership_type,
+          facility.address,
+          facility.emergency_mo,
+        ];
+        const matches = searchFields.some((field) =>
+          field?.toLowerCase().includes(query)
+        );
+        if (!matches) return false;
+      }
+      return true;
+    });
+  }, [
+    allFacilities,
+    selectedDistricts,
+    selectedFacilityTypes,
+    searchQuery,
+    selectedBedProfiles,
+  ]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -60,18 +120,21 @@ export function RecommendationsEngine() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Critical Alerts */}
-      <Alert className="border-orange-500 bg-orange-50/50 dark:bg-orange-950/20">
-        <AlertTriangle className="h-4 w-4 text-orange-600" />
-        <AlertTitle className="text-orange-900 dark:text-orange-100">
-          Система рекомендаций по перенаправлению
-        </AlertTitle>
-        <AlertDescription className="text-orange-700 dark:text-orange-300">
-          Анализируем загруженность медицинских организаций и предлагаем
-          оптимальные маршруты перенаправления пациентов для снижения нагрузки.
-        </AlertDescription>
-      </Alert>
+    <div className="space-y-4">
+      {/* Filters Panel */}
+      <div className="rounded-lg p-2.5 border border-[rgb(var(--blue-light-active))] bg-gradient-to-r from-[rgb(var(--blue-light))] to-[rgb(var(--blue-light-hover))]">
+        <AnalyticsFilters
+          facilities={allFacilities}
+          selectedDistricts={selectedDistricts}
+          selectedFacilityTypes={selectedFacilityTypes}
+          selectedBedProfiles={selectedBedProfiles}
+          searchQuery={searchQuery}
+          onDistrictsChange={setSelectedDistricts}
+          onFacilityTypesChange={setSelectedFacilityTypes}
+          onBedProfilesChange={setSelectedBedProfiles}
+          onSearchChange={setSearchQuery}
+        />
+      </div>
 
       {/* Main Tabs */}
       <Tabs defaultValue="redirections" className="p-3">
@@ -82,7 +145,7 @@ export function RecommendationsEngine() {
           </TabsTrigger>
           <TabsTrigger value="smp" className="gap-2">
             <Ambulance className="h-4 w-4" />
-            Рекомендации по новым СМП
+            Рекомендации по СМП
           </TabsTrigger>
         </TabsList>
 
@@ -94,7 +157,7 @@ export function RecommendationsEngine() {
               <RedirectionMap
                 source={selectedSource}
                 targets={selectedAlternatives}
-                allFacilities={allFacilities}
+                allFacilities={filteredFacilities}
                 onClose={handleClearSelection}
                 onSelectFacility={handleSelectFacility}
               />
@@ -105,14 +168,14 @@ export function RecommendationsEngine() {
               <RedirectionRecommendations
                 onSelectFacility={handleSelectFacility}
                 selectedSourceId={selectedSource?.id}
+                facilities={filteredFacilities}
               />
             </div>
           </div>
         </TabsContent>
 
         <TabsContent value="smp" className="space-y-6">
-          {/* SMP Tab - Keep as is for now */}
-          <SmpTab />
+          <SmpTab facilities={filteredFacilities} />
         </TabsContent>
       </Tabs>
     </div>

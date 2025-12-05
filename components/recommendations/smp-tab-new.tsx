@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -11,7 +11,15 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AnalyticsMap } from "@/components/map/AnalyticsMap";
-import { TrendingUp, Users, BedDouble, Activity, UserX } from "lucide-react";
+import {
+  TrendingUp,
+  Users,
+  BedDouble,
+  Activity,
+  UserX,
+  AlertTriangle,
+} from "lucide-react";
+import { FacilityStatistic } from "@/types/healthcare";
 
 interface ApiStats {
   count: number;
@@ -25,38 +33,102 @@ interface ApiStats {
   total_beds_avg_annual: number;
 }
 
-export function SmpTab() {
+interface SmpTabProps {
+  facilities?: FacilityStatistic[];
+}
+
+interface SmpFacility {
+  medical_organization: number;
+  occupancy_rate_percent: number;
+  facility_type: string;
+  district: string;
+}
+
+export function SmpTab({ facilities }: SmpTabProps) {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [stats, setStats] = useState<ApiStats | null>(null);
+  const [smpFacilities, setSmpFacilities] = useState<SmpFacility[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await fetch(
-          "https://admin.smartalmaty.kz/api/v1/healthcare/extra-mo-refusal/?limit=1"
-        );
-        const data = await response.json();
-        setStats({
-          count: data.count,
-          total_emergency_visits: data.total_emergency_visits,
-          total_hospitalized: data.total_hospitalized,
-          total_refused: data.total_refused,
-          refusal_percentage: data.refusal_percentage,
-          avg_occupancy_rate: data.avg_occupancy_rate,
-          rural_patients_total: data.rural_patients_total,
-          rural_percentage: data.rural_percentage,
-          total_beds_avg_annual: data.total_beds_avg_annual,
-        });
-      } catch (error) {
-        console.error("Failed to fetch stats:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Count overloaded SMP facilities (> 85%)
+  const overloadedCount = useMemo(() => {
+    return smpFacilities.filter((f) => f.occupancy_rate_percent > 0.85).length;
+  }, [smpFacilities]);
 
+  // Calculate top 3 overloaded profiles by average occupancy rate
+  const topOverloadedProfiles = useMemo(() => {
+    if (smpFacilities.length === 0) return [];
+
+    // Group facilities by facility_type (profile)
+    const profileStats = new Map<
+      string,
+      { total: number; count: number; overloadedCount: number }
+    >();
+
+    smpFacilities.forEach((f) => {
+      const profile = f.facility_type || "Неизвестно";
+      const existing = profileStats.get(profile) || {
+        total: 0,
+        count: 0,
+        overloadedCount: 0,
+      };
+      existing.total += f.occupancy_rate_percent;
+      existing.count += 1;
+      if (f.occupancy_rate_percent > 0.85) {
+        existing.overloadedCount += 1;
+      }
+      profileStats.set(profile, existing);
+    });
+
+    // Calculate average and sort by it
+    const profilesArray = Array.from(profileStats.entries())
+      .map(([profile, stats]) => ({
+        profile,
+        avgOccupancy: stats.total / stats.count,
+        count: stats.count,
+        overloadedCount: stats.overloadedCount,
+      }))
+      .filter((p) => p.avgOccupancy > 0.7) // Only show profiles with avg > 70%
+      .sort((a, b) => b.avgOccupancy - a.avgOccupancy)
+      .slice(0, 3);
+
+    return profilesArray;
+  }, [smpFacilities]);
+
+  useEffect(() => {
     fetchStats();
   }, []);
+
+  const fetchStats = async () => {
+    try {
+      // Fetch all SMP facilities data
+      const response = await fetch(
+        "https://admin.smartalmaty.kz/api/v1/healthcare/extra-mo-refusal/?limit=100"
+      );
+      const data = await response.json();
+
+      setStats({
+        count: data.count,
+        total_emergency_visits: data.total_emergency_visits,
+        total_hospitalized: data.total_hospitalized,
+        total_refused: data.total_refused,
+        refusal_percentage: data.refusal_percentage,
+        avg_occupancy_rate: data.avg_occupancy_rate,
+        rural_patients_total: data.rural_patients_total,
+        rural_percentage: data.rural_percentage,
+        total_beds_avg_annual: data.total_beds_avg_annual,
+      });
+
+      // Store facilities for counting overloaded
+      if (data.results) {
+        setSmpFacilities(data.results);
+      }
+    } catch (error) {
+      console.error("Failed to fetch stats:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const formatNumber = (num: number) => {
     return num.toLocaleString("ru-RU");
@@ -64,6 +136,48 @@ export function SmpTab() {
 
   return (
     <div className="space-y-4">
+      {/* Alert about overloaded SMP facilities */}
+      {overloadedCount > 0 && (
+        <Card className="border-orange-200 bg-orange-50/50 dark:bg-orange-950/20">
+          <CardContent className="py-3">
+            <div className="flex items-center gap-4">
+              <AlertTriangle className="h-8 w-8 text-orange-600 flex-shrink-0" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold flex items-center gap-2">
+                  Обнаружено {overloadedCount} перегруженных СМП МО из{" "}
+                  {smpFacilities.length}
+                  <Badge variant="destructive" className="text-xs">
+                    &gt;85%
+                  </Badge>
+                </h3>
+                <p className="text-sm text-muted-foreground mb-2">
+                  Рекомендуется перенаправление пациентов или увеличение коек
+                  для снижения нагрузки на существующие учреждения СМП
+                </p>
+
+                {/* Top 3 overloaded profiles */}
+                {topOverloadedProfiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-xs text-muted-foreground">
+                      Топ профили:
+                    </span>
+                    {topOverloadedProfiles.map((p, idx) => (
+                      <Badge
+                        key={p.profile}
+                        variant={idx === 0 ? "destructive" : "secondary"}
+                        className="text-xs"
+                      >
+                        {p.profile} ({Math.round(p.avgOccupancy * 100)}%)
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Карта оптимального покрытия */}
         <Card className="lg:col-span-2 lg:row-span-2 flex flex-col">
@@ -73,7 +187,10 @@ export function SmpTab() {
             </CardTitle>
           </CardHeader>
           <CardContent className="flex-1 p-2">
-            <AnalyticsMap className="w-full h-full" />
+            <AnalyticsMap
+              className="w-full h-full"
+              filteredFacilities={facilities}
+            />
           </CardContent>
         </Card>
 

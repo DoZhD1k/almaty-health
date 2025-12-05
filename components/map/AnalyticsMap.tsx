@@ -119,7 +119,7 @@ export function AnalyticsMap({
       container: containerRef.current,
       style: "mapbox://styles/mapbox/streets-v12",
       center: [76.9, 43.25], // Координаты Алматы
-      zoom: 11,
+      zoom: 10,
       maxZoom: 18,
       minZoom: 9,
     });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -37,11 +37,13 @@ interface RedirectionRecommendationsProps {
     alternatives: FacilityStatistic[]
   ) => void;
   selectedSourceId?: number;
+  facilities?: FacilityStatistic[];
 }
 
 export function RedirectionRecommendations({
   onSelectFacility,
   selectedSourceId,
+  facilities: externalFacilities,
 }: RedirectionRecommendationsProps) {
   const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
   const [redirections, setRedirections] = useState<RedirectionData[]>([]);
@@ -50,40 +52,59 @@ export function RedirectionRecommendations({
     useState<RedirectionData | null>(null);
   const [isFormulaDialogOpen, setIsFormulaDialogOpen] = useState(false);
 
+  // Refs for scrolling to selected card
+  const cardRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+
+  // Scroll to selected card when selectedSourceId changes
   useEffect(() => {
-    loadFacilities();
-  }, []);
+    if (selectedSourceId && cardRefs.current.has(selectedSourceId)) {
+      const cardElement = cardRefs.current.get(selectedSourceId);
+      cardElement?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [selectedSourceId]);
+
+  useEffect(() => {
+    // If facilities are passed as props, use them
+    if (externalFacilities && externalFacilities.length > 0) {
+      processAndSetFacilities(externalFacilities);
+    } else {
+      loadFacilities();
+    }
+  }, [externalFacilities]);
+
+  const processAndSetFacilities = (allFacilities: FacilityStatistic[]) => {
+    setFacilities(allFacilities);
+
+    // Находим перегруженные МО (> 85%)
+    const overloaded = allFacilities
+      .filter((f) => f.occupancy_rate_percent > 0.85)
+      .sort((a, b) => b.occupancy_rate_percent - a.occupancy_rate_percent);
+
+    // Для каждого перегруженного МО находим альтернативы
+    const redirectionData: RedirectionData[] = overloaded.map((source) => {
+      const alternatives = findNearbyAlternatives(source, allFacilities);
+      const redirectCount = calculateRedirectionCount(source);
+
+      return {
+        source,
+        alternatives,
+        redirectCount,
+      };
+    });
+
+    setRedirections(redirectionData);
+    setLoading(false);
+  };
 
   const loadFacilities = async () => {
     setLoading(true);
     try {
       const response = await healthcareApi.getFacilityStatistics();
       if (response.results && response.results.length > 0) {
-        const allFacilities = response.results;
-        setFacilities(allFacilities);
-
-        // Находим перегруженные МО (> 70%)
-        const overloaded = allFacilities
-          .filter((f) => f.occupancy_rate_percent > 0.85)
-          .sort((a, b) => b.occupancy_rate_percent - a.occupancy_rate_percent);
-
-        // Для каждого перегруженного МО находим альтернативы
-        const redirectionData: RedirectionData[] = overloaded.map((source) => {
-          const alternatives = findNearbyAlternatives(source, allFacilities);
-          const redirectCount = calculateRedirectionCount(source);
-
-          return {
-            source,
-            alternatives,
-            redirectCount,
-          };
-        });
-
-        setRedirections(redirectionData);
+        processAndSetFacilities(response.results);
       }
     } catch (error) {
       console.error("Error loading facilities:", error);
-    } finally {
       setLoading(false);
     }
   };
@@ -220,6 +241,11 @@ export function RedirectionRecommendations({
           return (
             <Card
               key={redirection.source.id}
+              ref={(el) => {
+                if (el) {
+                  cardRefs.current.set(redirection.source.id, el);
+                }
+              }}
               className={`overflow-hidden border-l-4 border-l-orange-500 cursor-pointer transition-all ${
                 selectedSourceId === redirection.source.id
                   ? "ring-2 ring-primary shadow-lg"
@@ -273,19 +299,25 @@ export function RedirectionRecommendations({
 
               <CardContent className="space-y-2">
                 {/* Компактная рекомендация */}
-                <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center gap-2">
-                    <Navigation className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                    <div className="text-sm">
-                      <span className="font-medium text-blue-900 dark:text-blue-100">
-                        Перенаправить {redirection.redirectCount} пациентов
-                      </span>
-                      <span className="text-blue-700 dark:text-blue-300 block">
-                        → загруженность до 85%
-                      </span>
+                {(() => {
+                  const bedCalc = calculateRequiredBeds(redirection.source);
+                  return (
+                    <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded border border-blue-200 dark:border-blue-800">
+                      <div className="flex items-center gap-2">
+                        <Bed className="h-4 w-4 text-blue-600 flex-shrink-0" />
+                        <div className="text-sm">
+                          <span className="font-medium text-blue-900 dark:text-blue-100">
+                            Требуется {bedCalc.additionalBeds} дополнительных
+                            коек
+                          </span>
+                          <span className="text-blue-700 dark:text-blue-300 block">
+                            → для загруженности 85%
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Компактные альтернативы */}
                 {redirection.alternatives.length > 0 ? (
