@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RedirectionRecommendations } from "@/components/recommendations/redirection-recommendations";
 import { RedirectionMap } from "@/components/recommendations/redirection-map";
-import { SmpTab } from "./recommendations/smp-tab-new";
+import { SmpTab } from "./recommendations/smp-tab";
 import { AnalyticsFilters } from "@/components/analytics/filters";
-import { AlertTriangle, Route, Ambulance } from "lucide-react";
+import { Route, Ambulance } from "lucide-react";
 import { FacilityStatistic } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 
@@ -25,7 +24,7 @@ export function RecommendationsEngine() {
   // Filter states
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
   const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>(
-    []
+    [],
   );
   const [selectedBedProfiles, setSelectedBedProfiles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -85,7 +84,7 @@ export function RecommendationsEngine() {
           facility.emergency_mo,
         ];
         const matches = searchFields.some((field) =>
-          field?.toLowerCase().includes(query)
+          field?.toLowerCase().includes(query),
         );
         if (!matches) return false;
       }
@@ -108,7 +107,7 @@ export function RecommendationsEngine() {
 
   const handleSelectFacility = (
     source: FacilityStatistic,
-    alternatives: FacilityStatistic[]
+    alternatives: FacilityStatistic[],
   ) => {
     setSelectedSource(source);
     setSelectedAlternatives(alternatives);

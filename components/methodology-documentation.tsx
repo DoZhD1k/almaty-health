@@ -16,9 +16,7 @@ import {
   AlertTriangle,
   Info,
   BookOpen,
-  Target,
   BarChart3,
-  Users,
 } from "lucide-react";
 
 export function MethodologyDocumentation() {

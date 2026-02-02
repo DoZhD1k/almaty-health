@@ -1,4 +1,3 @@
-import { Header } from "@/components/header";
 import { AnalyticsDashboard } from "@/components/analytics-dashboard";
 
 export default function AnalyticsPage() {

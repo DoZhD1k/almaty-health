@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { FacilityStatistic } from "@/types/healthcare";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Navigation, X, MapPin, AlertTriangle, Calculator } from "lucide-react";
+import { Navigation, MapPin, AlertTriangle, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FormulaInfoDialog } from "./formula-info-dialog";
 import {
@@ -25,7 +25,7 @@ interface RedirectionMapProps {
   onClose?: () => void;
   onSelectFacility?: (
     source: FacilityStatistic,
-    alternatives: FacilityStatistic[]
+    alternatives: FacilityStatistic[],
   ) => void;
 }
 
@@ -118,7 +118,7 @@ export function RedirectionMap({
   // Функция для поиска перегруженных больниц, которые могут направлять пациентов в выбранную больницу
   const findOverloadedSources = (
     targetFacility: FacilityStatistic,
-    allFacilities: FacilityStatistic[]
+    allFacilities: FacilityStatistic[],
   ) => {
     return allFacilities.filter((facility) => {
       // Исключаем саму больницу
@@ -131,7 +131,7 @@ export function RedirectionMap({
       if (
         !isCompatibleFacilityType(
           facility.facility_type,
-          targetFacility.facility_type
+          targetFacility.facility_type,
         )
       ) {
         return false;
@@ -160,12 +160,12 @@ export function RedirectionMap({
     // Add global functions for popup buttons (with current data)
     (window as any).analyzeOverloaded = (facilityId: string) => {
       const facility = allFacilities.find(
-        (f) => f.id.toString() === facilityId
+        (f) => f.id.toString() === facilityId,
       );
       if (facility && onSelectFacility) {
         const alternativeResults = findNearbyAlternatives(
           facility,
-          allFacilities
+          allFacilities,
         );
         const alternatives = alternativeResults.map((alt) => alt.facility);
         onSelectFacility(facility, alternatives);
@@ -174,12 +174,12 @@ export function RedirectionMap({
 
     (window as any).analyzeUnderloaded = (facilityId: string) => {
       const facility = allFacilities.find(
-        (f) => f.id.toString() === facilityId
+        (f) => f.id.toString() === facilityId,
       );
       if (facility && onSelectFacility) {
         const overloadedSources = findOverloadedSources(
           facility,
-          allFacilities
+          allFacilities,
         );
         if (overloadedSources.length > 0) {
           onSelectFacility(facility, overloadedSources);
@@ -191,7 +191,7 @@ export function RedirectionMap({
 
     (window as any).analyzeFacility = (facilityId: string) => {
       const facility = allFacilities.find(
-        (f) => f.id.toString() === facilityId
+        (f) => f.id.toString() === facilityId,
       );
       if (facility && onSelectFacility) {
         onSelectFacility(facility, []);
@@ -378,10 +378,10 @@ export function RedirectionMap({
       // Calculate additional statistics
       const totalBeds = facility.beds_deployed_withdrawn_for_rep || 0;
       const occupancyPercent = Math.round(
-        facility.occupancy_rate_percent * 100
+        facility.occupancy_rate_percent * 100,
       );
       const availableBeds = Math.floor(
-        totalBeds * (1 - facility.occupancy_rate_percent)
+        totalBeds * (1 - facility.occupancy_rate_percent),
       );
       const occupiedBeds = totalBeds - availableBeds;
 

@@ -17,7 +17,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer,
   LabelList,
   Cell,
 } from "recharts";
@@ -78,15 +77,15 @@ export function CombinedChart({
       ...new Set(filteredFacilities.map((f) => f.bed_profile)),
     ].map((profile) => {
       const facilities = filteredFacilities.filter(
-        (f) => f.bed_profile === profile
+        (f) => f.bed_profile === profile,
       );
       const totalDeaths = facilities.reduce(
         (sum, f) => sum + (f.death_smp || 0) + (f.death_vtmp || 0),
-        0
+        0,
       );
       const totalPatients = facilities.reduce(
         (sum, f) => sum + (f.total_admitted_patients || 0),
-        0
+        0,
       );
       const mortalityRate =
         totalPatients > 0 ? (totalDeaths / totalPatients) * 100 : 0;
@@ -109,7 +108,7 @@ export function CombinedChart({
       ...new Set(filteredFacilities.map((f) => f.facility_type)),
     ].map((type) => {
       const facilities = filteredFacilities.filter(
-        (f) => f.facility_type === type
+        (f) => f.facility_type === type,
       );
 
       const avgIdle =

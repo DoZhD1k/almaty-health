@@ -11,8 +11,6 @@ import { AnalyticsFilters } from "./analytics/filters";
 import { KeyMetrics } from "./analytics/cards";
 import { ComparisonTab } from "./analytics/tabs/comparison-tab";
 import { SmpVtmpTab } from "./analytics/tabs/smp-vtmp-tab";
-import { DistrictsTab } from "./analytics/tabs/districts-tab";
-import { DetailedFacilitiesTable } from "./analytics/cards/detailed-facilities-table";
 import { ProblemsAlert } from "./analytics/problems-alert";
 
 export function AnalyticsDashboard() {
@@ -24,7 +22,7 @@ export function AnalyticsDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [selectedDistricts, setSelectedDistricts] = useState<string[]>([]);
   const [selectedFacilityTypes, setSelectedFacilityTypes] = useState<string[]>(
-    []
+    [],
   );
   const [selectedBedProfiles, setSelectedBedProfiles] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -91,7 +89,7 @@ export function AnalyticsDashboard() {
           facility.emergency_mo,
         ];
         const matches = searchFields.some((field) =>
-          field?.toLowerCase().includes(query)
+          field?.toLowerCase().includes(query),
         );
         if (!matches) return false;
       }

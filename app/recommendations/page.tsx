@@ -1,4 +1,3 @@
-import { Header } from "@/components/header";
 import { RecommendationsEngine } from "@/components/recommendations-engine";
 
 export default function RecommendationsPage() {

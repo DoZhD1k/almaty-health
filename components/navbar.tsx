@@ -13,14 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { BlockMath } from "@/components/ui/math-formula";
 import { cn } from "@/lib/utils";
-import {
-  Activity,
-  TrendingUp,
-  Menu,
-  X,
-  BarChart3,
-  BookOpen,
-} from "lucide-react";
+import { Activity, Menu, X, BarChart3, BookOpen } from "lucide-react";
 
 const navigation = [
   {
@@ -88,13 +81,13 @@ export function Navbar() {
                     "group relative inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all duration-300",
                     active
                       ? "bg-[#4169E1] text-white shadow-lg"
-                      : "text-gray-700 hover:bg-gray-100"
+                      : "text-gray-700 hover:bg-gray-100",
                   )}
                 >
                   <item.icon
                     className={cn(
                       "relative z-10 h-4 w-4 transition-transform duration-300",
-                      active ? "scale-105" : "group-hover:scale-110"
+                      active ? "scale-105" : "group-hover:scale-110",
                     )}
                   />
                   <span className="relative z-10 whitespace-nowrap">
@@ -374,13 +367,13 @@ export function Navbar() {
                     "flex items-center gap-3 rounded-2xl px-3 py-3 text-base font-medium transition-all duration-200",
                     active
                       ? "bg-[#4169E1] text-white shadow-lg"
-                      : "text-gray-700 hover:bg-gray-100"
+                      : "text-gray-700 hover:bg-gray-100",
                   )}
                 >
                   <span
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-xl",
-                      active ? "bg-white/20" : "bg-gray-100"
+                      active ? "bg-white/20" : "bg-gray-100",
                     )}
                   >
                     <item.icon className="h-5 w-5" />

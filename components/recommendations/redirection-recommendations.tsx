@@ -3,27 +3,14 @@
 import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  AlertTriangle,
-  MapPin,
-  Navigation,
-  Bed,
-  ArrowRight,
-  Clock,
-  CheckCircle2,
-  Info,
-  Calculator,
-} from "lucide-react";
+import { AlertTriangle, MapPin, Bed, CheckCircle2 } from "lucide-react";
 import { FacilityStatistic } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 import {
   findNearbyAlternatives,
   calculateRedirectionCount,
   AlternativeFacility,
-  isCompatibleFacilityType,
 } from "@/lib/utils/distance";
-// import { FormulaInfoDialog } from "./formula-info-dialog";
 
 interface RedirectionData {
   source: FacilityStatistic;
@@ -34,7 +21,7 @@ interface RedirectionData {
 interface RedirectionRecommendationsProps {
   onSelectFacility?: (
     source: FacilityStatistic,
-    alternatives: FacilityStatistic[]
+    alternatives: FacilityStatistic[],
   ) => void;
   selectedSourceId?: number;
   facilities?: FacilityStatistic[];
@@ -235,7 +222,7 @@ export function RedirectionRecommendations({
         {redirections.map((redirection, index) => {
           const risk = getRiskLevel(redirection.source.occupancy_rate_percent);
           const currentLoad = Math.round(
-            redirection.source.occupancy_rate_percent * 100
+            redirection.source.occupancy_rate_percent * 100,
           );
 
           return (
@@ -255,7 +242,7 @@ export function RedirectionRecommendations({
                 if (onSelectFacility) {
                   onSelectFacility(
                     redirection.source,
-                    redirection.alternatives.map((alt) => alt.facility)
+                    redirection.alternatives.map((alt) => alt.facility),
                   );
                 }
               }}
@@ -331,7 +318,7 @@ export function RedirectionRecommendations({
                         .slice(0, 5)
                         .map((alt, altIndex) => {
                           const altLoad = Math.round(
-                            alt.facility.occupancy_rate_percent * 100
+                            alt.facility.occupancy_rate_percent * 100,
                           );
 
                           return (
@@ -376,8 +363,8 @@ export function RedirectionRecommendations({
                                     altLoad < 50
                                       ? "text-green-600"
                                       : altLoad < 70
-                                      ? "text-blue-600"
-                                      : "text-gray-600"
+                                        ? "text-blue-600"
+                                        : "text-gray-600"
                                   }`}
                                 >
                                   {altLoad}%
@@ -403,7 +390,7 @@ export function RedirectionRecommendations({
 
                       {(() => {
                         const bedCalc = calculateRequiredBeds(
-                          redirection.source
+                          redirection.source,
                         );
                         return (
                           <div className="ml-6 space-y-1 text-sm">

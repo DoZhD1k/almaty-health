@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -163,17 +162,17 @@ export function MedicalFilterPanel({
     const totalFacilities = filteredFacilities.length;
     const totalOccupancy = filteredFacilities.reduce(
       (sum, f) => sum + f.occupancy_rate_percent,
-      0
+      0,
     );
     const averageOccupancy = Math.round(
-      (totalOccupancy / totalFacilities) * 100
+      (totalOccupancy / totalFacilities) * 100,
     );
     const overloadedCount = filteredFacilities.filter(
-      (f) => f.occupancy_rate_percent > 0.95
+      (f) => f.occupancy_rate_percent > 0.95,
     ).length;
     const totalBeds = filteredFacilities.reduce(
       (sum, f) => sum + (f.beds_deployed_withdrawn_for_rep || 0),
-      0
+      0,
     );
 
     return {
@@ -196,7 +195,7 @@ export function MedicalFilterPanel({
       "facilityTypes" | "bedProfiles" | "loadLevels"
     >,
     value: string,
-    checked: boolean
+    checked: boolean,
   ) => {
     const currentValues = filters[category];
     const newValues = checked
@@ -289,7 +288,7 @@ export function MedicalFilterPanel({
                         handleCheckboxChange(
                           "facilityTypes",
                           option.id,
-                          checked as boolean
+                          checked as boolean,
                         )
                       }
                       className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
@@ -330,7 +329,7 @@ export function MedicalFilterPanel({
                         handleCheckboxChange(
                           "bedProfiles",
                           option.id,
-                          checked as boolean
+                          checked as boolean,
                         )
                       }
                       className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
@@ -373,7 +372,7 @@ export function MedicalFilterPanel({
                         handleCheckboxChange(
                           "loadLevels",
                           option.id,
-                          checked as boolean
+                          checked as boolean,
                         )
                       }
                       className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
@@ -414,8 +413,8 @@ export function MedicalFilterPanel({
                 summaryData.averageOccupancy <= 70
                   ? "bg-green-50 border-green-100"
                   : summaryData.averageOccupancy > 70
-                  ? "bg-orange-50 border-orange-100"
-                  : "bg-gray-50 border-gray-100"
+                    ? "bg-orange-50 border-orange-100"
+                    : "bg-gray-50 border-gray-100"
               }`}
             >
               <div
@@ -424,8 +423,8 @@ export function MedicalFilterPanel({
                   summaryData.averageOccupancy <= 70
                     ? "bg-green-500"
                     : summaryData.averageOccupancy > 70
-                    ? "bg-orange-500"
-                    : "bg-gray-500"
+                      ? "bg-orange-500"
+                      : "bg-gray-500"
                 }`}
               >
                 <TrendingUp className="h-3 w-3 text-white" />
@@ -437,8 +436,8 @@ export function MedicalFilterPanel({
                     summaryData.averageOccupancy <= 70
                       ? "text-green-600"
                       : summaryData.averageOccupancy > 70
-                      ? "text-orange-600"
-                      : "text-gray-600"
+                        ? "text-orange-600"
+                        : "text-gray-600"
                   }`}
                 >
                   Загруженность
@@ -449,8 +448,8 @@ export function MedicalFilterPanel({
                     summaryData.averageOccupancy <= 70
                       ? "text-green-700"
                       : summaryData.averageOccupancy > 70
-                      ? "text-orange-700"
-                      : "text-gray-700"
+                        ? "text-orange-700"
+                        : "text-gray-700"
                   }`}
                 >
                   {summaryData.averageOccupancy}%
