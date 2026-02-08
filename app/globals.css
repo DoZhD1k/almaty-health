@@ -1,0 +1,206 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "katex/dist/katex.min.css";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --radius: 0.625rem;
+  /* Custom Blue Palette (Set 1) */
+  --blue-light: 235 241 255;
+  --blue-light-hover: 225 234 255;
+  --blue-light-active: 193 211 255;
+  --blue-normal: 55 114 255;
+  --blue-normal-hover: 50 103 230;
+  --blue-normal-active: 44 91 204;
+  --blue-dark: 41 86 191;
+  --blue-dark-hover: 33 68 153;
+  --blue-dark-active: 25 51 115;
+  --blue-darker: 19 40 89;
+
+  /* Blue Palette (Set 2 – darker themed) */
+  --blue2-light: 234 235 238;
+  --blue2-light-hover: 223 224 229;
+  --blue2-light-active: 188 192 202;
+  --blue2-normal: 40 51 83;
+  --blue2-normal-hover: 36 46 75;
+  --blue2-normal-active: 32 41 66;
+  --blue2-dark: 30 38 62;
+  --blue2-dark-hover: 24 31 50;
+  --blue2-dark-active: 18 23 37;
+  --blue2-darker: 14 18 29;
+
+  /* Grey Palette */
+  --grey-light: 232 232 232;
+  --grey-light-hover: 221 221 221;
+  --grey-light-active: 184 184 184;
+  --grey-normal: 27 27 27;
+  --grey-dark: 20 20 20;
+  --grey-darker: 9 9 9;
+
+  /* Sidebar colors using Blue Set 2 */
+  --sidebar: rgb(var(--blue2-darker));
+  --sidebar-foreground: rgb(var(--blue2-light));
+  --sidebar-primary: rgb(var(--blue-normal));
+  --sidebar-primary-foreground: rgb(255 255 255);
+  --sidebar-accent: rgb(var(--blue2-dark));
+  --sidebar-accent-foreground: rgb(var(--blue2-light));
+  --sidebar-border: rgb(var(--blue2-dark-hover));
+  --sidebar-ring: rgb(var(--blue-normal));
+
+  /* Load status colors */
+  --load-low: 120 50% 50%;
+  --load-optimal: 142 76% 36%;
+  --load-high: 48 96% 53%;
+  --load-critical: 25 95% 53%;
+  --load-overload: 0 84% 60%;
+  --load-extreme: 0 63% 31%;
+}
+
+@theme inline {
+  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Load status colors */
+  --color-load-low: hsl(var(--load-low));
+  --color-load-optimal: hsl(var(--load-optimal));
+  --color-load-high: hsl(var(--load-high));
+  --color-load-critical: hsl(var(--load-critical));
+  --color-load-overload: hsl(var(--load-overload));
+  --color-load-extreme: hsl(var(--load-extreme));
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Progress bars with dynamic width */
+@layer components {
+  .progress-0 {
+    width: 0%;
+  }
+  .progress-5 {
+    width: 5%;
+  }
+  .progress-10 {
+    width: 10%;
+  }
+  .progress-15 {
+    width: 15%;
+  }
+  .progress-20 {
+    width: 20%;
+  }
+  .progress-25 {
+    width: 25%;
+  }
+  .progress-30 {
+    width: 30%;
+  }
+  .progress-35 {
+    width: 35%;
+  }
+  .progress-40 {
+    width: 40%;
+  }
+  .progress-45 {
+    width: 45%;
+  }
+  .progress-50 {
+    width: 50%;
+  }
+  .progress-55 {
+    width: 55%;
+  }
+  .progress-60 {
+    width: 60%;
+  }
+  .progress-65 {
+    width: 65%;
+  }
+  .progress-70 {
+    width: 70%;
+  }
+  .progress-75 {
+    width: 75%;
+  }
+  .progress-80 {
+    width: 80%;
+  }
+  .progress-85 {
+    width: 85%;
+  }
+  .progress-90 {
+    width: 90%;
+  }
+  .progress-95 {
+    width: 95%;
+  }
+  .progress-100 {
+    width: 100%;
+  }
+}

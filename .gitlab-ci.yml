@@ -1,0 +1,13 @@
+stages:
+  - containerize
+  - deploy-k8s
+
+variables:
+  DOCKER_BUILD_ARGS: >
+    --build-arg NEXT_PUBLIC_BASE_PATH=/hospital-admissions
+
+include:
+  - project: 'opendata/devops/templates'
+    file: 'build/containerize.yaml'
+  - project: 'opendata/devops/templates'
+    file: 'deploy/k8s-deploy.yaml'

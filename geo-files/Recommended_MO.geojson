@@ -1,0 +1,156 @@
+{
+  "type": "FeatureCollection",
+  "name": "Recommended_MO",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "medical_organization": "Рекомендуемая городская клиническая больница №9",
+        "Bed_Profile": "по городским МО",
+        "is delated": null,
+        "type": "Городские клинические больницы",
+        "type2": "гос",
+        "Number_of_ beds_actually_deployed_closed": "250",
+        "Patients admitted total": "0",
+        "Rural residents": "0",
+        "found_address_2gis": "р-н Наурызбай, условный адрес 1",
+        "district_2gis": "Наурызбайский район",
+        "search_method": "Рекомендация модели",
+        "Overload": "0%",
+        "color": "green",
+        "Extra_MO": "R1",
+        "is_recommended": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [76.785, 43.25]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "medical_organization": "Рекомендуемый перинатальный центр №3",
+        "Bed_Profile": "по городским МО",
+        "is delated": null,
+        "type": "Перинатальные/акушерские",
+        "type2": "гос",
+        "Number_of_ beds_actually_deployed_closed": "180",
+        "Patients admitted total": "0",
+        "Rural residents": "0",
+        "found_address_2gis": "р-н Алатауский, условный адрес 2",
+        "district_2gis": "Алатауский район",
+        "search_method": "Рекомендация модели",
+        "Overload": "0%",
+        "color": "green",
+        "Extra_MO": "R2",
+        "is_recommended": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [76.83, 43.205]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "medical_organization": "Рекомендуемая детская клиническая больница №3",
+        "Bed_Profile": "по городским МО",
+        "is delated": null,
+        "type": "Детские и педиатрические центры",
+        "type2": "гос",
+        "Number_of_ beds_actually_deployed_closed": "220",
+        "Patients admitted total": "0",
+        "Rural residents": "0",
+        "found_address_2gis": "р-н Ауэзовский, условный адрес 3",
+        "district_2gis": "Ауэзовский район",
+        "search_method": "Рекомендация модели",
+        "Overload": "0%",
+        "color": "green",
+        "Extra_MO": "R3",
+        "is_recommended": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [76.875, 43.24]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "medical_organization": "Рекомендуемая частная многопрофильная клиника «Запад»",
+        "Bed_Profile": "по частным МО",
+        "is delated": null,
+        "type": "Многопрофильные/частные клиники",
+        "type2": "Частные",
+        "Number_of_ beds_actually_deployed_closed": "90",
+        "Patients admitted total": "0",
+        "Rural residents": "0",
+        "found_address_2gis": "р-н Наурызбай, условный адрес 4",
+        "district_2gis": "Наурызбайский район",
+        "search_method": "Рекомендация модели",
+        "Overload": "0%",
+        "color": "green",
+        "Extra_MO": "R4",
+        "is_recommended": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [76.765, 43.265]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "medical_organization": "Рекомендуемый центр реабилитации «Юг»",
+        "Bed_Profile": "по городским МО",
+        "is delated": null,
+        "type": "Реабилитационные центры",
+        "type2": "гос",
+        "Number_of_ beds_actually_deployed_closed": "120",
+        "Patients admitted total": "0",
+        "Rural residents": "0",
+        "found_address_2gis": "р-н Жетысуский, условный адрес 5",
+        "district_2gis": "Жетысуский район",
+        "search_method": "Рекомендация модели",
+        "Overload": "0%",
+        "color": "green",
+        "Extra_MO": "R5",
+        "is_recommended": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [76.95, 43.29]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "medical_organization": "Рекомендуемая частная клиника дневного стационара",
+        "Bed_Profile": "по частным МО",
+        "is delated": null,
+        "type": "Многопрофильные/частные клиники",
+        "type2": "Частные",
+        "Number_of_ beds_actually_deployed_closed": "60",
+        "Patients admitted total": "0",
+        "Rural residents": "0",
+        "found_address_2gis": "р-н Бостандыкский, условный адрес 6",
+        "district_2gis": "Бостандыкский район",
+        "search_method": "Рекомендация модели",
+        "Overload": "0%",
+        "color": "green",
+        "Extra_MO": "R6",
+        "is_recommended": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [76.88, 43.21]
+      }
+    }
+  ]
+}

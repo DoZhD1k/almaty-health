@@ -1,0 +1,54 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+dist/
+
+# env (secrets)
+.env
+.env.*
+!.env.example
+
+# debug & logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE (IntelliJ, VS Code)
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# misc
+*.pem
+*.swp
+*.swo
+*~
+.turbo/
+.cache/
+.temp/
+.tmp/

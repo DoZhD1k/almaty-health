@@ -1,0 +1,51 @@
+replicaCount: 1
+
+image:
+  repository: git-ci-cd.smartalmaty.kz:8443/opendata/hospital-admissions
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+env:
+  open:
+    - name: NEXT_PUBLIC_BASE_PATH
+      value: "/hospital-admissions"
+
+imagePullSecrets:
+  - name: regcred
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+
+healthcheckPath: /
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+  hosts:
+    - host: opendata.smartalmaty.kz
+      paths:
+        - path: /hospital-admissions
+          pathType: Prefix
+
+resources:
+  requests:
+    cpu: 0.2
+    memory: 256Mi
+  limits:
+    cpu: 1
+    memory: 512Mi
+
+autoscaling:
+  enabled: false
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+pvc:
+  enabled: false
+  pvcname: media
+  pvcpatch: /media
