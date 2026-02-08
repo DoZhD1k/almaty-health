@@ -14,6 +14,8 @@ ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
 # Токен карты Mapbox — подставляется при сборке (CI передаёт из переменных)
 ARG NEXT_PUBLIC_MAPBOX_TOKEN
 ENV NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}
+# Сбрасывает кэш слоя сборки при каждом пайплайне (чтобы токен подхватился)
+ARG CACHEBUST=1
 
 RUN npm run build
 
