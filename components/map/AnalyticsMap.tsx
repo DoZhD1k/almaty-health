@@ -9,6 +9,7 @@ import { createFacilityPopupHTML, popupStyles } from "@/lib/utils/popup-styles";
 
 // Токен Mapbox
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes("example")) {
   console.warn(
@@ -156,7 +157,7 @@ export function AnalyticsMap({
         console.log("Loading medical facilities...");
 
         // Загружаем координаты из локального GeoJSON файла (53 точки с координатами)
-        const fileResponse = await fetch("/api/gpkg?layer=hospitals");
+        const fileResponse = await fetch(`${BASE_PATH}/api/gpkg?layer=hospitals`);
         const fileData = await fileResponse.json();
 
         // Загружаем детальные данные из API (с пагинацией)
@@ -240,7 +241,7 @@ export function AnalyticsMap({
     // Загрузка рекомендуемых СМП
     const loadRecommendedFacilities = async () => {
       try {
-        const response = await fetch("/geo-files/Recommended_MO.geojson");
+        const response = await fetch(`${BASE_PATH}/geo-files/Recommended_MO.geojson`);
         if (!response.ok) {
           console.warn("Recommended_MO.geojson not found");
           return;
