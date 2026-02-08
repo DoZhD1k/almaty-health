@@ -5,6 +5,7 @@ stages:
 variables:
   DOCKER_BUILD_ARGS: >
     --build-arg NEXT_PUBLIC_BASE_PATH=/hospital-admissions
+    --build-arg NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN
 
 include:
   - project: 'opendata/devops/templates'
