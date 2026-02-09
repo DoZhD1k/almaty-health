@@ -9,10 +9,8 @@ COPY . .
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ARG NEXT_PUBLIC_BASE_PATH=/hospital-admissions
-ENV NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH}
+ENV NEXT_PUBLIC_BASE_PATH=/hospital-admissions
 # Токен карты Mapbox — подставляется при сборке (CI передаёт из переменных)
-ARG NEXT_PUBLIC_MAPBOX_TOKEN
 ENV NEXT_PUBLIC_MAPBOX_TOKEN=${NEXT_PUBLIC_MAPBOX_TOKEN}
 # Сбрасывает кэш слоя сборки при каждом пайплайне (чтобы токен подхватился)
 ARG CACHEBUST=1
