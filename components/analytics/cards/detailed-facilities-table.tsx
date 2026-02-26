@@ -65,7 +65,7 @@ export function DetailedFacilitiesTable({
     filteredFacilities.slice(0, 3).map((f) => ({
       name: f.medical_organization,
       beds: f.beds_deployed_withdrawn_for_rep_avg_annual,
-    }))
+    })),
   );
 
   const handleSort = (key: SortKey) => {
@@ -90,7 +90,7 @@ export function DetailedFacilitiesTable({
 
   // Создаем Map для быстрого поиска: facility.id → cityOrg.med_fk
   const cityOrgByMedFk = new Map(
-    cityOrganizations.map((org) => [org.med_fk, org])
+    cityOrganizations.map((org) => [org.med_fk, org]),
   );
 
   // Поиск городской организации: facility.id === cityOrg.med_fk
@@ -101,7 +101,7 @@ export function DetailedFacilitiesTable({
 
   const sortedFacilities = () => {
     const facilities = filteredFacilities.filter(
-      (f) => f.occupancy_rate_percent !== null && f.occupancy_rate_percent > 0
+      (f) => f.occupancy_rate_percent !== null && f.occupancy_rate_percent > 0,
     );
 
     return facilities.sort((a, b) => {
@@ -206,8 +206,8 @@ export function DetailedFacilitiesTable({
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="rounded-md border max-h-[400px] overflow-y-auto">
-          <Table>
+        <div className="rounded-md border max-h-[400px] overflow-auto -mx-2 sm:mx-0">
+          <Table className="min-w-[800px]">
             <TableHeader className="sticky top-0 bg-background">
               <TableRow>
                 <TableHead className="w-12">#</TableHead>
@@ -331,8 +331,8 @@ export function DetailedFacilitiesTable({
                         hasReduction && bedReduction > 50
                           ? "bg-red-50 dark:bg-red-900/20"
                           : index < 3
-                          ? "bg-yellow-50 dark:bg-yellow-900/20"
-                          : ""
+                            ? "bg-yellow-50 dark:bg-yellow-900/20"
+                            : ""
                       }
                     >
                       <TableCell className="font-medium text-xs">
@@ -369,10 +369,10 @@ export function DetailedFacilitiesTable({
                               bedReduction > 50
                                 ? "text-red-600"
                                 : bedReduction > 0
-                                ? "text-orange-600"
-                                : bedReduction < 0
-                                ? "text-green-600"
-                                : "text-gray-600"
+                                  ? "text-orange-600"
+                                  : bedReduction < 0
+                                    ? "text-green-600"
+                                    : "text-gray-600"
                             }`}
                           >
                             {bedReduction > 0 && "-"}
@@ -440,7 +440,7 @@ export function DetailedFacilitiesTable({
                                 : 0;
                             const idlePercentage = 100 - bedDaysPercentage;
                             return Math.round(
-                              idlePercentage > 0 ? idlePercentage : 0
+                              idlePercentage > 0 ? idlePercentage : 0,
                             );
                           })()}
                           %
@@ -470,19 +470,19 @@ export function DetailedFacilitiesTable({
             filteredFacilities.filter(
               (f) =>
                 f.occupancy_rate_percent !== null &&
-                f.occupancy_rate_percent > 0
+                f.occupancy_rate_percent > 0,
             ).length
           }{" "}
           | МО с данными смертности:{" "}
           {
             filteredFacilities.filter(
-              (f) => (f.death_smp || 0) + (f.death_vtmp || 0) > 0
+              (f) => (f.death_smp || 0) + (f.death_vtmp || 0) > 0,
             ).length
           }{" "}
           | Общая смертность:{" "}
           {filteredFacilities.reduce(
             (sum, f) => sum + (f.death_smp || 0) + (f.death_vtmp || 0),
-            0
+            0,
           )}
         </div>
       </CardFooter>

@@ -133,12 +133,14 @@ export function CombinedChart({
     return generateColors(sortedData, "blue");
   })();
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {/* Показатели смертности по профилям коек */}
       <Card>
-        <CardHeader>
+        <CardHeader className="px-3 sm:px-6">
           <CardTitle className="flex flex-col gap-1">
-            <span>Показатели смертности по профилям коек</span>
+            <span className="text-sm sm:text-base">
+              Показатели смертности по профилям коек
+            </span>
             <FilterDisplay
               selectedDistricts={selectedDistricts}
               selectedFacilityTypes={selectedFacilityTypes}
@@ -150,7 +152,7 @@ export function CombinedChart({
             Средний процент летальности (смертей/общ кол-во пролеченных)
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-1 sm:px-6">
           <ChartContainer
             config={{
               mortality: {
@@ -158,7 +160,7 @@ export function CombinedChart({
                 color: "#8B0000",
               },
             }}
-            className="h-[350px]"
+            className="h-[280px] sm:h-[350px]"
           >
             <BarChart
               data={mortalityByProfile}
@@ -199,9 +201,11 @@ export function CombinedChart({
 
       {/* Простой коек в разрезе по типам */}
       <Card>
-        <CardHeader>
+        <CardHeader className="px-3 sm:px-6">
           <CardTitle className="flex flex-col gap-1">
-            <span>Простой коек в разрезе по типам</span>
+            <span className="text-sm sm:text-base">
+              Простой коек в разрезе по типам
+            </span>
             <FilterDisplay
               selectedDistricts={selectedDistricts}
               selectedFacilityTypes={selectedFacilityTypes}

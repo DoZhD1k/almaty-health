@@ -70,8 +70,8 @@ export function MedicalFilterPanel({
   });
 
   const [expandedSections, setExpandedSections] = useState({
-    facilityTypes: true,
-    bedProfiles: true,
+    facilityTypes: false,
+    bedProfiles: false,
     loadLevels: true,
   });
 
@@ -214,8 +214,7 @@ export function MedicalFilterPanel({
 
   return (
     <div
-      className={`bg-white/95 rounded-lg border border-gray-200 backdrop-blur-sm shadow-xl flex flex-col h-fit max-h-[calc(90vh-2px)]
- ${className}`}
+      className={`bg-white/95 rounded-lg border border-gray-200 backdrop-blur-sm shadow-xl flex flex-col h-fit max-h-[calc(90vh-2px)] ${className}`}
     >
       {/* Заголовок - фиксированный */}
       <div className="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-100">

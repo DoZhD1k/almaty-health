@@ -136,23 +136,33 @@ export function RecommendationsEngine() {
       </div>
 
       {/* Main Tabs */}
-      <Tabs defaultValue="redirections" className="p-3">
-        <TabsList className="grid grid-cols-2 w-fit bg-gray-100 p-1 rounded-lg mb-3">
-          <TabsTrigger value="redirections" className="gap-2">
+      <Tabs defaultValue="redirections" className="p-1 sm:p-3">
+        <TabsList className="grid grid-cols-2 w-full sm:w-fit bg-gray-100 p-1 rounded-lg mb-3">
+          <TabsTrigger
+            value="redirections"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm"
+          >
             <Route className="h-4 w-4" />
-            Рекомендации по перенаправлению
+            <span className="hidden sm:inline">
+              Рекомендации по перенаправлению
+            </span>
+            <span className="sm:hidden">Перенаправление</span>
           </TabsTrigger>
-          <TabsTrigger value="smp" className="gap-2">
+          <TabsTrigger
+            value="smp"
+            className="gap-1 sm:gap-2 text-xs sm:text-sm"
+          >
             <Ambulance className="h-4 w-4" />
-            Рекомендации по СМП
+            <span className="hidden sm:inline">Рекомендации по СМП</span>
+            <span className="sm:hidden">СМП</span>
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="redirections" className="space-y-0 mt-6">
-          {/* Two Column Layout: Map (Left) + Recommendations (Right) */}
-          <div className="grid grid-cols-[60%_40%] gap-4 min-h-[calc(100vh-280px)]">
-            {/* Left: Map - Always Visible */}
-            <div className="h-[calc(100vh-280px)] min-h-[700px]">
+        <TabsContent value="redirections" className="space-y-0 mt-4 sm:mt-6">
+          {/* Mobile: Stack vertically; Desktop: Two Column Layout */}
+          <div className="flex flex-col lg:grid lg:grid-cols-[60%_40%] gap-4 min-h-[400px] lg:min-h-[calc(100vh-280px)]">
+            {/* Map */}
+            <div className="h-[50vh] lg:h-[calc(100vh-280px)] min-h-[350px] lg:min-h-[700px]">
               <RedirectionMap
                 source={selectedSource}
                 targets={selectedAlternatives}
@@ -162,8 +172,8 @@ export function RecommendationsEngine() {
               />
             </div>
 
-            {/* Right: Scrollable Recommendations List */}
-            <div className="h-[calc(100vh-280px)] overflow-y-auto pr-2 space-y-4">
+            {/* Scrollable Recommendations List */}
+            <div className="h-auto max-h-[60vh] lg:h-[calc(100vh-280px)] overflow-y-auto pr-0 lg:pr-2 space-y-4">
               <RedirectionRecommendations
                 onSelectFacility={handleSelectFacility}
                 selectedSourceId={selectedSource?.id}

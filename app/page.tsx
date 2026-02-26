@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { MedicalFilterPanel } from "@/components/medical-filter-panel";
 import { FacilityStatistic, MedicalFilterState } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
+import { Filter, X } from "lucide-react";
 
 // Dynamically import the MapLibre map component to prevent SSR issues
 const MapLibreFacilityMap = dynamic(
@@ -24,13 +25,14 @@ const MapLibreFacilityMap = dynamic(
         </div>
       </div>
     ),
-  }
+  },
 );
 
 export default function HomePage() {
   const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
@@ -169,7 +171,7 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Floating Filter Panel - Overlaying the map on desktop */}
+      {/* Floating Filter Panel - Desktop */}
       <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
         <MedicalFilterPanel
           onFiltersChange={setFilters}
@@ -178,16 +180,49 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Mobile Layout - Floating panel */}
-      <div className="lg:hidden">
-        <div className="absolute top-4 left-4 right-4 z-10">
-          <MedicalFilterPanel
-            onFiltersChange={setFilters}
-            facilities={facilities}
-            className="shadow-lg"
-          />
-        </div>
+      {/* Mobile: FAB to open filters */}
+      <div className="lg:hidden absolute bottom-6 left-4 z-10">
+        <button
+          onClick={() => setMobileFiltersOpen(true)}
+          className="flex items-center gap-2 rounded-full bg-[#4169E1] px-4 py-3 text-white shadow-xl hover:bg-[#3558c0] active:scale-95 transition-all"
+        >
+          <Filter className="h-5 w-5" />
+          <span className="text-sm font-medium">Фильтры</span>
+        </button>
       </div>
+
+      {/* Mobile: Fullscreen Filter Drawer */}
+      {mobileFiltersOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white/98 backdrop-blur-sm animate-in slide-in-from-bottom duration-200">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+            <h2 className="text-base font-semibold text-gray-900">Фильтры</h2>
+            <button
+              onClick={() => setMobileFiltersOpen(false)}
+              className="flex items-center justify-center h-9 w-9 rounded-full bg-gray-100 hover:bg-gray-200"
+              aria-label="Закрыть фильтры"
+            >
+              <X className="h-5 w-5 text-gray-700" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <MedicalFilterPanel
+              onFiltersChange={(f) => {
+                setFilters(f);
+              }}
+              facilities={facilities}
+              className="border-0 shadow-none rounded-none"
+            />
+          </div>
+          <div className="shrink-0 p-4 border-t border-gray-200">
+            <button
+              onClick={() => setMobileFiltersOpen(false)}
+              className="w-full rounded-xl bg-[#4169E1] py-3 text-white font-medium hover:bg-[#3558c0] active:scale-[0.98] transition-all"
+            >
+              Показать результаты ({filteredFacilities.length})
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

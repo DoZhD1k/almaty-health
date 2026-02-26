@@ -179,10 +179,10 @@ export function SmpTab({ facilities }: SmpTabProps) {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Карта оптимального покрытия */}
-        <Card className="lg:col-span-2 lg:row-span-2 flex flex-col">
+        {/* Карта оптимального покрытия - скрыта на мобилке */}
+        <Card className="hidden sm:flex lg:col-span-2 lg:row-span-2 flex-col">
           <CardHeader>
-            <CardTitle className="flex flex-col gap-1">
+            <CardTitle className="flex flex-col gap-1 text-sm sm:text-base">
               Карта оптимального покрытия доступностью
             </CardTitle>
           </CardHeader>
@@ -194,7 +194,7 @@ export function SmpTab({ facilities }: SmpTabProps) {
           </CardContent>
         </Card>
 
-        <div className="gap-4 grid grid-cols-1">
+        <div className="gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1">
           {/* Госпитализация и отказы */}
           <Card className="flex flex-col">
             <CardHeader className="items-center pb-2">

@@ -119,12 +119,12 @@ export function AnalyticsDashboard() {
   }
 
   return (
-    <div className="p-3 space-y-3">
+    <div className="p-1 sm:p-3 space-y-3">
       <div className="mb-2">
-        <h1 className="text-lg font-bold text-gray-800 mb-0.5">
+        <h1 className="text-base sm:text-lg font-bold text-gray-800 mb-0.5">
           Аналитическая панель
         </h1>
-        <p className="text-[11px] text-gray-600">
+        <p className="text-[11px] text-gray-600 hidden sm:block">
           Комплексный анализ медицинских учреждений Алматы
         </p>
       </div>
@@ -157,8 +157,8 @@ export function AnalyticsDashboard() {
       <ProblemsAlert filteredFacilities={filteredFacilities} />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <Tabs defaultValue="comparison" className="p-3">
-          <TabsList className="grid grid-cols-2 w-fit bg-gray-100 p-1 rounded-lg mb-3">
+        <Tabs defaultValue="comparison" className="p-2 sm:p-3">
+          <TabsList className="grid grid-cols-2 w-full sm:w-fit bg-gray-100 p-1 rounded-lg mb-3">
             <TabsTrigger
               value="comparison"
               className="rounded-md px-3 py-1 text-xs font-medium"

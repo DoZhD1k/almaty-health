@@ -48,7 +48,7 @@ export function ComparisonTab({
       } catch (error) {
         console.error(
           "Ошибка загрузки данных городских медицинских организаций:",
-          error
+          error,
         );
       } finally {
         setIsLoading(false);
@@ -60,12 +60,14 @@ export function ComparisonTab({
 
   return (
     <div className="space-y-4">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Кольцевая диаграмма сравнения по профилям коек */}
         <Card>
-          <CardHeader>
+          <CardHeader className="px-3 sm:px-6">
             <CardTitle className="flex flex-col gap-1">
-              <span>Сравнение по профилям коек</span>
+              <span className="text-sm sm:text-base">
+                Сравнение по профилям коек
+              </span>
               <FilterDisplay
                 selectedDistricts={selectedDistricts}
                 selectedFacilityTypes={selectedFacilityTypes}
@@ -83,7 +85,7 @@ export function ComparisonTab({
                 ...new Set(filteredFacilities.map((f) => f.bed_profile)),
               ].map((bedProfile, index) => {
                 const facilities = filteredFacilities.filter(
-                  (f) => f.bed_profile === bedProfile
+                  (f) => f.bed_profile === bedProfile,
                 );
                 const colors = ["#3772ff", "#2956bf", "#214499", "#193373"];
 
@@ -105,9 +107,11 @@ export function ComparisonTab({
 
         {/* График иногородних пациентов по типу профиля (facility_type) - ТОП 10 */}
         <Card>
-          <CardHeader>
+          <CardHeader className="px-3 sm:px-6">
             <CardTitle className="flex flex-col gap-1">
-              <span>Иногородние пациенты по типу профиля (ТОП-10)</span>
+              <span className="text-sm sm:text-base">
+                Иногородние пациенты по типу профиля (ТОП-10)
+              </span>
               <FilterDisplay
                 selectedDistricts={selectedDistricts}
                 selectedFacilityTypes={selectedFacilityTypes}
@@ -126,12 +130,12 @@ export function ComparisonTab({
                 ...new Set(filteredFacilities.map((f) => f.facility_type)),
               ].map((facilityType) => {
                 const facilities = filteredFacilities.filter(
-                  (f) => f.facility_type === facilityType
+                  (f) => f.facility_type === facilityType,
                 );
                 // Используем данные admitted_rural_residents как иногородних
                 const outOfTownPatients = facilities.reduce(
                   (sum, f) => sum + (f.admitted_rural_residents || 0),
-                  0
+                  0,
                 );
 
                 return {
@@ -149,7 +153,7 @@ export function ComparisonTab({
               // Вычисляем общее количество для расчета процентов
               const total = sortedData.reduce(
                 (sum, item) => sum + item.value,
-                0
+                0,
               );
 
               // Преобразуем в проценты
@@ -184,9 +188,11 @@ export function ComparisonTab({
 
       {/* Новый график: Смертность и количество стационаров по районам */}
       <Card>
-        <CardHeader>
+        <CardHeader className="px-3 sm:px-6">
           <CardTitle className="flex flex-col gap-1">
-            <span>Смертность и количество стационаров по районам</span>
+            <span className="text-sm sm:text-base">
+              Смертность и количество стационаров по районам
+            </span>
             <FilterDisplay
               selectedDistricts={selectedDistricts}
               selectedFacilityTypes={selectedFacilityTypes}
