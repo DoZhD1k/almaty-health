@@ -12,7 +12,7 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes("example")) {
   console.warn(
-    "⚠️ Mapbox token not configured. Please set NEXT_PUBLIC_MAPBOX_TOKEN in .env.local"
+    "⚠️ Mapbox token not configured. Please set NEXT_PUBLIC_MAPBOX_TOKEN in .env.local",
   );
 }
 
@@ -294,6 +294,10 @@ export function AnalyticsMap({
 
     // Удаляем существующие источники и слои
     if (map.getLayer("facilities-layer")) map.removeLayer("facilities-layer");
+    if (map.getLayer("facilities-clusters"))
+      map.removeLayer("facilities-clusters");
+    if (map.getLayer("facilities-cluster-count"))
+      map.removeLayer("facilities-cluster-count");
     if (map.getLayer("recommended-facilities-layer"))
       map.removeLayer("recommended-facilities-layer");
     if (map.getSource("facilities")) map.removeSource("facilities");
@@ -325,13 +329,16 @@ export function AnalyticsMap({
 
     console.log(`Creating ${geoJsonFeatures.length} facility markers on map`);
 
-    // Добавляем источник данных для существующих учреждений
+    // Добавляем источник данных с кластеризацией
     map.addSource("facilities", {
       type: "geojson",
       data: {
         type: "FeatureCollection",
         features: geoJsonFeatures,
       },
+      cluster: true,
+      clusterMaxZoom: 14,
+      clusterRadius: 50,
     });
 
     // Функция для определения цвета маркера по загруженности
@@ -350,11 +357,52 @@ export function AnalyticsMap({
       return "Низкая";
     };
 
-    // Добавляем слой с маркерами
+    // Слой кластеров (кружки)
+    map.addLayer({
+      id: "facilities-clusters",
+      type: "circle",
+      source: "facilities",
+      filter: ["has", "point_count"],
+      paint: {
+        "circle-color": [
+          "step",
+          ["get", "point_count"],
+          "#51bbd6", // голубой для маленьких кластеров
+          5,
+          "#f1c40f", // жёлтый для средних
+          15,
+          "#e74c3c", // красный для больших
+        ],
+        "circle-radius": ["step", ["get", "point_count"], 18, 5, 24, 15, 32],
+        "circle-stroke-width": 2,
+        "circle-stroke-color": "#ffffff",
+        "circle-opacity": 0.85,
+      },
+    });
+
+    // Счётчик в кластере
+    map.addLayer({
+      id: "facilities-cluster-count",
+      type: "symbol",
+      source: "facilities",
+      filter: ["has", "point_count"],
+      layout: {
+        "text-field": "{point_count_abbreviated}",
+        "text-font": ["DIN Pro Medium", "Arial Unicode MS Bold"],
+        "text-size": 13,
+        "text-allow-overlap": true,
+      },
+      paint: {
+        "text-color": "#ffffff",
+      },
+    });
+
+    // Добавляем слой с некластеризованными маркерами
     map.addLayer({
       id: "facilities-layer",
       type: "circle",
       source: "facilities",
+      filter: ["!", ["has", "point_count"]],
       paint: {
         "circle-radius": [
           "case",
@@ -380,6 +428,34 @@ export function AnalyticsMap({
         "circle-stroke-width": 2,
         "circle-opacity": 0.8,
       },
+    });
+
+    // Клик по кластеру → приближение
+    map.on("click", "facilities-clusters", (e: any) => {
+      const features = map.queryRenderedFeatures(e.point, {
+        layers: ["facilities-clusters"],
+      });
+      if (!features.length) return;
+      const clusterId = features[0].properties?.cluster_id;
+      const source = map.getSource("facilities") as mapboxgl.GeoJSONSource;
+      source.getClusterExpansionZoom(
+        clusterId,
+        (err: any, zoom: number | null | undefined) => {
+          if (err || zoom == null) return;
+          map.easeTo({
+            center: (features[0].geometry as any).coordinates,
+            zoom: zoom,
+          });
+        },
+      );
+    });
+
+    // Курсор при наведении на кластер
+    map.on("mouseenter", "facilities-clusters", () => {
+      map.getCanvas().style.cursor = "pointer";
+    });
+    map.on("mouseleave", "facilities-clusters", () => {
+      map.getCanvas().style.cursor = "";
     });
 
     // Добавляем всплывающие окна
@@ -416,7 +492,7 @@ export function AnalyticsMap({
 
     // Добавляем рекомендуемые СМП если включен режим рекомендаций
     console.log(
-      `showRecommendations: ${showRecommendations}, recommendedFacilities: ${recommendedFacilities.length}`
+      `showRecommendations: ${showRecommendations}, recommendedFacilities: ${recommendedFacilities.length}`,
     );
     if (showRecommendations && recommendedFacilities.length > 0) {
       const recommendedGeoJson = recommendedFacilities.map((facility) => ({
@@ -491,12 +567,12 @@ export function AnalyticsMap({
       });
 
       console.log(
-        `Added ${recommendedFacilities.length} recommended facilities`
+        `Added ${recommendedFacilities.length} recommended facilities`,
       );
     }
 
     console.log(
-      `Added ${facilities.length} medical facilities to analytics map`
+      `Added ${facilities.length} medical facilities to analytics map`,
     );
   }, [
     mapRef.current,
@@ -581,7 +657,13 @@ export function AnalyticsMap({
             });
           }
 
-          // Перемещаем слой с больницами на передний план, если он существует
+          // Перемещаем слои с больницами на передний план, если они существуют
+          if (map.getLayer("facilities-clusters")) {
+            map.moveLayer("facilities-clusters");
+          }
+          if (map.getLayer("facilities-cluster-count")) {
+            map.moveLayer("facilities-cluster-count");
+          }
           if (map.getLayer("facilities-layer")) {
             map.moveLayer("facilities-layer");
           }
@@ -600,8 +682,8 @@ export function AnalyticsMap({
   const toggleLayer = (layerId: string) => {
     setLayers((prev) =>
       prev.map((layer) =>
-        layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
-      )
+        layer.id === layerId ? { ...layer, visible: !layer.visible } : layer,
+      ),
     );
   };
 
@@ -720,12 +802,12 @@ export function AnalyticsMap({
                       layer.id === "roads_accessible_10min"
                         ? "bg-green-600"
                         : layer.id === "roads_accessible_15min"
-                        ? "bg-yellow-500"
-                        : layer.id === "roads_accessible_30min"
-                        ? "bg-orange-600"
-                        : layer.id === "roads_accessible_60min"
-                        ? "bg-red-600"
-                        : "bg-gray-500"
+                          ? "bg-yellow-500"
+                          : layer.id === "roads_accessible_30min"
+                            ? "bg-orange-600"
+                            : layer.id === "roads_accessible_60min"
+                              ? "bg-red-600"
+                              : "bg-gray-500"
                     }`}
                   ></div>
                   <span>{layer.name}</span>
@@ -856,12 +938,12 @@ export function AnalyticsMap({
                           layer.id === "roads_accessible_10min"
                             ? "bg-green-600"
                             : layer.id === "roads_accessible_15min"
-                            ? "bg-yellow-500"
-                            : layer.id === "roads_accessible_30min"
-                            ? "bg-orange-600"
-                            : layer.id === "roads_accessible_60min"
-                            ? "bg-red-600"
-                            : "bg-gray-500"
+                              ? "bg-yellow-500"
+                              : layer.id === "roads_accessible_30min"
+                                ? "bg-orange-600"
+                                : layer.id === "roads_accessible_60min"
+                                  ? "bg-red-600"
+                                  : "bg-gray-500"
                         }`}
                       ></div>
                       <span>{layer.name}</span>

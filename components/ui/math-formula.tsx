@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  BlockMath as ReactKatexBlockMath,
-  InlineMath as ReactKatexInlineMath,
-} from "react-katex";
+import katex from "katex";
 import "katex/dist/katex.min.css";
 
 interface InlineMathProps {
@@ -12,10 +9,12 @@ interface InlineMathProps {
 }
 
 export function InlineMath({ children, className = "" }: InlineMathProps) {
+  const html = katex.renderToString(children, {
+    throwOnError: false,
+    displayMode: false,
+  });
   return (
-    <span className={className}>
-      <ReactKatexInlineMath math={children} />
-    </span>
+    <span className={className} dangerouslySetInnerHTML={{ __html: html }} />
   );
 }
 
@@ -25,9 +24,14 @@ interface BlockMathProps {
 }
 
 export function BlockMath({ children, className = "" }: BlockMathProps) {
+  const html = katex.renderToString(children, {
+    throwOnError: false,
+    displayMode: true,
+  });
   return (
-    <div className={`text-sm text-center ${className}`}>
-      <ReactKatexBlockMath math={children} />
-    </div>
+    <div
+      className={`text-sm text-center ${className}`}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
   );
 }

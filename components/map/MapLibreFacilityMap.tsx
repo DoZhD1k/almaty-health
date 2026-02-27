@@ -151,7 +151,7 @@ export function MapLibreFacilityMap({
   const containerRef = useRef<HTMLDivElement>(null);
   const { mapRef, isLoading, zoomIn, zoomOut, resetView } =
     useMapInitialization(containerRef);
-  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const popupRef = useRef<maplibregl.Popup | null>(null);
   const [districts, setDistricts] = useState<DistrictFeature[]>([]);
 
   // Fetch districts data
@@ -170,16 +170,16 @@ export function MapLibreFacilityMap({
                 "District id:",
                 id,
                 "name:",
-                feature.properties?.name_ru
+                feature.properties?.name_ru,
               );
               return id !== 0 && id !== 9;
-            }
+            },
           );
           console.log(
             "Districts loaded (filtered):",
             filteredDistricts.length,
             "from",
-            data.results.features.length
+            data.results.features.length,
           );
           setDistricts(filteredDistricts);
         }
@@ -200,7 +200,7 @@ export function MapLibreFacilityMap({
       "Districts effect triggered, isLoading:",
       isLoading,
       "style loaded:",
-      map.isStyleLoaded()
+      map.isStyleLoaded(),
     );
 
     const addLayers = () => {
@@ -213,7 +213,7 @@ export function MapLibreFacilityMap({
         console.log(
           "Adding districts source with",
           districts.length,
-          "features"
+          "features",
         );
         console.log("Sample feature:", districts[0]);
 
@@ -258,7 +258,7 @@ export function MapLibreFacilityMap({
           console.log(
             "Districts fill layer added (filtered for:",
             selectedDistrict,
-            ")"
+            ")",
           );
 
           // Outline layer for selected district only
@@ -276,7 +276,7 @@ export function MapLibreFacilityMap({
           console.log(
             "Districts outline layer added (filtered for:",
             selectedDistrict,
-            ")"
+            ")",
           );
         } else {
           // Show all districts when none selected
@@ -303,6 +303,13 @@ export function MapLibreFacilityMap({
           });
           console.log("Districts outline layer added (all districts)");
         }
+
+        // Перемещаем кластерные слои поверх полигонов районов
+        if (map.getLayer("facility-clusters"))
+          map.moveLayer("facility-clusters");
+        if (map.getLayer("cluster-count")) map.moveLayer("cluster-count");
+        if (map.getLayer("unclustered-facility"))
+          map.moveLayer("unclustered-facility");
 
         console.log("All district layers added successfully");
       } catch (error) {
@@ -342,85 +349,234 @@ export function MapLibreFacilityMap({
     };
   }, [districts, selectedDistrict, mapRef]);
 
-  // Add facilities as markers
+  // Add facilities as clustered GeoJSON source + layers
   useEffect(() => {
     if (!mapRef.current || isLoading || !facilities.length) return;
 
-    // Clear existing markers
-    markersRef.current.forEach((marker) => marker.remove());
-    markersRef.current = [];
+    const map = mapRef.current;
 
-    // Add new markers
-    facilities.forEach((facility) => {
-      if (!facility.latitude || !facility.longitude) return;
+    const addClusterLayers = () => {
+      // Build GeoJSON from facilities
+      const geoJsonFeatures = facilities
+        .filter(
+          (f) =>
+            f.latitude != null &&
+            f.longitude != null &&
+            !isNaN(f.latitude) &&
+            !isNaN(f.longitude),
+        )
+        .map((facility) => ({
+          type: "Feature" as const,
+          properties: {
+            medical_organization: facility.medical_organization,
+            district: facility.district || "",
+            facility_type: facility.facility_type || "",
+            bed_profile: facility.bed_profile || "",
+            occupancy_rate_percent: facility.occupancy_rate_percent || 0,
+            beds_deployed_withdrawn_for_rep:
+              facility.beds_deployed_withdrawn_for_rep || 0,
+            address: facility.address || "",
+          },
+          geometry: {
+            type: "Point" as const,
+            coordinates: [
+              Number(facility.longitude),
+              Number(facility.latitude),
+            ],
+          },
+        }));
 
-      const occupancyRate = facility.occupancy_rate_percent || 0;
-      const color = getStatusColor(occupancyRate);
+      // Remove old layers/sources
+      const layerIds = [
+        "facility-clusters",
+        "cluster-count",
+        "unclustered-facility",
+      ];
+      layerIds.forEach((id) => {
+        if (map.getLayer(id)) map.removeLayer(id);
+      });
+      if (map.getSource("facilities-clustered"))
+        map.removeSource("facilities-clustered");
 
-      // Create popup content
-      // const popupContent = `
-      //   <div class="min-w-[250px] p-2">
-      //     <h3 class="font-bold text-sm mb-2">${
-      //       facility.medical_organization || "Неизвестно"
-      //     }</h3>
-      //     <div class="space-y-1 text-xs">
-      //       <p><strong>Район:</strong> ${facility.district || "Неизвестно"}</p>
-      //       <p><strong>Тип:</strong> ${
-      //         facility.facility_type || "Неизвестно"
-      //       }</p>
-      //       <p><strong>Профиль:</strong> ${
-      //         facility.bed_profile || "Неизвестно"
-      //       }</p>
-      //       <p><strong>Коек развернуто:</strong> ${
-      //         facility.beds_deployed_withdrawn_for_rep || 0
-      //       }</p>
-      //       <p><strong>Загруженность:</strong> <span style="color: ${color}; font-weight: bold;">${getStatusText(
-      //   occupancyRate
-      // )} (${(occupancyRate * 100).toFixed(1)}%)</span></p>
-      //     </div>
-      //   </div>
-      // `;
-      const popupContent = buildFacilityPopup(facility);
+      // Add clustered source
+      map.addSource("facilities-clustered", {
+        type: "geojson",
+        data: {
+          type: "FeatureCollection",
+          features: geoJsonFeatures,
+        },
+        cluster: true,
+        clusterMaxZoom: 14,
+        clusterRadius: 50,
+      });
 
-      // const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
-      const popup = new maplibregl.Popup({
-        offset: 25,
-        anchor: "bottom",
-        closeButton: true,
-        maxWidth: "320px",
-      }).setHTML(popupContent);
+      // Cluster circles layer
+      map.addLayer({
+        id: "facility-clusters",
+        type: "circle",
+        source: "facilities-clustered",
+        filter: ["has", "point_count"],
+        paint: {
+          "circle-color": [
+            "step",
+            ["get", "point_count"],
+            "#51bbd6", // blue for small clusters
+            5,
+            "#f1c40f", // yellow for medium
+            15,
+            "#e74c3c", // red for large
+          ],
+          "circle-radius": ["step", ["get", "point_count"], 18, 5, 24, 15, 32],
+          "circle-stroke-width": 2,
+          "circle-stroke-color": "#ffffff",
+          "circle-opacity": 0.85,
+        },
+      });
 
-      // Create marker element
-      const el = document.createElement("div");
-      el.className = "facility-marker";
-      el.style.width = "16px";
-      el.style.height = "16px";
-      el.style.borderRadius = "50%";
-      el.style.backgroundColor = color;
-      el.style.border = "2px solid white";
-      el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
-      el.style.cursor = "pointer";
+      // Cluster count labels
+      map.addLayer({
+        id: "cluster-count",
+        type: "symbol",
+        source: "facilities-clustered",
+        filter: ["has", "point_count"],
+        layout: {
+          "text-field": "{point_count_abbreviated}",
+          "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
+          "text-size": 13,
+          "text-allow-overlap": true,
+        },
+        paint: {
+          "text-color": "#ffffff",
+        },
+      });
 
-      const marker = new maplibregl.Marker({ element: el })
-        .setLngLat([Number(facility.longitude), Number(facility.latitude)])
-        .setPopup(popup)
-        .addTo(mapRef.current!);
+      // Individual (unclustered) facility points
+      map.addLayer({
+        id: "unclustered-facility",
+        type: "circle",
+        source: "facilities-clustered",
+        filter: ["!", ["has", "point_count"]],
+        paint: {
+          "circle-radius": 8,
+          "circle-color": [
+            "case",
+            [">", ["get", "occupancy_rate_percent"], 0.95],
+            "#dc2626",
+            [">", ["get", "occupancy_rate_percent"], 0.8],
+            "#ea580c",
+            [">=", ["get", "occupancy_rate_percent"], 0.5],
+            "#16a34a",
+            "#6b7280",
+          ],
+          "circle-stroke-color": "#ffffff",
+          "circle-stroke-width": 2,
+          "circle-opacity": 0.85,
+        },
+      });
 
-      markersRef.current.push(marker);
-    });
+      // Перемещаем кластерные слои поверх полигонов районов
+      if (map.getLayer("districts-fill") || map.getLayer("districts-outline")) {
+        if (map.getLayer("facility-clusters"))
+          map.moveLayer("facility-clusters");
+        if (map.getLayer("cluster-count")) map.moveLayer("cluster-count");
+        if (map.getLayer("unclustered-facility"))
+          map.moveLayer("unclustered-facility");
+      }
+
+      // Click on cluster → zoom in
+      map.on("click", "facility-clusters", async (e: any) => {
+        const features = map.queryRenderedFeatures(e.point, {
+          layers: ["facility-clusters"],
+        });
+        if (!features.length) return;
+        const clusterId = features[0].properties?.cluster_id;
+        const source = map.getSource(
+          "facilities-clustered",
+        ) as maplibregl.GeoJSONSource;
+        try {
+          const zoom = await source.getClusterExpansionZoom(clusterId);
+          map.easeTo({
+            center: (features[0].geometry as any).coordinates,
+            zoom: zoom,
+          });
+        } catch (err) {
+          console.warn("Error getting cluster expansion zoom:", err);
+        }
+      });
+
+      // Click on individual facility → popup
+      map.on("click", "unclustered-facility", (e: any) => {
+        if (!e.features || !e.features.length) return;
+        const feature = e.features[0];
+        const coords = (feature.geometry as any).coordinates.slice();
+        const props = feature.properties;
+
+        // Find the original facility data for full popup
+        const matchedFacility = facilities.find(
+          (f) =>
+            Number(f.longitude).toFixed(5) === Number(coords[0]).toFixed(5) &&
+            Number(f.latitude).toFixed(5) === Number(coords[1]).toFixed(5),
+        );
+
+        const popupContent = matchedFacility
+          ? buildFacilityPopup(matchedFacility)
+          : buildFacilityPopup(props);
+
+        if (popupRef.current) popupRef.current.remove();
+
+        popupRef.current = new maplibregl.Popup({
+          offset: 25,
+          anchor: "bottom",
+          closeButton: true,
+          maxWidth: "320px",
+        })
+          .setLngLat(coords)
+          .setHTML(popupContent)
+          .addTo(map);
+      });
+
+      // Cursors
+      map.on("mouseenter", "facility-clusters", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "facility-clusters", () => {
+        map.getCanvas().style.cursor = "";
+      });
+      map.on("mouseenter", "unclustered-facility", () => {
+        map.getCanvas().style.cursor = "pointer";
+      });
+      map.on("mouseleave", "unclustered-facility", () => {
+        map.getCanvas().style.cursor = "";
+      });
+    };
+
+    if (map.isStyleLoaded() && map.loaded()) {
+      addClusterLayers();
+    } else {
+      map.once("load", addClusterLayers);
+    }
 
     return () => {
+      if (!map || (map as any)._removed) return;
       try {
-        markersRef.current.forEach((marker) => {
-          if (marker && typeof marker.remove === "function") {
-            marker.remove();
-          }
+        const layerIds = [
+          "facility-clusters",
+          "cluster-count",
+          "unclustered-facility",
+        ];
+        layerIds.forEach((id) => {
+          if (map.getLayer(id)) map.removeLayer(id);
         });
-        markersRef.current = [];
+        if (map.getSource("facilities-clustered"))
+          map.removeSource("facilities-clustered");
+        if (popupRef.current) {
+          popupRef.current.remove();
+          popupRef.current = null;
+        }
       } catch (error) {
         console.warn(
-          "Error cleaning up markers in MapLibreFacilityMap:",
-          error
+          "Error cleaning up cluster layers in MapLibreFacilityMap:",
+          error,
         );
       }
     };
