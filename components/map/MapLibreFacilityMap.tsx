@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import { useMapInitialization } from "@/hooks/use-map-initialization";
 import { FacilityStatistic } from "@/types/healthcare";
@@ -23,19 +23,6 @@ interface DistrictFeature {
   };
 }
 
-const getStatusColor = (occupancyRate: number) => {
-  if (occupancyRate > 0.95) return "#dc2626"; // red-600 - критическая (выше 95%)
-  if (occupancyRate > 0.8) return "#ea580c"; // orange-600 - высокая (80-95%)
-  if (occupancyRate >= 0.5) return "#16a34a"; // green-600 - нормальная (50-80%)
-  return "#6b7280"; // gray-500 - низкая (ниже 50%)
-};
-
-const getStatusText = (occupancyRate: number) => {
-  if (occupancyRate > 0.95) return "Критическая";
-  if (occupancyRate > 0.8) return "Высокая";
-  if (occupancyRate >= 0.5) return "Нормальная";
-  return "Низкая";
-};
 
 // Добавь рядом с твоими util-функциями (один раз на модуль)
 let _popupCssInjected = false;
@@ -317,21 +304,15 @@ export function MapLibreFacilityMap({
       }
     };
 
-    // Wait for map style to load with retry mechanism
+    // Wait for map style to load
     const attemptAddLayers = () => {
-      if (map.isStyleLoaded() && map.loaded()) {
-        console.log("Map is ready, adding layers");
+      if (map.isStyleLoaded()) {
         addLayers();
       } else {
-        console.log("Map not ready, waiting...");
-        map.once("load", () => {
-          console.log("Map load event fired");
-          addLayers();
-        });
+        map.once("idle", addLayers);
       }
     };
 
-    // Small delay to ensure map is ready
     setTimeout(attemptAddLayers, 500);
 
     return () => {
@@ -351,111 +332,65 @@ export function MapLibreFacilityMap({
 
   // Add facilities as clustered GeoJSON source + layers
   useEffect(() => {
-    if (!mapRef.current || isLoading || !facilities.length) return;
+    if (!mapRef.current || isLoading) return;
 
     const map = mapRef.current;
 
+    // Build GeoJSON from facilities
+    const geoJsonFeatures = facilities
+      .filter(
+        (f) =>
+          f.latitude != null &&
+          f.longitude != null &&
+          !isNaN(f.latitude) &&
+          !isNaN(f.longitude),
+      )
+      .map((facility) => ({
+        type: "Feature" as const,
+        properties: {
+          medical_organization: facility.medical_organization,
+          district: facility.district || "",
+          facility_type: facility.facility_type || "",
+          bed_profile: facility.bed_profile || "",
+          occupancy_rate_percent: facility.occupancy_rate_percent || 0,
+          beds_deployed_withdrawn_for_rep:
+            facility.beds_deployed_withdrawn_for_rep || 0,
+          address: facility.address || "",
+        },
+        geometry: {
+          type: "Point" as const,
+          coordinates: [
+            Number(facility.longitude),
+            Number(facility.latitude),
+          ],
+        },
+      }));
+
+    const geoJsonData = {
+      type: "FeatureCollection" as const,
+      features: geoJsonFeatures,
+    };
+
     const addClusterLayers = () => {
-      // Build GeoJSON from facilities
-      const geoJsonFeatures = facilities
-        .filter(
-          (f) =>
-            f.latitude != null &&
-            f.longitude != null &&
-            !isNaN(f.latitude) &&
-            !isNaN(f.longitude),
-        )
-        .map((facility) => ({
-          type: "Feature" as const,
-          properties: {
-            medical_organization: facility.medical_organization,
-            district: facility.district || "",
-            facility_type: facility.facility_type || "",
-            bed_profile: facility.bed_profile || "",
-            occupancy_rate_percent: facility.occupancy_rate_percent || 0,
-            beds_deployed_withdrawn_for_rep:
-              facility.beds_deployed_withdrawn_for_rep || 0,
-            address: facility.address || "",
-          },
-          geometry: {
-            type: "Point" as const,
-            coordinates: [
-              Number(facility.longitude),
-              Number(facility.latitude),
-            ],
-          },
-        }));
+      // If source already exists, just update its data (no layer recreation needed)
+      if (map.getSource("facilities-clustered")) {
+        (
+          map.getSource("facilities-clustered") as maplibregl.GeoJSONSource
+        ).setData(geoJsonData);
+        return;
+      }
 
-      // Remove old layers/sources
-      const layerIds = [
-        "facility-clusters",
-        "cluster-count",
-        "unclustered-facility",
-      ];
-      layerIds.forEach((id) => {
-        if (map.getLayer(id)) map.removeLayer(id);
-      });
-      if (map.getSource("facilities-clustered"))
-        map.removeSource("facilities-clustered");
-
-      // Add clustered source
+      // Add source (no clustering)
       map.addSource("facilities-clustered", {
         type: "geojson",
-        data: {
-          type: "FeatureCollection",
-          features: geoJsonFeatures,
-        },
-        cluster: true,
-        clusterMaxZoom: 14,
-        clusterRadius: 50,
+        data: geoJsonData,
       });
 
-      // Cluster circles layer
-      map.addLayer({
-        id: "facility-clusters",
-        type: "circle",
-        source: "facilities-clustered",
-        filter: ["has", "point_count"],
-        paint: {
-          "circle-color": [
-            "step",
-            ["get", "point_count"],
-            "#51bbd6", // blue for small clusters
-            5,
-            "#f1c40f", // yellow for medium
-            15,
-            "#e74c3c", // red for large
-          ],
-          "circle-radius": ["step", ["get", "point_count"], 18, 5, 24, 15, 32],
-          "circle-stroke-width": 2,
-          "circle-stroke-color": "#ffffff",
-          "circle-opacity": 0.85,
-        },
-      });
-
-      // Cluster count labels
-      map.addLayer({
-        id: "cluster-count",
-        type: "symbol",
-        source: "facilities-clustered",
-        filter: ["has", "point_count"],
-        layout: {
-          "text-field": "{point_count_abbreviated}",
-          "text-font": ["Open Sans Bold", "Arial Unicode MS Bold"],
-          "text-size": 13,
-          "text-allow-overlap": true,
-        },
-        paint: {
-          "text-color": "#ffffff",
-        },
-      });
-
-      // Individual (unclustered) facility points
+      // Individual facility points
       map.addLayer({
         id: "unclustered-facility",
         type: "circle",
         source: "facilities-clustered",
-        filter: ["!", ["has", "point_count"]],
         paint: {
           "circle-radius": 8,
           "circle-color": [
@@ -474,44 +409,18 @@ export function MapLibreFacilityMap({
         },
       });
 
-      // Перемещаем кластерные слои поверх полигонов районов
+      // Move facility layer above district polygons
       if (map.getLayer("districts-fill") || map.getLayer("districts-outline")) {
-        if (map.getLayer("facility-clusters"))
-          map.moveLayer("facility-clusters");
-        if (map.getLayer("cluster-count")) map.moveLayer("cluster-count");
-        if (map.getLayer("unclustered-facility"))
-          map.moveLayer("unclustered-facility");
+        map.moveLayer("unclustered-facility");
       }
 
-      // Click on cluster → zoom in
-      map.on("click", "facility-clusters", async (e: any) => {
-        const features = map.queryRenderedFeatures(e.point, {
-          layers: ["facility-clusters"],
-        });
-        if (!features.length) return;
-        const clusterId = features[0].properties?.cluster_id;
-        const source = map.getSource(
-          "facilities-clustered",
-        ) as maplibregl.GeoJSONSource;
-        try {
-          const zoom = await source.getClusterExpansionZoom(clusterId);
-          map.easeTo({
-            center: (features[0].geometry as any).coordinates,
-            zoom: zoom,
-          });
-        } catch (err) {
-          console.warn("Error getting cluster expansion zoom:", err);
-        }
-      });
-
-      // Click on individual facility → popup
+      // Click on facility → popup
       map.on("click", "unclustered-facility", (e: any) => {
         if (!e.features || !e.features.length) return;
         const feature = e.features[0];
         const coords = (feature.geometry as any).coordinates.slice();
         const props = feature.properties;
 
-        // Find the original facility data for full popup
         const matchedFacility = facilities.find(
           (f) =>
             Number(f.longitude).toFixed(5) === Number(coords[0]).toFixed(5) &&
@@ -535,13 +444,6 @@ export function MapLibreFacilityMap({
           .addTo(map);
       });
 
-      // Cursors
-      map.on("mouseenter", "facility-clusters", () => {
-        map.getCanvas().style.cursor = "pointer";
-      });
-      map.on("mouseleave", "facility-clusters", () => {
-        map.getCanvas().style.cursor = "";
-      });
       map.on("mouseenter", "unclustered-facility", () => {
         map.getCanvas().style.cursor = "pointer";
       });
@@ -550,36 +452,11 @@ export function MapLibreFacilityMap({
       });
     };
 
-    if (map.isStyleLoaded() && map.loaded()) {
+    if (map.isStyleLoaded()) {
       addClusterLayers();
     } else {
-      map.once("load", addClusterLayers);
+      map.once("idle", addClusterLayers);
     }
-
-    return () => {
-      if (!map || (map as any)._removed) return;
-      try {
-        const layerIds = [
-          "facility-clusters",
-          "cluster-count",
-          "unclustered-facility",
-        ];
-        layerIds.forEach((id) => {
-          if (map.getLayer(id)) map.removeLayer(id);
-        });
-        if (map.getSource("facilities-clustered"))
-          map.removeSource("facilities-clustered");
-        if (popupRef.current) {
-          popupRef.current.remove();
-          popupRef.current = null;
-        }
-      } catch (error) {
-        console.warn(
-          "Error cleaning up cluster layers in MapLibreFacilityMap:",
-          error,
-        );
-      }
-    };
   }, [facilities, isLoading, mapRef]);
 
   return (

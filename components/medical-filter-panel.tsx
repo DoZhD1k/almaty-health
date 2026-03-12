@@ -52,7 +52,7 @@ const loadLevelOptions: LoadLevel[] = [
     id: "critical",
     label: "Критическая (> 95%)",
     minOccupancy: 0.95,
-    maxOccupancy: 1,
+    maxOccupancy: Infinity,
   },
 ];
 
@@ -65,7 +65,7 @@ export function MedicalFilterPanel({
     district: "Все районы",
     facilityTypes: [],
     bedProfiles: [],
-    loadLevels: [],
+    loadLevels: ["low", "normal", "high", "critical"],
     searchQuery: "",
   });
 
@@ -134,15 +134,13 @@ export function MedicalFilterPanel({
         return false;
       }
 
-      // Load level filter
-      if (filters.loadLevels.length > 0) {
+      // Load level filter — skip if all 4 selected (show everything)
+      if (filters.loadLevels.length > 0 && filters.loadLevels.length < loadLevelOptions.length) {
+        const occ = Number(facility.occupancy_rate_percent) || 0;
         const matchesAnyLoadLevel = filters.loadLevels.some((loadLevelId) => {
           const loadLevel = loadLevelOptions.find((l) => l.id === loadLevelId);
           if (!loadLevel) return false;
-          return (
-            facility.occupancy_rate_percent >= loadLevel.minOccupancy &&
-            facility.occupancy_rate_percent < loadLevel.maxOccupancy
-          );
+          return occ >= loadLevel.minOccupancy && occ < loadLevel.maxOccupancy;
         });
         if (!matchesAnyLoadLevel) return false;
       }
