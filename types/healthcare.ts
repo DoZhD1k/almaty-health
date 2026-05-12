@@ -1,5 +1,25 @@
 // Интерфейсы для данных больниц и аналитики
 
+export interface Hospital {
+  unified_id: number;
+  name: string;
+  org_type: string;
+  district: string;
+  ownership: string;
+  lat: number;
+  lng: number;
+  total_beds: number;
+  pct_occupied: number;
+  occ_cat: 'over' | 'vhigh' | 'high' | 'norm' | 'low' | 'vlow';
+  bld_priority: string;
+  bld_condition: string;
+  seismic_label: string | null;
+  stop_cat: string | null;
+  lethal: number;
+  admitted: number;
+  rural_admitted: number;
+}
+
 export interface FacilityStatistic {
   id: number;
   medical_organization: string;

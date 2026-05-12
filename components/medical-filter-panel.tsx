@@ -26,11 +26,12 @@ import {
   FacilityType,
   BedProfile,
   LoadLevel,
+  Hospital
 } from "@/types/healthcare";
 
 interface MedicalFilterPanelProps {
   onFiltersChange: (filters: MedicalFilterState) => void;
-  facilities: FacilityStatistic[];
+  facilities: Hospital[];
   className?: string;
 }
 
@@ -59,13 +60,14 @@ const loadLevelOptions: LoadLevel[] = [
 export function MedicalFilterPanel({
   onFiltersChange,
   facilities,
+  // ...props,
   className = "",
 }: MedicalFilterPanelProps) {
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
     bedProfiles: [],
-    loadLevels: ["low", "normal", "high", "critical"],
+    loadLevels: ["vlow", "low", "norm", "high", "vhigh", "over"], 
     searchQuery: "",
   });
 
@@ -83,11 +85,11 @@ export function MedicalFilterPanel({
     ];
 
     const facilityTypes = [
-      ...new Set(facilities.map((f) => f.facility_type).filter(Boolean)),
+      ...new Set(facilities.map((f) => f.org_type).filter(Boolean)),
     ].map((type) => ({ id: type, label: type }));
 
     const bedProfiles = [
-      ...new Set(facilities.map((f) => f.bed_profile).filter(Boolean)),
+      ...new Set(facilities.map((f) => f.ownership).filter(Boolean)),
     ].map((profile) => ({ id: profile, label: profile }));
 
     return {
@@ -103,7 +105,7 @@ export function MedicalFilterPanel({
       // Search filter
       if (
         filters.searchQuery &&
-        !facility.medical_organization
+        !facility.name
           .toLowerCase()
           .includes(filters.searchQuery.toLowerCase())
       ) {
@@ -121,7 +123,7 @@ export function MedicalFilterPanel({
       // Facility type filter
       if (
         filters.facilityTypes.length > 0 &&
-        !filters.facilityTypes.includes(facility.facility_type)
+        !filters.facilityTypes.includes(facility.org_type)
       ) {
         return false;
       }
@@ -129,20 +131,15 @@ export function MedicalFilterPanel({
       // Bed profile filter
       if (
         filters.bedProfiles.length > 0 &&
-        !filters.bedProfiles.includes(facility.bed_profile)
+        !filters.bedProfiles.includes(facility.ownership)
       ) {
         return false;
       }
 
-      // Load level filter — skip if all 4 selected (show everything)
-      if (filters.loadLevels.length > 0 && filters.loadLevels.length < loadLevelOptions.length) {
-        const occ = Number(facility.occupancy_rate_percent) || 0;
-        const matchesAnyLoadLevel = filters.loadLevels.some((loadLevelId) => {
-          const loadLevel = loadLevelOptions.find((l) => l.id === loadLevelId);
-          if (!loadLevel) return false;
-          return occ >= loadLevel.minOccupancy && occ < loadLevel.maxOccupancy;
-        });
-        if (!matchesAnyLoadLevel) return false;
+      if (filters.loadLevels.length > 0 && filters.loadLevels.length < 6) {
+        if (!filters.loadLevels.includes(facility.occ_cat)) {
+          return false;
+        }
       }
 
       return true;
@@ -158,18 +155,36 @@ export function MedicalFilterPanel({
     }
 
     const totalFacilities = filteredFacilities.length;
+    // const totalOccupancy = filteredFacilities.reduce(
+    //   (sum, f) => sum + f.occupancy_rate_percent,
+    //   0,
+    // );
+    // const averageOccupancy = Math.round(
+    //   (totalOccupancy / totalFacilities) * 100,
+    // );
+    // const overloadedCount = filteredFacilities.filter(
+    //   (f) => f.occupancy_rate_percent > 0.95,
+    // ).length;
+    // const totalBeds = filteredFacilities.reduce(
+    //   (sum, f) => sum + (f.beds_deployed_withdrawn_for_rep || 0),
+    //   0,
+    // );
+
     const totalOccupancy = filteredFacilities.reduce(
-      (sum, f) => sum + f.occupancy_rate_percent,
+      (sum, f) => sum + (f.pct_occupied || 0),
       0,
     );
-    const averageOccupancy = Math.round(
-      (totalOccupancy / totalFacilities) * 100,
-    );
+
+    const averageOccupancy = totalFacilities > 0 
+      ? Math.round(totalOccupancy / totalFacilities) 
+      : 0;
+
     const overloadedCount = filteredFacilities.filter(
-      (f) => f.occupancy_rate_percent > 0.95,
+      (f) => f.pct_occupied > 95,
     ).length;
+
     const totalBeds = filteredFacilities.reduce(
-      (sum, f) => sum + (f.beds_deployed_withdrawn_for_rep || 0),
+      (sum, f) => sum + (f.total_beds || 0),
       0,
     );
 

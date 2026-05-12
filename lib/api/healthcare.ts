@@ -4,6 +4,7 @@ import {
   CityMedicalOrganization,
   ApiResponse,
   DashboardFilters,
+  Hospital,
 } from "@/types/healthcare";
 
 // Прямой доступ к внешнему API без прокси Next.js
@@ -111,6 +112,14 @@ class HealthcareApiClient {
     return this.directFetch<CityMedicalOrganization>(
       "/api/v1/healthcare/city-medical-organization/?limit=1000"
     );
+  }
+
+  async getHospitals(): Promise<ApiResponse<Hospital>> {
+    return this.directFetch<Hospital>("/api/v1/healthcare/hospitals/?limit=1000");
+  }
+
+  async getHospitalDetail(id: number): Promise<any> {
+    return this.directFetch<any>(`/api/v1/healthcare/hospitals/${id}/`);
   }
 }
 

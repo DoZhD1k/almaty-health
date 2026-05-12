@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { MedicalFilterPanel } from "@/components/medical-filter-panel";
-import { FacilityStatistic, MedicalFilterState } from "@/types/healthcare";
+import { FacilityStatistic, Hospital, MedicalFilterState } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 import { Filter, X } from "lucide-react";
 
@@ -29,7 +29,8 @@ const MapLibreFacilityMap = dynamic(
 );
 
 export default function HomePage() {
-  const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
+  // const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
+  const [hospitals, setHospitals] = useState<Hospital[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -37,47 +38,116 @@ export default function HomePage() {
     district: "Все районы",
     facilityTypes: [],
     bedProfiles: [],
-    loadLevels: ["low", "normal", "high", "critical"],
+    // loadLevels: ["low", "normal", "high", "critical"],
+    loadLevels: ["vlow", "low", "norm", "high", "vhigh", "over"], 
     searchQuery: "",
   });
 
   useEffect(() => {
-    loadFacilities();
+    loadHospitals();
   }, []);
 
-  const loadFacilities = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log("Loading facilities from API...");
-      const response = await healthcareApi.getFacilityStatistics();
-      console.log("API response received:", response);
+  // const loadFacilities = async () => {
+  //   setLoading(true);
+  //   setError(null);
+  //   try {
+  //     console.log("Loading facilities from API...");
+  //     const response = await healthcareApi.getFacilityStatistics();
+  //     console.log("API response received:", response);
 
-      if (response.results && response.results.length > 0) {
-        setFacilities(response.results);
-        console.log(`Loaded ${response.results.length} facilities`);
-      } else {
-        console.warn("No facilities data in response:", response);
-        setError("Нет данных для отображения");
-      }
+  //     if (response.results && response.results.length > 0) {
+  //       setFacilities(response.results);
+  //       console.log(`Loaded ${response.results.length} facilities`);
+  //     } else {
+  //       console.warn("No facilities data in response:", response);
+  //       setError("Нет данных для отображения");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error loading facilities:", error);
+  //     const errorMessage =
+  //       error instanceof Error
+  //         ? `Ошибка подключения к серверу: ${error.message}`
+  //         : "Ошибка подключения к серверу";
+  //     setError(errorMessage);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const loadHospitals = async () => {
+    setLoading(true);
+    try {
+      const response = await healthcareApi.getHospitals(); // Используем новую функцию
+      setHospitals(response.results);
     } catch (error) {
-      console.error("Error loading facilities:", error);
-      const errorMessage =
-        error instanceof Error
-          ? `Ошибка подключения к серверу: ${error.message}`
-          : "Ошибка подключения к серверу";
-      setError(errorMessage);
+      setError("Ошибка загрузки больниц");
     } finally {
       setLoading(false);
     }
   };
+  // const filteredFacilities = useMemo(() => {
+  //   return facilities.filter((facility) => {
+  //     // Search filter
+  //     if (
+  //       filters.searchQuery &&
+  //       !facility.medical_organization
+  //         .toLowerCase()
+  //         .includes(filters.searchQuery.toLowerCase())
+  //     ) {
+  //       return false;
+  //     }
 
-  const filteredFacilities = useMemo(() => {
-    return facilities.filter((facility) => {
+  //     // District filter
+  //     if (
+  //       filters.district !== "Все районы" &&
+  //       facility.district !== filters.district
+  //     ) {
+  //       return false;
+  //     }
+
+  //     // Facility type filter
+  //     if (
+  //       filters.facilityTypes.length > 0 &&
+  //       !filters.facilityTypes.includes(facility.facility_type)
+  //     ) {
+  //       return false;
+  //     }
+
+  //     // Bed profile filter
+  //     if (
+  //       filters.bedProfiles.length > 0 &&
+  //       !filters.bedProfiles.includes(facility.bed_profile)
+  //     ) {
+  //       return false;
+  //     }
+
+  //     // Load level filter — skip if all 4 selected (show everything)
+  //     if (filters.loadLevels.length > 0 && filters.loadLevels.length < 4) {
+  //       const loadLevelOptions = [
+  //         { id: "low", minOccupancy: 0, maxOccupancy: 0.5 },
+  //         { id: "normal", minOccupancy: 0.5, maxOccupancy: 0.8 },
+  //         { id: "high", minOccupancy: 0.8, maxOccupancy: 0.95 },
+  //         { id: "critical", minOccupancy: 0.95, maxOccupancy: Infinity },
+  //       ];
+  //       const occ = Number(facility.occupancy_rate_percent) || 0;
+  //       const matchesAnyLoadLevel = filters.loadLevels.some((loadLevelId) => {
+  //         const loadLevel = loadLevelOptions.find((l) => l.id === loadLevelId);
+  //         if (!loadLevel) return false;
+  //         return occ >= loadLevel.minOccupancy && occ < loadLevel.maxOccupancy;
+  //       });
+  //       if (!matchesAnyLoadLevel) return false;
+  //     }
+
+  //     return true;
+  //   });
+  // }, [facilities, filters]);
+  
+  const filteredHospitals = useMemo(() => {
+    return hospitals.filter((hospital) => {
       // Search filter
       if (
         filters.searchQuery &&
-        !facility.medical_organization
+        !hospital.name
           .toLowerCase()
           .includes(filters.searchQuery.toLowerCase())
       ) {
@@ -87,7 +157,7 @@ export default function HomePage() {
       // District filter
       if (
         filters.district !== "Все районы" &&
-        facility.district !== filters.district
+        hospital.district !== filters.district
       ) {
         return false;
       }
@@ -95,7 +165,7 @@ export default function HomePage() {
       // Facility type filter
       if (
         filters.facilityTypes.length > 0 &&
-        !filters.facilityTypes.includes(facility.facility_type)
+        !filters.facilityTypes.includes(hospital.org_type)
       ) {
         return false;
       }
@@ -103,31 +173,19 @@ export default function HomePage() {
       // Bed profile filter
       if (
         filters.bedProfiles.length > 0 &&
-        !filters.bedProfiles.includes(facility.bed_profile)
+        !filters.bedProfiles.includes(hospital.ownership)
       ) {
         return false;
       }
 
-      // Load level filter — skip if all 4 selected (show everything)
-      if (filters.loadLevels.length > 0 && filters.loadLevels.length < 4) {
-        const loadLevelOptions = [
-          { id: "low", minOccupancy: 0, maxOccupancy: 0.5 },
-          { id: "normal", minOccupancy: 0.5, maxOccupancy: 0.8 },
-          { id: "high", minOccupancy: 0.8, maxOccupancy: 0.95 },
-          { id: "critical", minOccupancy: 0.95, maxOccupancy: Infinity },
-        ];
-        const occ = Number(facility.occupancy_rate_percent) || 0;
-        const matchesAnyLoadLevel = filters.loadLevels.some((loadLevelId) => {
-          const loadLevel = loadLevelOptions.find((l) => l.id === loadLevelId);
-          if (!loadLevel) return false;
-          return occ >= loadLevel.minOccupancy && occ < loadLevel.maxOccupancy;
-        });
-        if (!matchesAnyLoadLevel) return false;
+      if (filters.loadLevels.length > 0 && filters.loadLevels.length < 6) {
+        if (!filters.loadLevels.includes(hospital.occ_cat)) {
+          return false;
+        }
       }
-
       return true;
     });
-  }, [facilities, filters]);
+  }, [hospitals, filters]);
 
   if (loading) {
     return (
@@ -147,7 +205,7 @@ export default function HomePage() {
         <div className="text-center">
           <p className="text-red-500 mb-4">Ошибка: {error}</p>
           <button
-            onClick={loadFacilities}
+            onClick={loadHospitals}
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Повторить
@@ -162,7 +220,7 @@ export default function HomePage() {
       {/* Full-screen Map Background */}
       <div className="absolute inset-0 z-0">
         <MapLibreFacilityMap
-          facilities={filteredFacilities}
+          facilities={filteredHospitals}
           fullscreen={true}
           selectedDistrict={filters.district}
         />
@@ -172,7 +230,7 @@ export default function HomePage() {
       <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
         <MedicalFilterPanel
           onFiltersChange={setFilters}
-          facilities={facilities}
+          facilities={hospitals}
           className="shadow-lg"
         />
       </div>
@@ -206,7 +264,7 @@ export default function HomePage() {
               onFiltersChange={(f) => {
                 setFilters(f);
               }}
-              facilities={facilities}
+              facilities={hospitals}
               className="border-0 shadow-none rounded-none"
             />
           </div>
@@ -215,7 +273,7 @@ export default function HomePage() {
               onClick={() => setMobileFiltersOpen(false)}
               className="w-full rounded-xl bg-[#4169E1] py-3 text-white font-medium hover:bg-[#3558c0] active:scale-[0.98] transition-all"
             >
-              Показать результаты ({filteredFacilities.length})
+              Показать результаты ({filteredHospitals.length})
             </button>
           </div>
         </div>
