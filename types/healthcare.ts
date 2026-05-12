@@ -1,5 +1,7 @@
 // Интерфейсы для данных больниц и аналитики
 
+import { MapMode } from "@/components/medical-filter-panel";
+
 export interface Hospital {
   unified_id: number;
   name: string;
@@ -18,6 +20,17 @@ export interface Hospital {
   lethal: number;
   admitted: number;
   rural_admitted: number;
+}
+
+
+export interface SeismicPoint {
+  unified_id: number;
+  name: string;
+  seismic_score: number;
+  seismic_label: string;
+  seismic_zone: string;
+  lat: number;
+  lng: number;
 }
 
 export interface FacilityStatistic {
@@ -182,6 +195,9 @@ export interface MedicalFilterState {
   bedProfiles: string[];
   loadLevels: string[];
   searchQuery: string;
+  mapMode: MapMode;
+  showSeismicGrid: boolean;
+  selectedTechConditions: string[];
 }
 
 export interface FacilityType {

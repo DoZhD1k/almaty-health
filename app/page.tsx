@@ -3,11 +3,10 @@
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { MedicalFilterPanel } from "@/components/medical-filter-panel";
-import { FacilityStatistic, Hospital, MedicalFilterState } from "@/types/healthcare";
+import { Hospital, MedicalFilterState, SeismicPoint } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 import { Filter, X } from "lucide-react";
 
-// Dynamically import the MapLibre map component to prevent SSR issues
 const MapLibreFacilityMap = dynamic(
   () =>
     import("@/components/map/MapLibreFacilityMap").then((mod) => ({
@@ -29,8 +28,8 @@ const MapLibreFacilityMap = dynamic(
 );
 
 export default function HomePage() {
-  // const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
   const [hospitals, setHospitals] = useState<Hospital[]>([]);
+  const [seismicData, setSeismicData] = useState<SeismicPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -38,113 +37,35 @@ export default function HomePage() {
     district: "Все районы",
     facilityTypes: [],
     bedProfiles: [],
-    // loadLevels: ["low", "normal", "high", "critical"],
     loadLevels: ["vlow", "low", "norm", "high", "vhigh", "over"], 
     searchQuery: "",
+    mapMode: "load",
+    showSeismicGrid: false,
+    selectedTechConditions: ["dark-red", "red", "orange", "yellow", "green", "gray"],
   });
 
   useEffect(() => {
     loadHospitals();
   }, []);
 
-  // const loadFacilities = async () => {
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     console.log("Loading facilities from API...");
-  //     const response = await healthcareApi.getFacilityStatistics();
-  //     console.log("API response received:", response);
-
-  //     if (response.results && response.results.length > 0) {
-  //       setFacilities(response.results);
-  //       console.log(`Loaded ${response.results.length} facilities`);
-  //     } else {
-  //       console.warn("No facilities data in response:", response);
-  //       setError("Нет данных для отображения");
-  //     }
-  //   } catch (error) {
-  //     console.error("Error loading facilities:", error);
-  //     const errorMessage =
-  //       error instanceof Error
-  //         ? `Ошибка подключения к серверу: ${error.message}`
-  //         : "Ошибка подключения к серверу";
-  //     setError(errorMessage);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const loadHospitals = async () => {
     setLoading(true);
     try {
-      const response = await healthcareApi.getHospitals(); // Используем новую функцию
-      setHospitals(response.results);
+      const [hospRes, seismicRes] = await Promise.all([
+        healthcareApi.getHospitals(),
+        healthcareApi.getSeismicPoints(),
+      ]);
+      setHospitals(hospRes.results);
+      setSeismicData(seismicRes);
     } catch (error) {
       setError("Ошибка загрузки больниц");
     } finally {
       setLoading(false);
     }
   };
-  // const filteredFacilities = useMemo(() => {
-  //   return facilities.filter((facility) => {
-  //     // Search filter
-  //     if (
-  //       filters.searchQuery &&
-  //       !facility.medical_organization
-  //         .toLowerCase()
-  //         .includes(filters.searchQuery.toLowerCase())
-  //     ) {
-  //       return false;
-  //     }
-
-  //     // District filter
-  //     if (
-  //       filters.district !== "Все районы" &&
-  //       facility.district !== filters.district
-  //     ) {
-  //       return false;
-  //     }
-
-  //     // Facility type filter
-  //     if (
-  //       filters.facilityTypes.length > 0 &&
-  //       !filters.facilityTypes.includes(facility.facility_type)
-  //     ) {
-  //       return false;
-  //     }
-
-  //     // Bed profile filter
-  //     if (
-  //       filters.bedProfiles.length > 0 &&
-  //       !filters.bedProfiles.includes(facility.bed_profile)
-  //     ) {
-  //       return false;
-  //     }
-
-  //     // Load level filter — skip if all 4 selected (show everything)
-  //     if (filters.loadLevels.length > 0 && filters.loadLevels.length < 4) {
-  //       const loadLevelOptions = [
-  //         { id: "low", minOccupancy: 0, maxOccupancy: 0.5 },
-  //         { id: "normal", minOccupancy: 0.5, maxOccupancy: 0.8 },
-  //         { id: "high", minOccupancy: 0.8, maxOccupancy: 0.95 },
-  //         { id: "critical", minOccupancy: 0.95, maxOccupancy: Infinity },
-  //       ];
-  //       const occ = Number(facility.occupancy_rate_percent) || 0;
-  //       const matchesAnyLoadLevel = filters.loadLevels.some((loadLevelId) => {
-  //         const loadLevel = loadLevelOptions.find((l) => l.id === loadLevelId);
-  //         if (!loadLevel) return false;
-  //         return occ >= loadLevel.minOccupancy && occ < loadLevel.maxOccupancy;
-  //       });
-  //       if (!matchesAnyLoadLevel) return false;
-  //     }
-
-  //     return true;
-  //   });
-  // }, [facilities, filters]);
   
   const filteredHospitals = useMemo(() => {
     return hospitals.filter((hospital) => {
-      // Search filter
       if (
         filters.searchQuery &&
         !hospital.name
@@ -154,7 +75,6 @@ export default function HomePage() {
         return false;
       }
 
-      // District filter
       if (
         filters.district !== "Все районы" &&
         hospital.district !== filters.district
@@ -162,27 +82,42 @@ export default function HomePage() {
         return false;
       }
 
-      // Facility type filter
-      if (
-        filters.facilityTypes.length > 0 &&
-        !filters.facilityTypes.includes(hospital.org_type)
-      ) {
-        return false;
-      }
-
-      // Bed profile filter
-      if (
-        filters.bedProfiles.length > 0 &&
-        !filters.bedProfiles.includes(hospital.ownership)
-      ) {
-        return false;
-      }
-
-      if (filters.loadLevels.length > 0 && filters.loadLevels.length < 6) {
-        if (!filters.loadLevels.includes(hospital.occ_cat)) {
+      // if (filters.mapMode === "load") {
+        if (
+          filters.facilityTypes.length > 0 &&
+          !filters.facilityTypes.includes(hospital.org_type)
+        ) {
           return false;
         }
+
+        if (
+          filters.bedProfiles.length > 0 &&
+          !filters.bedProfiles.includes(hospital.ownership)
+        ) {
+          return false;
+        }
+
+        if (filters.loadLevels.length > 0 && filters.loadLevels.length < 6) {
+          if (!filters.loadLevels.includes(hospital.occ_cat)) {
+            return false;
+          }
+        }
+      // }
+
+      if (filters.mapMode === "buildings") {
+        let condition = "gray"; // default
+        
+        // ВАЖНО: Эта логика должна быть идентична MapLibre paint свойству
+        if (hospital.bld_priority === "срочно") condition = "dark-red";
+        else if (hospital.bld_condition?.includes("Аварийное")) condition = "red";
+        // else if (hospital.bld_seismic) condition = "orange"; // Если в объекте есть seismic
+        else if (hospital.bld_priority === "плановый") condition = "yellow";
+        else if (hospital.bld_condition?.includes("Исправное")) condition = "green";
+        else condition = "gray";
+
+        if (!filters.selectedTechConditions.includes(condition)) return false;
       }
+
       return true;
     });
   }, [hospitals, filters]);
@@ -196,7 +131,6 @@ export default function HomePage() {
         </div>
       </div>
     );
-    //fun
   }
 
   if (error) {
@@ -223,13 +157,14 @@ export default function HomePage() {
           facilities={filteredHospitals}
           fullscreen={true}
           selectedDistrict={filters.district}
+          mapMode={filters.mapMode}
         />
       </div>
 
       {/* Floating Filter Panel - Desktop */}
       <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
         <MedicalFilterPanel
-          onFiltersChange={setFilters}
+          onFiltersChange={(newFilters) => setFilters(newFilters)}
           facilities={hospitals}
           className="shadow-lg"
         />

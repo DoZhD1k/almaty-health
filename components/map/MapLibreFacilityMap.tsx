@@ -1,22 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import maplibregl, { ExpressionSpecification } from "maplibre-gl";
 import { useMapInitialization } from "@/hooks/use-map-initialization";
-import { FacilityStatistic, Hospital } from "@/types/healthcare";
+import { FacilityStatistic, Hospital, SeismicPoint } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 
-// interface MapLibreFacilityMapProps {
-//   facilities?: FacilityStatistic[];
-//   className?: string;
-//   fullscreen?: boolean;
-//   selectedDistrict?: string;
-// }
 interface MapLibreFacilityMapProps {
   facilities?: Hospital[];
   className?: string;
   fullscreen?: boolean;
   selectedDistrict?: string;
+  mapMode?: "load" | "buildings" | "geo";
+  seismicData?: SeismicPoint[];
+  showSeismicGrid?: boolean;
 }
 
 interface DistrictFeature {
@@ -31,7 +28,6 @@ interface DistrictFeature {
 }
 
 
-// Добавь рядом с твоими util-функциями (один раз на модуль)
 let _popupCssInjected = false;
 const injectPopupCss = () => {
   if (_popupCssInjected) return;
@@ -331,6 +327,9 @@ export function MapLibreFacilityMap({
   className = "",
   fullscreen = false,
   selectedDistrict = "Все районы",
+  mapMode = "load",
+  seismicData = [],
+  showSeismicGrid = false,
 }: MapLibreFacilityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { mapRef, isLoading, zoomIn, zoomOut, resetView } =
@@ -338,7 +337,6 @@ export function MapLibreFacilityMap({
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const [districts, setDistricts] = useState<DistrictFeature[]>([]);
 
-  // Fetch districts data
   useEffect(() => {
     fetch("https://admin.smartalmaty.kz/api/v1/address/districts")
       .then((res) => res.json())
@@ -371,7 +369,6 @@ export function MapLibreFacilityMap({
       .catch((err) => console.error("Error loading districts:", err));
   }, []);
 
-  // Add district polygons to map
   useEffect(() => {
     if (!mapRef.current) return;
     if (!districts.length) {
@@ -527,141 +524,11 @@ export function MapLibreFacilityMap({
     };
   }, [districts, selectedDistrict, mapRef]);
 
-  // Add facilities as clustered GeoJSON source + layers
-  // useEffect(() => {
-  //   if (!mapRef.current || isLoading) return;
-
-  //   const map = mapRef.current;
-
-  //   // Build GeoJSON from facilities
-  //   const geoJsonFeatures = facilities
-  //     .filter(
-  //       (f) =>
-  //         f.latitude != null &&
-  //         f.longitude != null &&
-  //         !isNaN(f.latitude) &&
-  //         !isNaN(f.longitude),
-  //     )
-  //     .map((facility) => ({
-  //       type: "Feature" as const,
-  //       properties: {
-  //         medical_organization: facility.medical_organization,
-  //         district: facility.district || "",
-  //         facility_type: facility.facility_type || "",
-  //         bed_profile: facility.bed_profile || "",
-  //         occupancy_rate_percent: facility.occupancy_rate_percent || 0,
-  //         beds_deployed_withdrawn_for_rep:
-  //           facility.beds_deployed_withdrawn_for_rep || 0,
-  //         address: facility.address || "",
-  //       },
-  //       geometry: {
-  //         type: "Point" as const,
-  //         coordinates: [
-  //           Number(facility.longitude),
-  //           Number(facility.latitude),
-  //         ],
-  //       },
-  //     }));
-
-  //   const geoJsonData = {
-  //     type: "FeatureCollection" as const,
-  //     features: geoJsonFeatures,
-  //   };
-
-  //   const addClusterLayers = () => {
-  //     // If source already exists, just update its data (no layer recreation needed)
-  //     if (map.getSource("facilities-clustered")) {
-  //       (
-  //         map.getSource("facilities-clustered") as maplibregl.GeoJSONSource
-  //       ).setData(geoJsonData);
-  //       return;
-  //     }
-
-  //     // Add source (no clustering)
-  //     map.addSource("facilities-clustered", {
-  //       type: "geojson",
-  //       data: geoJsonData,
-  //     });
-
-  //     // Individual facility points
-  //     map.addLayer({
-  //       id: "unclustered-facility",
-  //       type: "circle",
-  //       source: "facilities-clustered",
-  //       paint: {
-  //         "circle-radius": 8,
-  //         "circle-color": [
-  //           "case",
-  //           [">", ["get", "occupancy_rate_percent"], 0.95],
-  //           "#dc2626",
-  //           [">", ["get", "occupancy_rate_percent"], 0.8],
-  //           "#ea580c",
-  //           [">=", ["get", "occupancy_rate_percent"], 0.5],
-  //           "#16a34a",
-  //           "#6b7280",
-  //         ],
-  //         "circle-stroke-color": "#ffffff",
-  //         "circle-stroke-width": 2,
-  //         "circle-opacity": 0.85,
-  //       },
-  //     });
-
-  //     // Move facility layer above district polygons
-  //     if (map.getLayer("districts-fill") || map.getLayer("districts-outline")) {
-  //       map.moveLayer("unclustered-facility");
-  //     }
-
-  //     // Click on facility → popup
-  //     map.on("click", "unclustered-facility", (e: any) => {
-  //       if (!e.features || !e.features.length) return;
-  //       const feature = e.features[0];
-  //       const coords = (feature.geometry as any).coordinates.slice();
-  //       const props = feature.properties;
-
-  //       const matchedFacility = facilities.find(
-  //         (f) =>
-  //           Number(f.longitude).toFixed(5) === Number(coords[0]).toFixed(5) &&
-  //           Number(f.latitude).toFixed(5) === Number(coords[1]).toFixed(5),
-  //       );
-
-  //       const popupContent = matchedFacility
-  //         ? buildFacilityPopup(matchedFacility)
-  //         : buildFacilityPopup(props);
-
-  //       if (popupRef.current) popupRef.current.remove();
-
-  //       popupRef.current = new maplibregl.Popup({
-  //         offset: 25,
-  //         anchor: "bottom",
-  //         closeButton: true,
-  //         maxWidth: "320px",
-  //       })
-  //         .setLngLat(coords)
-  //         .setHTML(popupContent)
-  //         .addTo(map);
-  //     });
-
-  //     map.on("mouseenter", "unclustered-facility", () => {
-  //       map.getCanvas().style.cursor = "pointer";
-  //     });
-  //     map.on("mouseleave", "unclustered-facility", () => {
-  //       map.getCanvas().style.cursor = "";
-  //     });
-  //   };
-
-  //   if (map.isStyleLoaded()) {
-  //     addClusterLayers();
-  //   } else {
-  //     map.once("idle", addClusterLayers);
-  //   }
-  // }, [facilities, isLoading, mapRef]);
-
   useEffect(() => {
     if (!mapRef.current || isLoading) return;
 
     const map = mapRef.current;
 
-    // Build GeoJSON from facilities
     const geoJsonFeatures = facilities
       .filter(
         (f) =>
@@ -694,6 +561,7 @@ export function MapLibreFacilityMap({
         (
           map.getSource("facilities-clustered") as maplibregl.GeoJSONSource
         ).setData(geoJsonData);
+        map.setPaintProperty("unclustered-facility", "circle-color", getMapColorExpression(mapMode));
         return;
       }
 
@@ -712,17 +580,7 @@ export function MapLibreFacilityMap({
             7,
             ["min", 28, ["+", 7, ["*", ["sqrt", ["get", "total_beds"]], 0.45]]]
           ],
-          "circle-color": [
-            "match",
-            ["get", "occ_cat"],
-            "over", "#7B0000",
-            "vhigh", "#C62828",
-            "high", "#EF6C00",
-            "norm", "#2E7D32",
-            "low", "#FDD835",
-            "vlow", "#9E9E9E",
-            "#9E9E9E"
-          ],
+          "circle-color": getMapColorExpression(mapMode),
           "circle-stroke-color": "#ffffff",
           "circle-stroke-width": 2,
           "circle-opacity": 0.9,
@@ -732,35 +590,6 @@ export function MapLibreFacilityMap({
       if (map.getLayer("districts-fill") || map.getLayer("districts-outline")) {
         map.moveLayer("unclustered-facility");
       }
-
-      // map.on("click", "unclustered-facility", (e: any) => {
-      //   if (!e.features || !e.features.length) return;
-      //   const feature = e.features[0];
-      //   const coords = (feature.geometry as any).coordinates.slice();
-      //   const props = feature.properties;
-
-      //   const matchedFacility = facilities.find(
-      //     (f) =>
-      //       Number(f.lng).toFixed(5) === Number(coords[0]).toFixed(5) &&
-      //       Number(f.lat).toFixed(5) === Number(coords[1]).toFixed(5),
-      //   );
-
-      //   const popupContent = matchedFacility
-      //     ? buildFacilityPopup(matchedFacility)
-      //     : buildFacilityPopup(props);
-
-      //   if (popupRef.current) popupRef.current.remove();
-
-      //   popupRef.current = new maplibregl.Popup({
-      //     offset: 25,
-      //     anchor: "bottom",
-      //     closeButton: true,
-      //     maxWidth: "320px",
-      //   })
-      //     .setLngLat(coords)
-      //     .setHTML(popupContent)
-      //     .addTo(map);
-      // });
 
       map.on("click", "unclustered-facility", async (e: any) => {
         if (!e.features || !e.features.length) return;
@@ -797,7 +626,64 @@ export function MapLibreFacilityMap({
     } else {
       map.once("idle", addClusterLayers);
     }
-  }, [facilities, isLoading, mapRef]);
+    // console.log(mapMode, "map color expression set for facilities");
+  }, [facilities, isLoading, mapRef, mapMode]);
+
+  useEffect(() => {
+    if (!mapRef.current || !mapRef.current.isStyleLoaded()) return;
+    const map = mapRef.current;
+
+    const sourceId = "seismic-source";
+    const layerId = "seismic-layer";
+
+    if (!showSeismicGrid || !seismicData?.length) {
+      if (map.getLayer(layerId)) map.removeLayer(layerId);
+      if (map.getSource(sourceId)) map.removeSource(sourceId);
+      return;
+    }
+
+    const geojson = {
+      type: "FeatureCollection",
+      features: seismicData
+        .filter(s => s.seismic_score >= 0.2)
+        .map(s => ({
+          type: "Feature",
+          properties: { ...s },
+          geometry: { type: "Point", coordinates: [s.lng, s.lat] }
+        }))
+    };
+
+    if (map.getSource(sourceId)) {
+      (map.getSource(sourceId) as any).setData(geojson);
+    } else {
+      map.addSource(sourceId, { type: "geojson", data: geojson as any });
+      map.addLayer({
+        id: layerId,
+        type: "circle",
+        source: sourceId,
+        paint: {
+          // Радиус: 8 + score * 24
+          "circle-radius": ["+", 8, ["*", ["get", "seismic_score"], 24]],
+          // Цвет: >0.7 DarkRed, >0.4 Orange, else Yellow
+          "circle-color": [
+            "step", ["get", "seismic_score"],
+            "#FDD835", 0.4, "#EF6C00", 0.7, "#B71C1C"
+          ],
+          "circle-stroke-width": 2,
+          "circle-stroke-color": [
+            "step", ["get", "seismic_score"],
+            "#FDD835", 0.4, "#EF6C00", 0.7, "#B71C1C"
+          ],
+          "circle-opacity": 0.18,
+          "circle-stroke-opacity": 0.7
+        }
+      });
+      // Перемещаем под основные маркеры больниц
+      if (map.getLayer("unclustered-facility")) {
+          map.moveLayer(layerId, "unclustered-facility");
+      }
+    }
+  }, [seismicData, showSeismicGrid, isLoading]);
 
   return (
     <div
@@ -899,4 +785,30 @@ export function MapLibreFacilityMap({
       )}
     </div>
   );
+}
+
+function getMapColorExpression(mode: string): any {
+  if (mode === "buildings") {
+    return [
+      "case",
+      ["boolean", ["get", "bld_emergency"], false], "#7B0000",
+      ["==", ["get", "bld_condition"], "Аварийное (Снос)"], "#B71C1C",
+      ["boolean", ["get", "bld_seismic"], false], "#EF6C00",
+      ["==", ["get", "bld_priority"], "плановый"], "#F9A825",
+      ["==", ["get", "bld_condition"], "Исправное/Удовлетворительное"], "#2E7D32",
+      "#9E9E9E"
+    ];
+  }
+
+  return [
+    "match",
+    ["get", "occ_cat"],
+    "over", "#7B0000",
+    "vhigh", "#C62828",
+    "high", "#EF6C00",
+    "norm", "#2E7D32",
+    "low", "#FDD835",
+    "vlow", "#9E9E9E",
+    "#9E9E9E"
+  ] as ExpressionSpecification;
 }

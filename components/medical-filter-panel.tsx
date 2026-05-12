@@ -57,25 +57,48 @@ const loadLevelOptions: LoadLevel[] = [
   },
 ];
 
+export type MapMode = "load" | "buildings" | "geo";
+
 export function MedicalFilterPanel({
   onFiltersChange,
   facilities,
   // ...props,
   className = "",
 }: MedicalFilterPanelProps) {
+  const [activeTab, setActiveTab] = useState<MapMode>("load");
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
     bedProfiles: [],
     loadLevels: ["vlow", "low", "norm", "high", "vhigh", "over"], 
     searchQuery: "",
+    mapMode: "load",
+    showSeismicGrid: false,
+    selectedTechConditions: ["dark-red", "red", "orange", "yellow", "green", "gray"],
   });
+
+  const TECH_CONDITIONS = [
+    { id: "dark-red", label: "Аварийное (аварийный флаг)", color: "#7B0000" },
+    { id: "red", label: "Аварийное (снос)", color: "#B71C1C" },
+    { id: "orange", label: "Сейсмоусиление / Ветхое", color: "#EF6C00" },
+    { id: "yellow", label: "Неудовлетворительное", color: "#F9A825" },
+    { id: "green", label: "Исправное", color: "#2E7D32" },
+    { id: "gray", label: "Нет данных", color: "#9E9E9E" },
+  ];
 
   const [expandedSections, setExpandedSections] = useState({
     facilityTypes: false,
     bedProfiles: false,
     loadLevels: true,
   });
+
+  const handleTabChange = (mode: MapMode) => {
+    setActiveTab(mode);
+    // onFiltersChange({ ...filters, mapMode: mode });
+    const updatedFilters = { ...filters, mapMode: mode };
+    setFilters(updatedFilters);
+    onFiltersChange(updatedFilters);
+  };
 
   // Извлекаем уникальные данные из facilities
   const { districts, facilityTypeOptions, bedProfileOptions } = useMemo(() => {
@@ -233,6 +256,25 @@ export function MedicalFilterPanel({
       <div className="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-100">
         <h2 className="text-md font-semibold text-gray-900">Фильтры</h2>
       </div>
+      <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
+        {[
+          { id: "load", label: "Нагрузка", icon: TrendingUp },
+          { id: "buildings", label: "Здания", icon: Building2 },
+          { id: "geo", label: "Геоанализ", icon: Search },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => handleTabChange(tab.id as MapMode)}
+            className={`cursor-pointer rounded-md flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold transition-all
+              ${activeTab === tab.id 
+                ? "bg-blue-600 text-white shadow-inner" 
+                : "text-gray-500 hover:bg-gray-100"}`}
+          >
+            <tab.icon className="h-3 w-3" />
+            {tab.label}
+          </button>
+        ))}
+      </div>
 
       {/* Скроллируемый контент */}
       <div className="flex-1 overflow-y-auto">
@@ -276,130 +318,171 @@ export function MedicalFilterPanel({
             </Select>
           </div>
 
-          {/* Типы медицинской организации */}
-          <div className="border border-gray-200 rounded-lg">
-            <button
-              onClick={() => toggleSection("facilityTypes")}
-              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-xs text-gray-900">Типы МО:</span>
-              {expandedSections.facilityTypes ? (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+          {activeTab === "load" && (
+            <>
+            <div className="border border-gray-200 rounded-lg">
+              <button
+                onClick={() => toggleSection("facilityTypes")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-xs text-gray-900">Типы МО:</span>
+                {expandedSections.facilityTypes ? (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                )}
+              </button>
+              {expandedSections.facilityTypes && (
+                <div className="px-3 pb-3 space-y-2 border-t border-gray-100 max-h-40 overflow-y-auto">
+                  {facilityTypeOptions.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`facility-type-${option.id}`}
+                        checked={filters.facilityTypes.includes(option.id)}
+                        onCheckedChange={(checked) =>
+                          handleCheckboxChange(
+                            "facilityTypes",
+                            option.id,
+                            checked as boolean,
+                          )
+                        }
+                        className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                      />
+                      <Label
+                        htmlFor={`facility-type-${option.id}`}
+                        className="text-xs font-normal cursor-pointer text-gray-700"
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               )}
-            </button>
-            {expandedSections.facilityTypes && (
-              <div className="px-3 pb-3 space-y-2 border-t border-gray-100 max-h-40 overflow-y-auto">
-                {facilityTypeOptions.map((option) => (
-                  <div key={option.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`facility-type-${option.id}`}
-                      checked={filters.facilityTypes.includes(option.id)}
-                      onCheckedChange={(checked) =>
-                        handleCheckboxChange(
-                          "facilityTypes",
-                          option.id,
-                          checked as boolean,
-                        )
-                      }
-                      className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                    />
-                    <Label
-                      htmlFor={`facility-type-${option.id}`}
-                      className="text-xs font-normal cursor-pointer text-gray-700"
-                    >
-                      {option.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            </div>
 
-          {/* Профиль коек */}
-          <div className="border border-gray-200 rounded-lg">
-            <button
-              onClick={() => toggleSection("bedProfiles")}
-              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-xs text-gray-900">Профиль коек:</span>
-              {expandedSections.bedProfiles ? (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+            <div className="border border-gray-200 rounded-lg">
+              <button
+                onClick={() => toggleSection("bedProfiles")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-xs text-gray-900">Профиль коек:</span>
+                {expandedSections.bedProfiles ? (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                )}
+              </button>
+              {expandedSections.bedProfiles && (
+                <div className="px-3 pb-3 space-y-2 border-t border-gray-100 max-h-40 overflow-y-auto">
+                  {bedProfileOptions.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`bed-profile-${option.id}`}
+                        checked={filters.bedProfiles.includes(option.id)}
+                        onCheckedChange={(checked) =>
+                          handleCheckboxChange(
+                            "bedProfiles",
+                            option.id,
+                            checked as boolean,
+                          )
+                        }
+                        className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                      />
+                      <Label
+                        htmlFor={`bed-profile-${option.id}`}
+                        className="text-xs font-normal cursor-pointer text-gray-700"
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               )}
-            </button>
-            {expandedSections.bedProfiles && (
-              <div className="px-3 pb-3 space-y-2 border-t border-gray-100 max-h-40 overflow-y-auto">
-                {bedProfileOptions.map((option) => (
-                  <div key={option.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`bed-profile-${option.id}`}
-                      checked={filters.bedProfiles.includes(option.id)}
-                      onCheckedChange={(checked) =>
-                        handleCheckboxChange(
-                          "bedProfiles",
-                          option.id,
-                          checked as boolean,
-                        )
-                      }
-                      className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                    />
-                    <Label
-                      htmlFor={`bed-profile-${option.id}`}
-                      className="text-xs font-normal cursor-pointer text-gray-700"
-                    >
-                      {option.label}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            </div>
 
-          {/* Уровень загруженности */}
-          <div className="border border-gray-200 rounded-lg">
-            <button
-              onClick={() => toggleSection("loadLevels")}
-              className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-xs text-gray-900">
-                Уровень загруженности:
-              </span>
-              {expandedSections.loadLevels ? (
-                <ChevronUp className="h-4 w-4 text-gray-500" />
-              ) : (
-                <ChevronDown className="h-4 w-4 text-gray-500" />
+            <div className="border border-gray-200 rounded-lg">
+              <button
+                onClick={() => toggleSection("loadLevels")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-xs text-gray-900">
+                  Уровень загруженности:
+                </span>
+                {expandedSections.loadLevels ? (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                )}
+              </button>
+              {expandedSections.loadLevels && (
+                <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
+                  {loadLevelOptions.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`load-level-${option.id}`}
+                        checked={filters.loadLevels.includes(option.id)}
+                        onCheckedChange={(checked) =>
+                          handleCheckboxChange(
+                            "loadLevels",
+                            option.id,
+                            checked as boolean,
+                          )
+                        }
+                        className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                      />
+                      <Label
+                        htmlFor={`load-level-${option.id}`}
+                        className="text-xs font-normal cursor-pointer text-gray-700"
+                      >
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
               )}
-            </button>
-            {expandedSections.loadLevels && (
-              <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
-                {loadLevelOptions.map((option) => (
-                  <div key={option.id} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`load-level-${option.id}`}
-                      checked={filters.loadLevels.includes(option.id)}
-                      onCheckedChange={(checked) =>
-                        handleCheckboxChange(
-                          "loadLevels",
-                          option.id,
-                          checked as boolean,
-                        )
-                      }
-                      className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                    />
-                    <Label
-                      htmlFor={`load-level-${option.id}`}
-                      className="text-xs font-normal cursor-pointer text-gray-700"
-                    >
-                      {option.label}
-                    </Label>
-                  </div>
-                ))}
+            </div>
+            </>
+          )}
+
+          {activeTab === "buildings" && (
+            <>
+              <div className="space-y-2">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Тех. состояние</h3>
+                <div className="bg-blue-50/50 p-2 rounded-lg space-y-1">
+                  {TECH_CONDITIONS.map((item) => (
+                    <div key={item.id} className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={item.id} 
+                          checked={filters.selectedTechConditions.includes(item.id)}
+                          onCheckedChange={(checked) => {
+                            const next = checked 
+                              ? [...filters.selectedTechConditions, item.id]
+                              : filters.selectedTechConditions.filter(id => id !== item.id);
+                            updateFilters({ selectedTechConditions: next });
+                          }}
+                        />
+                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                        <Label htmlFor={item.id} className="text-[11px] leading-none cursor-pointer">{item.label}</Label>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-            )}
-          </div>
+
+              <div className="space-y-2 border-t pt-2">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Сейсмика</h3>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="seismic-grid" 
+                    checked={filters.showSeismicGrid}
+                    onCheckedChange={(val) => updateFilters({ showSeismicGrid: !!val })}
+                  />
+                  <Label htmlFor="seismic-grid" className="text-xs">Сейсмическая сетка</Label>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* Статистика - в нижней части панели */}
           <div className="grid grid-cols-2 gap-2">

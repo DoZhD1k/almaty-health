@@ -5,6 +5,7 @@ import {
   ApiResponse,
   DashboardFilters,
   Hospital,
+  SeismicPoint,
 } from "@/types/healthcare";
 
 // Прямой доступ к внешнему API без прокси Next.js
@@ -116,6 +117,11 @@ class HealthcareApiClient {
 
   async getHospitals(): Promise<ApiResponse<Hospital>> {
     return this.directFetch<Hospital>("/api/v1/healthcare/hospitals/?limit=1000");
+  }
+
+  async getSeismicPoints(): Promise<SeismicPoint[]> {
+    const response = await fetch("https://admin.smartalmaty.kz/api/v1/healthcare/analytics/seismic/");
+    return response.json();
   }
 
   async getHospitalDetail(id: number): Promise<any> {
