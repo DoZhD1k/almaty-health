@@ -82,7 +82,6 @@ export default function HomePage() {
         return false;
       }
 
-      // if (filters.mapMode === "load") {
         if (
           filters.facilityTypes.length > 0 &&
           !filters.facilityTypes.includes(hospital.org_type)
@@ -97,25 +96,23 @@ export default function HomePage() {
           return false;
         }
 
-        if (filters.loadLevels.length > 0 && filters.loadLevels.length < 6) {
-          if (!filters.loadLevels.includes(hospital.occ_cat)) {
-            return false;
-          }
-        }
-      // }
-
       if (filters.mapMode === "buildings") {
-        let condition = "gray"; // default
+        let condition = "gray";
         
-        // ВАЖНО: Эта логика должна быть идентична MapLibre paint свойству
         if (hospital.bld_priority === "срочно") condition = "dark-red";
         else if (hospital.bld_condition?.includes("Аварийное")) condition = "red";
-        // else if (hospital.bld_seismic) condition = "orange"; // Если в объекте есть seismic
+        else if (hospital.seismic_label?.includes("риск")) condition = "orange"; 
         else if (hospital.bld_priority === "плановый") condition = "yellow";
         else if (hospital.bld_condition?.includes("Исправное")) condition = "green";
         else condition = "gray";
 
         if (!filters.selectedTechConditions.includes(condition)) return false;
+      }
+
+      if (filters.mapMode === "load") {
+        if (filters.loadLevels.length > 0 && !filters.loadLevels.includes(hospital.occ_cat)) {
+          return false;
+        }
       }
 
       return true;
@@ -151,17 +148,17 @@ export default function HomePage() {
 
   return (
     <div className="relative flex-1 overflow-hidden">
-      {/* Full-screen Map Background */}
       <div className="absolute inset-0 z-0">
         <MapLibreFacilityMap
           facilities={filteredHospitals}
           fullscreen={true}
           selectedDistrict={filters.district}
           mapMode={filters.mapMode}
+          seismicData={seismicData}
+          showSeismicGrid={filters.showSeismicGrid}
         />
       </div>
 
-      {/* Floating Filter Panel - Desktop */}
       <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
         <MedicalFilterPanel
           onFiltersChange={(newFilters) => setFilters(newFilters)}
@@ -170,7 +167,6 @@ export default function HomePage() {
         />
       </div>
 
-      {/* Mobile: FAB to open filters */}
       <div className="lg:hidden absolute bottom-6 left-4 z-10">
         <button
           onClick={() => setMobileFiltersOpen(true)}
@@ -181,7 +177,6 @@ export default function HomePage() {
         </button>
       </div>
 
-      {/* Mobile: Fullscreen Filter Drawer */}
       {mobileFiltersOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white/98 backdrop-blur-sm animate-in slide-in-from-bottom duration-200">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">

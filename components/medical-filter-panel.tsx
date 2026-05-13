@@ -100,7 +100,6 @@ export function MedicalFilterPanel({
     onFiltersChange(updatedFilters);
   };
 
-  // Извлекаем уникальные данные из facilities
   const { districts, facilityTypeOptions, bedProfileOptions } = useMemo(() => {
     const districts = [
       "Все районы",
@@ -122,10 +121,8 @@ export function MedicalFilterPanel({
     };
   }, [facilities]);
 
-  // Вычисляем статистику на основе отфильтрованных данных
   const summaryData = useMemo(() => {
     const filteredFacilities = facilities.filter((facility) => {
-      // Search filter
       if (
         filters.searchQuery &&
         !facility.name
@@ -135,7 +132,6 @@ export function MedicalFilterPanel({
         return false;
       }
 
-      // District filter
       if (
         filters.district !== "Все районы" &&
         facility.district !== filters.district
@@ -143,7 +139,6 @@ export function MedicalFilterPanel({
         return false;
       }
 
-      // Facility type filter
       if (
         filters.facilityTypes.length > 0 &&
         !filters.facilityTypes.includes(facility.org_type)
@@ -151,7 +146,6 @@ export function MedicalFilterPanel({
         return false;
       }
 
-      // Bed profile filter
       if (
         filters.bedProfiles.length > 0 &&
         !filters.bedProfiles.includes(facility.ownership)
@@ -164,7 +158,6 @@ export function MedicalFilterPanel({
           return false;
         }
       }
-
       return true;
     });
 
@@ -178,20 +171,6 @@ export function MedicalFilterPanel({
     }
 
     const totalFacilities = filteredFacilities.length;
-    // const totalOccupancy = filteredFacilities.reduce(
-    //   (sum, f) => sum + f.occupancy_rate_percent,
-    //   0,
-    // );
-    // const averageOccupancy = Math.round(
-    //   (totalOccupancy / totalFacilities) * 100,
-    // );
-    // const overloadedCount = filteredFacilities.filter(
-    //   (f) => f.occupancy_rate_percent > 0.95,
-    // ).length;
-    // const totalBeds = filteredFacilities.reduce(
-    //   (sum, f) => sum + (f.beds_deployed_withdrawn_for_rep || 0),
-    //   0,
-    // );
 
     const totalOccupancy = filteredFacilities.reduce(
       (sum, f) => sum + (f.pct_occupied || 0),
@@ -252,7 +231,6 @@ export function MedicalFilterPanel({
     <div
       className={`bg-white/95 rounded-lg border border-gray-200 backdrop-blur-sm shadow-xl flex flex-col h-fit max-h-[calc(90vh-2px)] ${className}`}
     >
-      {/* Заголовок - фиксированный */}
       <div className="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-100">
         <h2 className="text-md font-semibold text-gray-900">Фильтры</h2>
       </div>
@@ -276,7 +254,6 @@ export function MedicalFilterPanel({
         ))}
       </div>
 
-      {/* Скроллируемый контент */}
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-4 px-4 py-4">
           {/* Поиск по названию МО */}

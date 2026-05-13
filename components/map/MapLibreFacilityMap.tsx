@@ -134,7 +134,6 @@ const fmt = (v: number | string) =>
   new Intl.NumberFormat("ru-RU").format(Number(v ?? 0));
 
 const statusColor = (rate01: number) => {
-  // использую твои пороги, только ещё возвращаю класс чипа
   if (rate01 > 0.95)
     return { hex: "#dc2626", chip: "critical", label: "Критическая" };
   if (rate01 > 0.8) return { hex: "#ea580c", chip: "high", label: "Высокая" };
@@ -342,9 +341,7 @@ export function MapLibreFacilityMap({
       .then((res) => res.json())
       .then((data) => {
         console.log("Districts API response:", data);
-        // API returns {count, next, previous, results: {type: "FeatureCollection", features: [...]}}
         if (data.results && data.results.features) {
-          // Filter out districts with id 0 and 9
           const filteredDistricts = data.results.features.filter(
             (feature: any) => {
               const id = feature.id || feature.properties?.id;
@@ -398,7 +395,6 @@ export function MapLibreFacilityMap({
         );
         console.log("Sample feature:", districts[0]);
 
-        // Remove existing layers if present
         if (map.getLayer("districts-fill")) {
           console.log("Removing existing districts-fill layer");
           map.removeLayer("districts-fill");
@@ -416,16 +412,13 @@ export function MapLibreFacilityMap({
           map.removeSource("districts");
         }
 
-        // Add source
         map.addSource("districts", {
           type: "geojson",
           data: geojson as any,
         });
         console.log("Districts source added");
 
-        // If a district is selected, show only that district
         if (selectedDistrict !== "Все районы") {
-          // Fill layer for selected district only
           map.addLayer({
             id: "districts-fill",
             type: "fill",
@@ -442,7 +435,6 @@ export function MapLibreFacilityMap({
             ")",
           );
 
-          // Outline layer for selected district only
           map.addLayer({
             id: "districts-outline",
             type: "line",
@@ -460,7 +452,6 @@ export function MapLibreFacilityMap({
             ")",
           );
         } else {
-          // Show all districts when none selected
           map.addLayer({
             id: "districts-fill",
             type: "fill",
@@ -485,7 +476,6 @@ export function MapLibreFacilityMap({
           console.log("Districts outline layer added (all districts)");
         }
 
-        // Перемещаем кластерные слои поверх полигонов районов
         if (map.getLayer("facility-clusters"))
           map.moveLayer("facility-clusters");
         if (map.getLayer("cluster-count")) map.moveLayer("cluster-count");
@@ -498,7 +488,6 @@ export function MapLibreFacilityMap({
       }
     };
 
-    // Wait for map style to load
     const attemptAddLayers = () => {
       if (map.isStyleLoaded()) {
         addLayers();
@@ -626,45 +615,50 @@ export function MapLibreFacilityMap({
     } else {
       map.once("idle", addClusterLayers);
     }
-    // console.log(mapMode, "map color expression set for facilities");
   }, [facilities, isLoading, mapRef, mapMode]);
 
   useEffect(() => {
-    if (!mapRef.current || !mapRef.current.isStyleLoaded()) return;
     const map = mapRef.current;
+    if (!map) return;
 
     const sourceId = "seismic-source";
     const layerId = "seismic-layer";
 
-    if (!showSeismicGrid || !seismicData?.length) {
-      if (map.getLayer(layerId)) map.removeLayer(layerId);
-      if (map.getSource(sourceId)) map.removeSource(sourceId);
-      return;
-    }
+    const updateSeismic = () => {
+      if (!map.isStyleLoaded()) {
+        map.once('idle', updateSeismic);
+        return;
+      }
+      
+      console.log("Updating seismic layer. Grid visible:", showSeismicGrid, "Data count:", seismicData?.length);
 
-    const geojson = {
+      if (!showSeismicGrid || !seismicData || seismicData.length === 0) {
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+        return;
+      }
+
+    const geojson: any = {
       type: "FeatureCollection",
       features: seismicData
-        .filter(s => s.seismic_score >= 0.2)
+        // .filter(s => s.seismic_score >= 0.1)
         .map(s => ({
           type: "Feature",
-          properties: { ...s },
-          geometry: { type: "Point", coordinates: [s.lng, s.lat] }
+          properties: { ...s, seismic_score: Number(s.seismic_score)  },
+          geometry: { type: "Point", coordinates: [Number(s.lng), Number(s.lat)] }
         }))
     };
 
     if (map.getSource(sourceId)) {
-      (map.getSource(sourceId) as any).setData(geojson);
+      (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(geojson);
     } else {
-      map.addSource(sourceId, { type: "geojson", data: geojson as any });
+      map.addSource(sourceId, { type: "geojson", data: geojson });
       map.addLayer({
         id: layerId,
         type: "circle",
         source: sourceId,
         paint: {
-          // Радиус: 8 + score * 24
           "circle-radius": ["+", 8, ["*", ["get", "seismic_score"], 24]],
-          // Цвет: >0.7 DarkRed, >0.4 Orange, else Yellow
           "circle-color": [
             "step", ["get", "seismic_score"],
             "#FDD835", 0.4, "#EF6C00", 0.7, "#B71C1C"
@@ -678,12 +672,14 @@ export function MapLibreFacilityMap({
           "circle-stroke-opacity": 0.7
         }
       });
-      // Перемещаем под основные маркеры больниц
       if (map.getLayer("unclustered-facility")) {
-          map.moveLayer(layerId, "unclustered-facility");
+        map.moveLayer(layerId, "unclustered-facility");
       }
     }
-  }, [seismicData, showSeismicGrid, isLoading]);
+    };
+
+    updateSeismic();
+  }, [seismicData, showSeismicGrid, isLoading, mapMode]);
 
   return (
     <div
@@ -791,11 +787,24 @@ function getMapColorExpression(mode: string): any {
   if (mode === "buildings") {
     return [
       "case",
-      ["boolean", ["get", "bld_emergency"], false], "#7B0000",
-      ["==", ["get", "bld_condition"], "Аварийное (Снос)"], "#B71C1C",
-      ["boolean", ["get", "bld_seismic"], false], "#EF6C00",
-      ["==", ["get", "bld_priority"], "плановый"], "#F9A825",
+      ["any", 
+        ["==", ["get", "bld_priority"], "срочно"],
+        ["==", ["get", "bld_condition"], "Аварийное (Снос)"]
+      ], "#7B0000",
+      
+      ["match", ["get", "bld_condition"], 
+        "Аварийное", true, 
+        "Ветхое", true, 
+        false
+      ], "#B71C1C",
+
+      ["any",
+        ["coalesce", ["get", "bld_seismic"], false],
+        ["==", ["get", "bld_priority"], "плановый"]
+      ], "#EF6C00",
+
       ["==", ["get", "bld_condition"], "Исправное/Удовлетворительное"], "#2E7D32",
+
       "#9E9E9E"
     ];
   }
@@ -810,5 +819,5 @@ function getMapColorExpression(mode: string): any {
     "low", "#FDD835",
     "vlow", "#9E9E9E",
     "#9E9E9E"
-  ] as ExpressionSpecification;
+  ];
 }
