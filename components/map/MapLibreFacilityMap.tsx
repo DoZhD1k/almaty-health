@@ -14,6 +14,12 @@ interface MapLibreFacilityMapProps {
   mapMode?: "load" | "buildings" | "geo";
   seismicData?: SeismicPoint[];
   showSeismicGrid?: boolean;
+  refusalsData?: any[];
+  plannedZones?: any;
+  plannedObjects?: any;
+  gridCells?: any;
+  geoAccessMode?: "current" | "planned";
+  activeGeoLayers?: string[];
 }
 
 interface DistrictFeature {
@@ -142,64 +148,6 @@ const statusColor = (rate01: number) => {
   return { hex: "#6b7280", chip: "low", label: "Низкая" };
 };
 
-function buildFacilityPopup(facility: any) {
-  injectPopupCss();
-
-  const occ = Number(facility.occupancy_rate_percent ?? 0);
-  const pct = Math.max(0, Math.min(100, +(occ * 100).toFixed(1)));
-  const col = statusColor(occ);
-  const beds = Number(facility.beds_deployed_withdrawn_for_rep ?? 0);
-  const freeEst = Math.max(0, Math.round(beds * (1 - occ)));
-
-  return `
-  <div class="ml-card" role="group" aria-label="Информация о медорганизации">
-    <div class="ml-hd">
-      <div>
-        <h3 class="ml-ttl">${
-          facility.medical_organization ?? "Неизвестная организация"
-        }</h3>
-        <span class="ml-chip ${col.chip}">${col.label} • ${pct}%</span>
-      </div>
-      <div class="ml-meta">
-        <span class="ml-pill">${facility.district ?? "Без района"}</span>
-        <span class="ml-pill">${
-          facility.facility_type ?? "Тип не указан"
-        }</span>
-        <span class="ml-pill">${
-          facility.bed_profile ?? "Профиль не указан"
-        }</span>
-      </div>
-    </div>
-
-    <div class="ml-bd">
-      <div class="ml-kpi">
-        <div class="ml-box">
-          <div class="ml-cap">Коек развернуто</div>
-          <div class="ml-val">${fmt(beds)}</div>
-        </div>
-        <div class="ml-box">
-          <div class="ml-cap">Свободно (оценка)</div>
-          <div class="ml-val">${fmt(freeEst)}</div>
-        </div>
-      </div>
-
-      <div class="ml-row">
-        <span>Загруженность</span>
-        <b style="color:${col.hex}">${pct}%</b>
-      </div>
-      <div class="ml-bar" aria-hidden="true">
-        <i style="width:${pct}%; background:${col.hex}"></i>
-      </div>
-
-      ${
-        facility.address
-          ? `<div class="ml-addr"><b>Адрес:</b> ${facility.address}</div>`
-          : ""
-      }
-    </div>
-  </div>`;
-}
-
 function buildComplexHospitalPopup(d: any) {
   injectPopupCss();
 
@@ -321,6 +269,39 @@ function buildComplexHospitalPopup(d: any) {
   </div>`;
 }
 
+function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const dy = (lat2 - lat1) * 111000;
+  const dx = (lng2 - lng1) * 111000 * Math.cos(lat1 * Math.PI / 180);
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function computeGridData(gridGeoJSON: any, hospitalPoints: {lat: number, lng: number}[]) {
+  if (!gridGeoJSON || !hospitalPoints.length) return gridGeoJSON;
+
+  const features = gridGeoJSON.features.map((f: any) => {
+    const coords = f.geometry.coordinates[0][0][0]; 
+    const cellLng = coords[0];
+    const cellLat = coords[1];
+
+    let minD = Infinity;
+    for (const p of hospitalPoints) {
+      const d = getDistanceMeters(cellLat, cellLng, p.lat, p.lng);
+      if (d < minD) minD = d;
+    }
+
+    let color = "#C62828"; // Красный (>5км)
+    if (minD <= 1200) color = "#2E7D32";      // Зеленый (пешком)
+    else if (minD <= 5000) color = "#1565C0"; // Синий (транспорт)
+
+    return {
+      ...f,
+      properties: { ...f.properties, dynamicColor: color, dist: minD }
+    };
+  });
+
+  return { ...gridGeoJSON, features };
+}
+
 export function MapLibreFacilityMap({
   facilities = [],
   className = "",
@@ -329,6 +310,12 @@ export function MapLibreFacilityMap({
   mapMode = "load",
   seismicData = [],
   showSeismicGrid = false,
+  refusalsData = [],
+  plannedZones = null,
+  plannedObjects = null,
+  gridCells = null,
+  geoAccessMode = "current",
+  activeGeoLayers = [],
 }: MapLibreFacilityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { mapRef, isLoading, zoomIn, zoomOut, resetView } =
@@ -580,6 +567,12 @@ export function MapLibreFacilityMap({
         map.moveLayer("unclustered-facility");
       }
 
+      map.setPaintProperty(
+        "unclustered-facility", 
+        "circle-opacity", 
+        mapMode === "geo" ? 0.3 : 0.9 // В геоанализе делаем точки бледными
+      );
+
       map.on("click", "unclustered-facility", async (e: any) => {
         if (!e.features || !e.features.length) return;
         
@@ -630,8 +623,6 @@ export function MapLibreFacilityMap({
         return;
       }
       
-      console.log("Updating seismic layer. Grid visible:", showSeismicGrid, "Data count:", seismicData?.length);
-
       if (!showSeismicGrid || !seismicData || seismicData.length === 0) {
         if (map.getLayer(layerId)) map.removeLayer(layerId);
         if (map.getSource(sourceId)) map.removeSource(sourceId);
@@ -680,6 +671,239 @@ export function MapLibreFacilityMap({
 
     updateSeismic();
   }, [seismicData, showSeismicGrid, isLoading, mapMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || isLoading || mapMode !== "geo") return;
+
+    const sourceId = "zones-source";
+    const fillLayerId = "zones-fill-layer";
+    const lineLayerId = "zones-line-layer";
+
+    const updateZones = () => {
+      if (!map.isStyleLoaded()) return;
+
+      if (!activeGeoLayers?.includes("zones") || !plannedZones) {
+        if (map.getLayer(fillLayerId)) map.removeLayer(fillLayerId);
+        if (map.getLayer(lineLayerId)) map.removeLayer(lineLayerId);
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+        return;
+      }
+
+      if (map.getSource(sourceId)) {
+        (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(plannedZones);
+      } else {
+        map.addSource(sourceId, { type: "geojson", data: plannedZones });
+
+        map.addLayer({
+          id: fillLayerId,
+          type: "fill",
+          source: sourceId,
+          paint: {
+            "fill-color": [
+              "match", ["get", "priority"],
+              "critical", "#D32F2F",
+              "high", "#1565C0",
+              "moderate", "#78909C",
+              "none", "#CFD8DC",
+              "#78909C"
+            ],
+            "fill-opacity": 0.35
+          }
+        });
+
+        map.addLayer({
+          id: lineLayerId,
+          type: "line",
+          source: sourceId,
+          paint: {
+            "line-color": [
+              "match", ["get", "priority"],
+              "critical", "#B71C1C",
+              "high", "#0D47A1",
+              "#546E7A"
+            ],
+            "line-width": 1
+          }
+        });
+
+        if (map.getLayer("districts-fill")) {
+          map.moveLayer(fillLayerId, "districts-fill");
+          map.moveLayer(lineLayerId, "districts-fill");
+        }
+      }
+    };
+
+    if (map.isStyleLoaded()) updateZones();
+    else map.once("idle", updateZones);
+
+  }, [plannedZones, activeGeoLayers, mapMode, isLoading]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || isLoading || mapMode !== "geo") return;
+
+    const sourceId = "planned-obj-source";
+    const layerId = "planned-obj-layer";
+
+    const updateLayer = () => {
+      if (!map.isStyleLoaded()) return;
+
+      if (geoAccessMode !== "planned" || !plannedObjects) {
+        if (map.getLayer(layerId)) {
+          map.setLayoutProperty(layerId, 'visibility', 'none');
+        }
+        return;
+      }
+      
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, { type: "geojson", data: plannedObjects });
+      } else {
+        (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(plannedObjects);
+      }
+
+      if (!map.getLayer(layerId)) {
+        map.addLayer({
+          id: layerId,
+          type: "circle",
+          source: sourceId,
+          paint: {
+            "circle-radius": 9,
+            "circle-color": "#FF6F00",
+            "circle-stroke-color": "#ffffff",
+            "circle-stroke-width": 2.5,
+            "circle-opacity": 1
+          }
+        });
+      }
+
+      map.setLayoutProperty(layerId, 'visibility', 'visible');
+      map.moveLayer(layerId);
+    };
+
+    if (map.isStyleLoaded()) {
+      updateLayer();
+    } else {
+      map.once('idle', updateLayer);
+    }
+
+  }, [plannedObjects, geoAccessMode, mapMode, isLoading]);
+
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || isLoading || mapMode !== "geo") return;
+
+    const sourceId = "refusals-source";
+    const layerId = "refusals-layer";
+
+    const updateRefusals = () => {
+      if (!activeGeoLayers?.includes("refusals") || !refusalsData) {
+        if (map.getLayer(layerId)) map.removeLayer(layerId);
+        if (map.getSource(sourceId)) map.removeSource(sourceId);
+        return;
+      }
+
+      const geojson: any = {
+        type: "FeatureCollection",
+        features: refusalsData.map(r => ({
+          type: "Feature",
+          properties: { 
+            ...r,
+            pct_ref: r.total_emergency_visits > 0 
+              ? (r.hospitalization_denied / r.total_emergency_visits) * 100 
+              : 0
+          },
+          geometry: { type: "Point", coordinates: [r.longitude, r.latitude] }
+        }))
+      };
+
+      if (map.getSource(sourceId)) {
+        (map.getSource(sourceId) as any).setData(geojson);
+      } else {
+        map.addSource(sourceId, { type: "geojson", data: geojson });
+        map.addLayer({
+          id: layerId,
+          type: "circle",
+          source: sourceId,
+          paint: {
+            "circle-radius": ["max", 8, ["min", 30, ["sqrt", ["/", ["get", "total_emergency_visits"], 500]]]],
+            "circle-color": [
+              "step", ["get", "pct_ref"],
+              "#2E7D32", 50, "#EF6C00", 70, "#C62828", 85, "#7B0000"
+            ],
+            "circle-stroke-color": [
+              "step", ["get", "pct_ref"],
+              "#2E7D32", 50, "#EF6C00", 70, "#C62828", 85, "#7B0000"
+            ],
+            "circle-stroke-width": 1.5,
+            "circle-opacity": 0.72
+          }
+        });
+      }
+    };
+
+    if (map.isStyleLoaded()) updateRefusals();
+    else map.once("idle", updateRefusals);
+
+  }, [refusalsData, activeGeoLayers, mapMode, isLoading]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || isLoading || !gridCells) return;
+
+    const sourceId = "grid-source";
+    const layerId = "grid-layer";
+
+    const updateGrid = () => {
+      if (!map.isStyleLoaded()) return;
+
+      const isVisible = mapMode === "geo" && activeGeoLayers?.includes("grid");
+
+      if (!isVisible) {
+        if (map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', 'none');
+        return;
+      }
+
+      const points = facilities.map(f => ({ lat: f.lat, lng: f.lng }));
+      if (geoAccessMode === "planned" && plannedObjects) {
+        plannedObjects.features.forEach((f: any) => {
+          points.push({ lat: f.geometry.coordinates[1], lng: f.geometry.coordinates[0] });
+        });
+      }
+
+      const calculatedGrid = computeGridData(gridCells, points);
+
+      if (map.getSource(sourceId)) {
+        (map.getSource(sourceId) as any).setData(calculatedGrid);
+        map.setLayoutProperty(layerId, 'visibility', 'visible');
+      } else {
+        map.addSource(sourceId, { type: "geojson", data: calculatedGrid });
+        
+        const beforeId = map.getLayer("districts-fill") ? "districts-fill" : 
+                        map.getLayer("unclustered-facility") ? "unclustered-facility" : undefined;
+
+        map.addLayer({
+          id: layerId,
+          type: "fill",
+          source: sourceId,
+          layout: { 'visibility': 'visible' },
+          paint: {
+            "fill-color": ["get", "dynamicColor"],
+            "fill-opacity": 0.3
+          }
+        }, beforeId);
+
+        if (map.getLayer("planned-obj-layer")) {
+          map.moveLayer("planned-obj-layer");
+        }
+      }
+    };
+
+    const timer = setTimeout(updateGrid, 100);
+    return () => clearTimeout(timer);
+
+  }, [gridCells, facilities, plannedObjects, geoAccessMode, activeGeoLayers, mapMode, isLoading]);
 
   return (
     <div

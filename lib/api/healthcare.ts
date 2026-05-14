@@ -6,6 +6,7 @@ import {
   DashboardFilters,
   Hospital,
   SeismicPoint,
+  RefusalPoint,
 } from "@/types/healthcare";
 
 // Прямой доступ к внешнему API без прокси Next.js
@@ -121,6 +122,26 @@ class HealthcareApiClient {
 
   async getSeismicPoints(): Promise<SeismicPoint[]> {
     const response = await fetch("https://admin.smartalmaty.kz/api/v1/healthcare/analytics/seismic/");
+    return response.json();
+  }
+
+  async getRefusals(): Promise<ApiResponse<RefusalPoint>> {
+    return this.directFetch<RefusalPoint>("/api/v1/healthcare/extra-mo-refusal/?limit=1000");
+  }
+
+  async getPlannedZones(): Promise<any> {
+    const response = await fetch("https://admin.smartalmaty.kz/api/v1/healthcare/geo/planned-zones/");
+    if (!response.ok) throw new Error("Ошибка загрузки зон генплана");
+    return response.json();
+  }
+
+  async getPlannedObjects(): Promise<any> {
+    const response = await fetch("https://admin.smartalmaty.kz/api/v1/healthcare/geo/planned-objects/");
+    return response.json();
+  }
+
+  async getGridCells(): Promise<any> {
+    const response = await fetch("https://admin.smartalmaty.kz/api/v1/healthcare/geo/grid-cells/");
     return response.json();
   }
 

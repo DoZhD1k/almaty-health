@@ -47,6 +47,11 @@ export default function HomePage() {
     selectedOrgTypeForGrid: null,
   });
 
+  const [refusalsData, setRefusalsData] = useState<any[]>([]);
+  const [plannedZones, setPlannedZones] = useState<any>(null);
+  const [plannedObjects, setPlannedObjects] = useState<any>(null);
+  const [gridCells, setGridCells] = useState<any>(null);
+
   useEffect(() => {
     loadHospitals();
   }, []);
@@ -54,19 +59,41 @@ export default function HomePage() {
   const loadHospitals = async () => {
     setLoading(true);
     try {
-      const [hospRes, seismicRes] = await Promise.all([
+      const [
+        hospRes, 
+        seismicRes, 
+        refusalsRes,
+        zonesRes,
+        plannedRes, 
+        // gridRes
+      ] = await Promise.all([
         healthcareApi.getHospitals(),
         healthcareApi.getSeismicPoints(),
+        healthcareApi.getRefusals(),
+        healthcareApi.getPlannedZones(),
+        healthcareApi.getPlannedObjects(),
+        // healthcareApi.getGridCells()
       ]);
+
       setHospitals(hospRes.results);
       setSeismicData(seismicRes);
+      setRefusalsData(refusalsRes.results);
+      setPlannedZones(zonesRes);
+      setPlannedObjects(plannedRes);
+
+      console.log("Starting grid cells load...");
+      const gridRes = await healthcareApi.getGridCells();
+      console.log("Grid cells loaded:", gridRes.features.length);
+      setGridCells(gridRes);
+      
     } catch (error) {
-      setError("Ошибка загрузки больниц");
+      console.error("Ошибка при загрузке гео-данных:", error);
+      setError("Не удалось загрузить данные для Геоанализа");
     } finally {
       setLoading(false);
     }
   };
-  
+
   const filteredHospitals = useMemo(() => {
     return hospitals.filter((hospital) => {
       if (
@@ -159,6 +186,13 @@ export default function HomePage() {
           mapMode={filters.mapMode}
           seismicData={seismicData}
           showSeismicGrid={filters.showSeismicGrid}
+
+          refusalsData={refusalsData}
+          plannedZones={plannedZones}
+          plannedObjects={plannedObjects}
+          gridCells={gridCells}
+          geoAccessMode={filters.geoAccessMode}
+          activeGeoLayers={filters.activeGeoLayers}
         />
       </div>
 

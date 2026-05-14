@@ -201,6 +201,16 @@ export interface MedicalFilterState {
   selectedOrgTypeForGrid: string | null; 
 }
 
+export interface RefusalPoint {
+  medical_organization: string | number;
+  total_emergency_visits: number;
+  hospitalized_emerg: number;
+  hospitalization_denied: number;
+  occupancy_rate_percent: number;
+  latitude: number;
+  longitude: number;
+}
+
 export interface FacilityType {
   id: string;
   label: string;
