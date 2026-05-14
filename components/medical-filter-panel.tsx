@@ -75,6 +75,9 @@ export function MedicalFilterPanel({
     mapMode: "load",
     showSeismicGrid: false,
     selectedTechConditions: ["dark-red", "red", "orange", "yellow", "green", "gray"],
+    geoAccessMode: "current",
+    activeGeoLayers: ["zones"],
+    selectedOrgTypeForGrid: null,
   });
 
   const TECH_CONDITIONS = [
@@ -459,6 +462,62 @@ export function MedicalFilterPanel({
                 </div>
               </div>
             </>
+          )}
+
+          {activeTab === "geo" && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Доступность 15 мин</h3>
+                <div className="flex p-1 bg-gray-100 rounded-lg gap-1">
+                  <button
+                    onClick={() => updateFilters({ geoAccessMode: "current" })}
+                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
+                      filters.geoAccessMode === "current" ? "bg-white shadow-sm text-blue-600" : "text-gray-500"
+                    }`}
+                  >
+                    Текущие МО
+                  </button>
+                  <button
+                    onClick={() => updateFilters({ geoAccessMode: "planned" })}
+                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
+                      filters.geoAccessMode === "planned" ? "bg-white shadow-sm text-green-600" : "text-gray-500"
+                    }`}
+                  >
+                    С планируемыми
+                  </button>
+                </div>
+                <p className="text-[9px] text-gray-400 italic">Пересчёт шаговой доступности по сетке города</p>
+              </div>
+
+              <div className="space-y-2 border-t pt-3">
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Дополнительные слои</h3>
+                <div className="space-y-2">
+                  {[
+                    { id: "zones", label: "🏥 Зоны генплана (больницы)" },
+                    { id: "grid", label: "🎯 Сетка доступности (15 мин)" },
+                    { id: "refusals", label: "⚕ Отказы в госпитализации" },
+                    { id: "profiles", label: "📊 Дефицит профилей" },
+                    { id: "orgTypeGrid", label: "🗺 Грид по типу МО" },
+                  ].map((layer) => (
+                    <div key={layer.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={layer.id}
+                        checked={filters.activeGeoLayers.includes(layer.id)}
+                        onCheckedChange={(checked) => {
+                          const next = checked
+                            ? [...filters.activeGeoLayers, layer.id]
+                            : filters.activeGeoLayers.filter((id) => id !== layer.id);
+                          updateFilters({ activeGeoLayers: next });
+                        }}
+                      />
+                      <Label htmlFor={layer.id} className="text-xs cursor-pointer text-gray-700">
+                        {layer.label}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           )}
 
           {/* Статистика - в нижней части панели */}

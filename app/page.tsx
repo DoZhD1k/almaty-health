@@ -42,6 +42,9 @@ export default function HomePage() {
     mapMode: "load",
     showSeismicGrid: false,
     selectedTechConditions: ["dark-red", "red", "orange", "yellow", "green", "gray"],
+    geoAccessMode: "current",
+    activeGeoLayers: ["zones"],
+    selectedOrgTypeForGrid: null,
   });
 
   useEffect(() => {

@@ -1,5 +1,3 @@
-// Интерфейсы для данных больниц и аналитики
-
 import { MapMode } from "@/components/medical-filter-panel";
 
 export interface Hospital {
@@ -198,6 +196,9 @@ export interface MedicalFilterState {
   mapMode: MapMode;
   showSeismicGrid: boolean;
   selectedTechConditions: string[];
+  geoAccessMode: "current" | "planned";
+  activeGeoLayers: string[];
+  selectedOrgTypeForGrid: string | null; 
 }
 
 export interface FacilityType {
