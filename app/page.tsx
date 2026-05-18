@@ -6,6 +6,7 @@ import { MedicalFilterPanel } from "@/components/medical-filter-panel";
 import { Hospital, MedicalFilterState, SeismicPoint } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 import { Filter, X } from "lucide-react";
+import { OrgTypeGridPanel } from "@/components/map/OrgTypeGridPanel";
 
 const MapLibreFacilityMap = dynamic(
   () =>
@@ -34,6 +35,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [focusedHospitalId, setFocusedHospitalId] = useState<number | null>(null);
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
@@ -204,10 +206,31 @@ export default function HomePage() {
           gridCells={gridCells}
           geoAccessMode={filters.geoAccessMode}
           activeGeoLayers={filters.activeGeoLayers}
-
           recommendations={recommendations}
+
+          selectedOrgTypeForGrid={filters.selectedOrgTypeForGrid}
+          focusedHospitalId={focusedHospitalId}
         />
       </div>
+
+      {filters.activeGeoLayers.includes("orgTypeGrid") && (
+        <OrgTypeGridPanel 
+          onClose={() => setFilters({
+            ...filters, 
+            activeGeoLayers: filters.activeGeoLayers.filter(l => l !== "orgTypeGrid"),
+            selectedOrgTypeForGrid: null
+          })}
+          hospitals={hospitals}
+          selectedType={filters.selectedOrgTypeForGrid}
+          onSelectType={(type) => {
+            setFilters({ ...filters, selectedOrgTypeForGrid: type });
+            setFocusedHospitalId(null);
+          }}
+          onHospitalClick={(h) => {
+            setFocusedHospitalId(h.unified_id);
+          }}
+        />
+      )}
 
       <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
         <MedicalFilterPanel
