@@ -33,6 +33,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [recommendations, setRecommendations] = useState<any[]>([]);
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
@@ -64,28 +65,38 @@ export default function HomePage() {
         seismicRes, 
         refusalsRes,
         zonesRes,
-        plannedRes, 
-        // gridRes
+        plannedRes,
+        recsRes
       ] = await Promise.all([
         healthcareApi.getHospitals(),
         healthcareApi.getSeismicPoints(),
         healthcareApi.getRefusals(),
         healthcareApi.getPlannedZones(),
         healthcareApi.getPlannedObjects(),
-        // healthcareApi.getGridCells()
+        fetch("/geo-files/recommendations.json").then(res => res.json())
       ]);
 
       setHospitals(hospRes.results);
       setSeismicData(seismicRes);
       setRefusalsData(refusalsRes.results);
       setPlannedZones(zonesRes);
-      setPlannedObjects(plannedRes);
+      setRecommendations(recsRes);
+      console.log("Planned zones loaded:", zonesRes.features.length);
+
+      const filteredPlanned = {
+        ...plannedRes,
+        features: plannedRes.features.filter((feature: any) => 
+          ["Больница", "Многопрофильная Больница"].includes(feature.properties.obj_type)
+        )
+      };
+
+      console.log(`Planned Objects: total ${plannedRes.features.length}, filtered hospitals: ${filteredPlanned.features.length}`);
+      setPlannedObjects(filteredPlanned);
 
       console.log("Starting grid cells load...");
       const gridRes = await healthcareApi.getGridCells();
       console.log("Grid cells loaded:", gridRes.features.length);
-      setGridCells(gridRes);
-      
+      setGridCells(gridRes);     
     } catch (error) {
       console.error("Ошибка при загрузке гео-данных:", error);
       setError("Не удалось загрузить данные для Геоанализа");
@@ -193,6 +204,8 @@ export default function HomePage() {
           gridCells={gridCells}
           geoAccessMode={filters.geoAccessMode}
           activeGeoLayers={filters.activeGeoLayers}
+
+          recommendations={recommendations}
         />
       </div>
 

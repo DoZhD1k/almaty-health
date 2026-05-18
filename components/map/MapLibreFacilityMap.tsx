@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl, { ExpressionSpecification } from "maplibre-gl";
 import { useMapInitialization } from "@/hooks/use-map-initialization";
 import { FacilityStatistic, Hospital, SeismicPoint } from "@/types/healthcare";
@@ -20,6 +20,7 @@ interface MapLibreFacilityMapProps {
   gridCells?: any;
   geoAccessMode?: "current" | "planned";
   activeGeoLayers?: string[];
+  recommendations?: any[];
 }
 
 interface DistrictFeature {
@@ -302,6 +303,110 @@ function computeGridData(gridGeoJSON: any, hospitalPoints: {lat: number, lng: nu
   return { ...gridGeoJSON, features };
 }
 
+function enrichZonesWithPlannedStatus(zones: any, plannedObjs: any) {
+  if (!zones || !plannedObjs || !plannedObjs.features || plannedObjs.features.length === 0) {
+    return zones;
+  }
+
+  const enrichedFeatures = zones.features.map((zone: any) => {
+    let coords;
+    try {
+      // Поддержка Polygon и MultiPolygon
+      if (zone.geometry.type === "MultiPolygon") {
+        coords = zone.geometry.coordinates[0][0][0];
+      } else {
+        coords = zone.geometry.coordinates[0][0];
+      }
+    } catch (e) {
+      return zone;
+    }
+
+    const zoneLng = coords[0];
+    const zoneLat = coords[1];
+
+    let nearestHospitalName = null;
+    let hasHospitalNearby = false;
+
+    for (const obj of plannedObjs.features) {
+      const [objLng, objLat] = obj.geometry.coordinates;
+      
+      // Вычисляем расстояние
+      const dist = getDistanceMeters(zoneLat, zoneLng, objLat, objLng);
+
+      if (dist <= 2500) { // 2.5 км
+        hasHospitalNearby = true;
+        nearestHospitalName = obj.properties.name || obj.properties.short_name;
+        break;
+      }
+    }
+
+    return {
+      ...zone,
+      properties: {
+        ...zone.properties,
+        is_planned: hasHospitalNearby,
+        planned_hosp_name: nearestHospitalName
+      }
+    };
+  });
+
+  const greenCount = enrichedFeatures.filter((f: any) => f.properties.is_planned).length;
+  console.log(`ГИС Расчет: Найдено ${greenCount} зон с больницами в радиусе 2.5км`);
+
+  return { ...zones, features: enrichedFeatures };
+}
+
+function enrichZonesWithEverything(zones: any, plannedObjs: any, recommendations: any[]) {
+  if (!zones) return zones;
+
+  const features = zones.features
+    .filter((f: any) => f.properties.priority !== "critical") // Убираем ПМСП-зоны
+    .map((zone: any) => {
+      const zoneId = zone.id || zone.properties.id;
+
+      // 1. Координаты для расчета расстояния
+      let coords;
+      try {
+        coords = zone.geometry.type === "MultiPolygon" 
+          ? zone.geometry.coordinates[0][0][0] 
+          : zone.geometry.coordinates[0][0];
+      } catch (e) { return zone; }
+
+      // 2. Логика для ЗЕЛЕНОГО цвета (Больница в радиусе 2.5 км)
+      let isPlanned = false;
+      let plannedName = "";
+      if (plannedObjs?.features) {
+        for (const obj of plannedObjs.features) {
+          const d = getDistanceMeters(coords[1], coords[0], obj.geometry.coordinates[1], obj.geometry.coordinates[0]);
+          if (d <= 2500) {
+            isPlanned = true;
+            plannedName = obj.properties.name;
+            break;
+          }
+        }
+      }
+
+      // 3. Логика для КРАСНОГО цвета (Совпадение по zone_id в JSON рекомендаций)
+      // Исключаем ПМСП, берем только стационары
+      const rec = recommendations?.find(r => r.zone_id === zoneId && r.type !== "ПМСП");
+
+      return {
+        ...zone,
+        properties: {
+          ...zone.properties,
+          is_planned: isPlanned,
+          planned_hosp_name: plannedName,
+          has_rec: !!rec,
+          rec_type: rec?.type || "",
+          rec_reason: rec?.reason || "",
+          rec_scale: rec?.scale || ""
+        }
+      };
+    });
+
+  return { ...zones, features };
+}
+
 export function MapLibreFacilityMap({
   facilities = [],
   className = "",
@@ -316,6 +421,7 @@ export function MapLibreFacilityMap({
   gridCells = null,
   geoAccessMode = "current",
   activeGeoLayers = [],
+  recommendations = [],
 }: MapLibreFacilityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { mapRef, isLoading, zoomIn, zoomOut, resetView } =
@@ -672,28 +778,24 @@ export function MapLibreFacilityMap({
     updateSeismic();
   }, [seismicData, showSeismicGrid, isLoading, mapMode]);
 
+  const enrichedZonesData = useMemo(() => {
+    if (!plannedZones || !plannedObjects) return plannedZones;
+    return enrichZonesWithEverything(plannedZones, plannedObjects, recommendations || []);
+  }, [plannedZones, plannedObjects, recommendations]);
+
   useEffect(() => {
     const map = mapRef.current;
-    if (!map || isLoading || mapMode !== "geo") return;
+    if (!map || isLoading) return;
 
     const sourceId = "zones-source";
     const fillLayerId = "zones-fill-layer";
     const lineLayerId = "zones-line-layer";
 
-    const updateZones = () => {
-      if (!map.isStyleLoaded()) return;
+    const createZonesLayers = () => {
+      if (!map.isStyleLoaded() || !enrichedZonesData) return;
 
-      if (!activeGeoLayers?.includes("zones") || !plannedZones) {
-        if (map.getLayer(fillLayerId)) map.removeLayer(fillLayerId);
-        if (map.getLayer(lineLayerId)) map.removeLayer(lineLayerId);
-        if (map.getSource(sourceId)) map.removeSource(sourceId);
-        return;
-      }
-
-      if (map.getSource(sourceId)) {
-        (map.getSource(sourceId) as maplibregl.GeoJSONSource).setData(plannedZones);
-      } else {
-        map.addSource(sourceId, { type: "geojson", data: plannedZones });
+      if (!map.getSource(sourceId)) {
+        map.addSource(sourceId, { type: "geojson", data: enrichedZonesData });
 
         map.addLayer({
           id: fillLayerId,
@@ -701,12 +803,12 @@ export function MapLibreFacilityMap({
           source: sourceId,
           paint: {
             "fill-color": [
-              "match", ["get", "priority"],
-              "critical", "#D32F2F",
-              "high", "#1565C0",
-              "moderate", "#78909C",
-              "none", "#CFD8DC",
-              "#78909C"
+              "case",
+              ["to-boolean", ["get", "is_planned"]], "#388E3C",
+              ["to-boolean", ["get", "has_rec"]], "#D32F2F",
+              ["==", ["get", "priority"], "high"], "#1565C0",
+              ["==", ["get", "priority"], "moderate"], "#78909C",
+              "#CFD8DC"
             ],
             "fill-opacity": 0.35
           }
@@ -718,26 +820,92 @@ export function MapLibreFacilityMap({
           source: sourceId,
           paint: {
             "line-color": [
-              "match", ["get", "priority"],
-              "critical", "#B71C1C",
-              "high", "#0D47A1",
+              "case",
+              ["to-boolean", ["get", "is_planned"]], "#1B5E20",
+              ["to-boolean", ["get", "has_rec"]], "#B71C1C",
+              ["==", ["get", "priority"], "high"], "#0D47A1",
               "#546E7A"
             ],
-            "line-width": 1
+            "line-width": 1.2
           }
         });
 
-        if (map.getLayer("districts-fill")) {
-          map.moveLayer(fillLayerId, "districts-fill");
-          map.moveLayer(lineLayerId, "districts-fill");
+        const beforeLayer = map.getLayer("unclustered-facility") ? "unclustered-facility" : undefined;
+        map.moveLayer(fillLayerId, beforeLayer);
+        map.moveLayer(lineLayerId, beforeLayer);
+      }
+    };
+
+    const updateZones = () => {
+      if (!map.isStyleLoaded()) return;
+
+      const isVisible = mapMode === "geo" && activeGeoLayers?.includes("zones");
+
+      if (!isVisible) {
+        if (map.getLayer(fillLayerId)) map.setLayoutProperty(fillLayerId, 'visibility', 'none');
+        if (map.getLayer(lineLayerId)) map.setLayoutProperty(lineLayerId, 'visibility', 'none');
+        return;
+      }
+
+      if (!map.getLayer(fillLayerId)) {
+        createZonesLayers();
+      } else {
+        map.setLayoutProperty(fillLayerId, 'visibility', 'visible');
+        map.setLayoutProperty(lineLayerId, 'visibility', 'visible');
+        
+        const source = map.getSource(sourceId) as maplibregl.GeoJSONSource;
+        if (source && enrichedZonesData) {
+          source.setData(enrichedZonesData);
         }
       }
     };
 
-    if (map.isStyleLoaded()) updateZones();
-    else map.once("idle", updateZones);
+    if (map.isStyleLoaded()) {
+      updateZones();
+    } else {
+      map.once('idle', updateZones);
+    }
 
-  }, [plannedZones, activeGeoLayers, mapMode, isLoading]);
+    const handleZoneClick = (e: any) => {
+      if (!e.features?.length) return;
+      const p = e.features[0].properties;
+      let html = `<div style="padding: 10px; font-family: sans-serif; min-width:220px;">`;
+      
+      if (String(p.is_planned) === "true") {
+        html += `
+          <b style="color: #2E7D32; font-size: 13px;">✅ ЗАПЛАНИРОВАНА БОЛЬНИЦА</b>
+          <p style="margin-top: 5px; font-weight: bold; border-top:1px solid #eee; padding-top:5px;">${p.planned_hosp_name}</p>
+          <p style="font-size: 10px; color: #666;">(объект в радиусе 2.5 км)</p>
+        `;
+      } else if (String(p.has_rec) === "true") {
+        html += `
+          <b style="color: #D32F2F; font-size: 13px;">⚠ РЕКОМЕНДАЦИЯ СИСТЕМЫ</b>
+          <p style="margin: 5px 0; font-weight: bold; color: #333;">Нужно построить: ${p.rec_type}</p>
+          <div style="font-size: 11px; background: #FFF3F3; padding: 6px; border-radius: 4px; border-left: 3px solid #D32F2F;">
+            <b>Причина:</b> ${p.rec_reason}<br>
+            <b style="display:block; margin-top:4px;">Масштаб:</b> ${p.rec_scale}
+          </div>
+        `;
+      } else {
+        html += `
+          <b style="color: #333; font-size: 13px;">Зона Генплана</b>
+          <p style="font-size: 12px; margin-top: 5px; color: #666;">Приоритет дефицита: <b>${p.priority}</b></p>
+        `;
+      }
+      html += `</div>`;
+
+      new maplibregl.Popup({ closeButton: true }).setLngLat(e.lngLat).setHTML(html).addTo(map);
+    };
+
+    map.on("click", fillLayerId, handleZoneClick);
+    map.on("mouseenter", fillLayerId, () => map.getCanvas().style.cursor = 'pointer');
+    map.on("mouseleave", fillLayerId, () => map.getCanvas().style.cursor = '');
+
+    return () => {
+      map.off("click", fillLayerId, handleZoneClick);
+    };
+
+  }, [enrichedZonesData, activeGeoLayers, mapMode, isLoading]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -788,7 +956,6 @@ export function MapLibreFacilityMap({
     }
 
   }, [plannedObjects, geoAccessMode, mapMode, isLoading]);
-
 
   useEffect(() => {
     const map = mapRef.current;
