@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import maplibregl, { ExpressionSpecification } from "maplibre-gl";
+import maplibregl from "maplibre-gl";
 import { useMapInitialization } from "@/hooks/use-map-initialization";
 import { Hospital, SeismicPoint } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
@@ -139,18 +139,6 @@ const injectPopupCss = () => {
   const style = document.createElement("style");
   style.textContent = css;
   document.head.appendChild(style);
-};
-
-const fmt = (v: number | string) =>
-  new Intl.NumberFormat("ru-RU").format(Number(v ?? 0));
-
-const statusColor = (rate01: number) => {
-  if (rate01 > 0.95)
-    return { hex: "#dc2626", chip: "critical", label: "Критическая" };
-  if (rate01 > 0.8) return { hex: "#ea580c", chip: "high", label: "Высокая" };
-  if (rate01 >= 0.5)
-    return { hex: "#16a34a", chip: "normal", label: "Нормальная" };
-  return { hex: "#6b7280", chip: "low", label: "Низкая" };
 };
 
 function buildComplexHospitalPopup(d: any) {
@@ -1352,45 +1340,6 @@ function getMapColorExpression(mode: string): any {
     "#9E9E9E"
   ];
 }
-
-// function getMapColorExpression(mode: string): any {
-//   if (mode === "buildings") {
-//     return [
-//       "case",
-//       ["any", 
-//         ["==", ["get", "bld_priority"], "срочно"],
-//         ["==", ["get", "bld_condition"], "Аварийное (Снос)"]
-//       ], "#7B0000",
-      
-//       ["match", ["get", "bld_condition"], 
-//         "Аварийное", true, 
-//         "Ветхое", true, 
-//         false
-//       ], "#B71C1C",
-
-//       ["any",
-//         ["coalesce", ["get", "bld_seismic"], false],
-//         ["==", ["get", "bld_priority"], "плановый"]
-//       ], "#EF6C00",
-
-//       ["==", ["get", "bld_condition"], "Исправное/Удовлетворительное"], "#2E7D32",
-
-//       "#9E9E9E"
-//     ];
-//   }
-
-//   return [
-//     "match",
-//     ["get", "occ_cat"],
-//     "over", "#7B0000",
-//     "vhigh", "#C62828",
-//     "high", "#EF6C00",
-//     "norm", "#2E7D32",
-//     "low", "#FDD835",
-//     "vlow", "#9E9E9E",
-//     "#9E9E9E"
-//   ];
-// }
 
 function computeOrgTypeGrid(
   gridGeoJSON: any, 

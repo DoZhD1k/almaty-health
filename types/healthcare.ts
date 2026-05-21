@@ -16,6 +16,9 @@ export interface Hospital {
   bld_condition: string;
   bld_emergency: boolean;
   bld_seismic: boolean;
+  bld_year: number | null;
+  bld_tech: string | null;
+  bld_emergency_label: string | null;
   seismic_label: string | null;
   stop_cat: string | null;
   lethal: number;

@@ -10,6 +10,9 @@ import { OrgTypeGridPanel } from "@/components/map/OrgTypeGridPanel";
 import { DistrictSummaryModal } from "@/components/modals/DistrictSummaryModal";
 import { NonresidentsModal } from "@/components/modals/NonresidentsModal";
 import { RefusalsModal } from "@/components/modals/RefusalsModal";
+import { MapLegend } from "@/components/map/MapLegend";
+import { ProfilesDeficitModal } from "@/components/modals/ProfilesDeficitModal";
+import { BuildingAnalysisModal } from "@/components/modals/BuildingAnalysisModal";
 
 const MapLibreFacilityMap = dynamic(
   () =>
@@ -44,6 +47,8 @@ export default function HomePage() {
   const [showNonresidents, setShowNonresidents] = useState(false);
   const [showRefusalsPanel, setShowRefusalsPanel] = useState(false);
   const [focusedRefusal, setFocusedRefusal] = useState<any | null>(null);
+  const [profilesSummary, setProfilesSummary] = useState<any>(null);
+  const [showBuildingAnalysis, setShowBuildingAnalysis] = useState(false);
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
@@ -79,6 +84,7 @@ export default function HomePage() {
         plannedRes,
         recsRes,
         nonRes,
+        summary,
       ] = await Promise.all([
         healthcareApi.getHospitals(),
         healthcareApi.getSeismicPoints(),
@@ -87,11 +93,12 @@ export default function HomePage() {
         healthcareApi.getPlannedObjects(),
         fetch("/geo-files/recommendations.json").then(res => res.json()), 
         healthcareApi.getNonresidents(),
+        healthcareApi.getBedProfilesSummary(),
       ]);
 
+      setProfilesSummary(summary);
       setHospitals(hospRes.results);
       setSeismicData(seismicRes);
-      // setRefusalsData(refusalsRes.results);
       setRefusalsData(refusalsRes);
       setPlannedZones(zonesRes);
       setRecommendations(recsRes);
@@ -153,18 +160,9 @@ export default function HomePage() {
           return false;
         }
 
-        // if (
-        //   filters.bedProfiles.length > 0 &&
-        //   !filters.bedProfiles.includes(hospital.ownership)
-        // ) {
-        //   return false;
-        // }
-
         if (filters.ownTypes.length > 0) {
           if (!filters.ownTypes.includes(hospital.own_type)) return false;
         }
-
-      // app/page.tsx -> внутри useMemo для filteredHospitals
 
         if (filters.mapMode === "buildings") {
           if (filters.selectedTechConditions.length > 0) {
@@ -313,6 +311,8 @@ export default function HomePage() {
         />
       )}
 
+      <MapLegend mapMode={filters.mapMode} />
+
       <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
         <MedicalFilterPanel
           onFiltersChange={(newFilters) => setFilters(newFilters)}
@@ -325,6 +325,11 @@ export default function HomePage() {
           onShowNonresidents={() => {
             setShowNonresidents(!showNonresidents);
             setShowDistrictSummary(false);
+          }}
+          onShowBuildingAnalysis={() => {
+            setShowBuildingAnalysis(!showBuildingAnalysis);
+            setShowDistrictSummary(false);
+            setShowNonresidents(false);
           }}
         />
       </div>
@@ -366,6 +371,11 @@ export default function HomePage() {
                 setShowNonresidents(!showNonresidents);
                 setShowDistrictSummary(false);
               }}
+              onShowBuildingAnalysis={() => {
+                setShowBuildingAnalysis(!showBuildingAnalysis);
+                setShowDistrictSummary(false);
+                setShowNonresidents(false);
+              }}
             />
           </div>
           <div className="shrink-0 p-4 border-t border-gray-200">
@@ -377,6 +387,26 @@ export default function HomePage() {
             </button>
           </div>
         </div>
+      )}
+
+      {filters.mapMode === "geo" && filters.activeGeoLayers.includes("profiles") && (
+        <ProfilesDeficitModal 
+          data={profilesSummary} 
+          onClose={() => {
+            setFilters(prev => ({
+              ...prev,
+              activeGeoLayers: prev.activeGeoLayers.filter(l => l !== "profiles")
+            }));
+          }}
+        />
+      )}
+
+      {showBuildingAnalysis && (
+        <BuildingAnalysisModal 
+          data={hospitals} 
+          onClose={() => setShowBuildingAnalysis(false)}
+          onHospitalClick={(id) => setFocusedHospitalId(id)}
+        />
       )}
     </div>
   );

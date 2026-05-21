@@ -9,7 +9,6 @@ import {
   RefusalPoint,
 } from "@/types/healthcare";
 
-// Прямой доступ к внешнему API без прокси Next.js
 const API_BASE_URL = "https://admin.smartalmaty.kz";
 
 class HealthcareApiClient {
@@ -152,6 +151,12 @@ class HealthcareApiClient {
   async getNonresidents(): Promise<any[]> {
     const response = await fetch("https://admin.smartalmaty.kz/api/v1/healthcare/analytics/nonresidents/");
     if (!response.ok) throw new Error("Ошибка загрузки данных иногородних");
+    return response.json();
+  }
+
+  async getBedProfilesSummary(): Promise<any> {
+    const response = await fetch("https://admin.smartalmaty.kz/api/v1/healthcare/analytics/bed-profiles-summary/");
+    if (!response.ok) throw new Error("Ошибка загрузки сводки профилей");
     return response.json();
   }
 }

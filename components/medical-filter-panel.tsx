@@ -36,6 +36,7 @@ interface MedicalFilterPanelProps {
   className?: string;
   onShowDistrictSummary: () => void;
   onShowNonresidents: () => void;
+  onShowBuildingAnalysis: () => void;
 }
 
 const loadLevelOptions = [
@@ -55,6 +56,7 @@ export function MedicalFilterPanel({
   className = "",
   onShowDistrictSummary, // Достаем из пропсов
   onShowNonresidents, 
+  onShowBuildingAnalysis,
 }: MedicalFilterPanelProps) {
   const [activeTab, setActiveTab] = useState<MapMode>("load");
   const [filters, setFilters] = useState<MedicalFilterState>({
@@ -703,6 +705,15 @@ export function MedicalFilterPanel({
                 🚑 Иногородние пациенты
               </button>
             </div>
+          )}
+
+          {activeTab === "buildings" && (
+            <button
+              onClick={onShowBuildingAnalysis}
+              className="w-full py-2.5 px-4 text-[11px] font-bold text-white bg-[#37474F] rounded-lg hover:bg-slate-700 transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
+            >
+              🏢 Анализ зданий
+            </button>
           )}
         </div>
       </div>
