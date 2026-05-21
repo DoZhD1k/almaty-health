@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Bed,
   Search,
+  Users,
 } from "lucide-react";
 import {
   FacilityStatistic,
@@ -33,28 +34,17 @@ interface MedicalFilterPanelProps {
   onFiltersChange: (filters: MedicalFilterState) => void;
   facilities: Hospital[];
   className?: string;
+  onShowDistrictSummary: () => void;
+  onShowNonresidents: () => void;
 }
 
-const loadLevelOptions: LoadLevel[] = [
-  { id: "low", label: "Низкая (< 50%)", minOccupancy: 0, maxOccupancy: 0.5 },
-  {
-    id: "normal",
-    label: "Нормальная (50-80%)",
-    minOccupancy: 0.5,
-    maxOccupancy: 0.8,
-  },
-  {
-    id: "high",
-    label: "Высокая (80-95%)",
-    minOccupancy: 0.8,
-    maxOccupancy: 0.95,
-  },
-  {
-    id: "critical",
-    label: "Критическая (> 95%)",
-    minOccupancy: 0.95,
-    maxOccupancy: Infinity,
-  },
+const loadLevelOptions = [
+  { id: "over", label: ">100% перегружено", color: "#7B0000" },
+  { id: "vhigh", label: "92–100% очень высокая", color: "#C62828" },
+  { id: "high", label: "85–92% высокая", color: "#EF6C00" },
+  { id: "norm", label: "70–85% норма", color: "#2E7D32" },
+  { id: "low", label: "50–70% низкая", color: "#FDD835" },
+  { id: "vlow", label: "<50% очень низкая", color: "#9E9E9E" },
 ];
 
 export type MapMode = "load" | "buildings" | "geo";
@@ -62,19 +52,21 @@ export type MapMode = "load" | "buildings" | "geo";
 export function MedicalFilterPanel({
   onFiltersChange,
   facilities,
-  // ...props,
   className = "",
+  onShowDistrictSummary, // Достаем из пропсов
+  onShowNonresidents, 
 }: MedicalFilterPanelProps) {
   const [activeTab, setActiveTab] = useState<MapMode>("load");
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
-    bedProfiles: [],
-    loadLevels: ["vlow", "low", "norm", "high", "vhigh", "over"], 
+    // bedProfiles: [],
+    ownTypes: [],
+    loadLevels: [], 
     searchQuery: "",
     mapMode: "load",
     showSeismicGrid: false,
-    selectedTechConditions: ["dark-red", "red", "orange", "yellow", "green", "gray"],
+    selectedTechConditions: [],
     geoAccessMode: "current",
     activeGeoLayers: ["zones"],
     selectedOrgTypeForGrid: null,
@@ -89,15 +81,21 @@ export function MedicalFilterPanel({
     { id: "gray", label: "Нет данных", color: "#9E9E9E" },
   ];
 
+  const OWN_TYPE_OPTIONS = [
+    { id: "Городская", label: "Городская (УЗ Алматы)", color: "#1565C0" },
+    { id: "Республиканская", label: "Республиканская (МЗ РК)", color: "#2E7D32" },
+    { id: "Ведомственная", label: "Ведомственная", color: "#E65100" },
+    { id: "Частная", label: "Частная", color: "#6A1B9A" },
+  ];
+
   const [expandedSections, setExpandedSections] = useState({
     facilityTypes: false,
-    bedProfiles: false,
-    loadLevels: true,
+    loadLevels: false,
+    ownTypes: false,
   });
 
   const handleTabChange = (mode: MapMode) => {
     setActiveTab(mode);
-    // onFiltersChange({ ...filters, mapMode: mode });
     const updatedFilters = { ...filters, mapMode: mode };
     setFilters(updatedFilters);
     onFiltersChange(updatedFilters);
@@ -117,12 +115,55 @@ export function MedicalFilterPanel({
       ...new Set(facilities.map((f) => f.ownership).filter(Boolean)),
     ].map((profile) => ({ id: profile, label: profile }));
 
+    const ownTypes = [
+      ...new Set(facilities.map((f) => f.own_type).filter(f => f && f !== "Не указано")),
+    ].map((type) => ({ id: type, label: type }));
+
     return {
       districts,
       facilityTypeOptions: facilityTypes,
-      bedProfileOptions: bedProfiles,
+      bedProfileOptions: ownTypes,
+      // ownTypeOptions: ownTypes,
     };
   }, [facilities]);
+
+  const ownTypeCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    facilities.forEach(f => {
+      const type = f.own_type; 
+      let key = "";
+      if (type?.toLowerCase().includes("госуд") || type?.toLowerCase().includes("город")) key = "Городская";
+      else if (type?.toLowerCase().includes("респ")) key = "Республиканская";
+      else if (type?.toLowerCase().includes("ведом")) key = "Ведомственная";
+      else if (type?.toLowerCase().includes("частн")) key = "Частная";
+      
+      if (key) counts[key] = (counts[key] || 0) + 1;
+    });
+    return counts;
+  }, [facilities]);
+
+  const handleToggleOption = (
+    category: keyof MedicalFilterState,
+    value: string | null,
+    allOptions: { id: string }[]
+  ) => {
+    const currentValues = filters[category] as string[];
+    
+    if (value === null) {
+      updateFilters({ [category]: [] });
+      return;
+    }
+
+    let nextValues = currentValues.includes(value)
+      ? currentValues.filter((v) => v !== value)
+      : [...currentValues, value];
+
+    if (nextValues.length === allOptions.length || nextValues.length === 0) {
+      nextValues = [];
+    }
+
+    updateFilters({ [category]: nextValues });
+  };
 
   const summaryData = useMemo(() => {
     const filteredFacilities = facilities.filter((facility) => {
@@ -142,24 +183,16 @@ export function MedicalFilterPanel({
         return false;
       }
 
-      if (
-        filters.facilityTypes.length > 0 &&
-        !filters.facilityTypes.includes(facility.org_type)
-      ) {
-        return false;
+      if (filters.facilityTypes.length > 0) {
+        if (!filters.facilityTypes.includes(facility.org_type)) return false;
       }
 
-      if (
-        filters.bedProfiles.length > 0 &&
-        !filters.bedProfiles.includes(facility.ownership)
-      ) {
-        return false;
+      if (filters.loadLevels.length > 0) {
+        if (!filters.loadLevels.includes(facility.occ_cat)) return false;
       }
 
-      if (filters.loadLevels.length > 0 && filters.loadLevels.length < 6) {
-        if (!filters.loadLevels.includes(facility.occ_cat)) {
-          return false;
-        }
+      if (filters.ownTypes.length > 0) {
+        if (!filters.ownTypes.includes(facility.own_type)) return false;
       }
       return true;
     });
@@ -168,7 +201,7 @@ export function MedicalFilterPanel({
       return {
         totalFacilities: 0,
         averageOccupancy: 0,
-        overloadedCount: 0,
+        totalAdmitted: 0,
         totalBeds: 0,
       };
     }
@@ -184,43 +217,36 @@ export function MedicalFilterPanel({
       ? Math.round(totalOccupancy / totalFacilities) 
       : 0;
 
-    const overloadedCount = filteredFacilities.filter(
-      (f) => f.pct_occupied > 95,
-    ).length;
-
     const totalBeds = filteredFacilities.reduce(
       (sum, f) => sum + (f.total_beds || 0),
       0,
     );
 
+    const totalAdmitted = filteredFacilities.reduce(
+      (sum, f) => sum + (f.admitted || 0),
+      0
+    );
+
     return {
       totalFacilities,
       averageOccupancy,
-      overloadedCount,
+      totalAdmitted,
       totalBeds,
     };
   }, [facilities, filters]);
+
+  const occCatCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    facilities.forEach(f => {
+      counts[f.occ_cat] = (counts[f.occ_cat] || 0) + 1;
+    });
+    return counts;
+  }, [facilities]);
 
   const updateFilters = (newFilters: Partial<MedicalFilterState>) => {
     const updated = { ...filters, ...newFilters };
     setFilters(updated);
     onFiltersChange(updated);
-  };
-
-  const handleCheckboxChange = (
-    category: keyof Pick<
-      MedicalFilterState,
-      "facilityTypes" | "bedProfiles" | "loadLevels"
-    >,
-    value: string,
-    checked: boolean,
-  ) => {
-    const currentValues = filters[category];
-    const newValues = checked
-      ? [...currentValues, value]
-      : currentValues.filter((item) => item !== value);
-
-    updateFilters({ [category]: newValues });
   };
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -258,12 +284,11 @@ export function MedicalFilterPanel({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="space-y-4 px-4 py-4">
-          {/* Поиск по названию МО */}
+        <div className="space-y-2 px-4 py-4">
           <div>
-            <Label className="text-xs font-medium text-gray-700 mb-2 block">
+            {/* <Label className="text-xs font-medium text-gray-700 mb-2 block">
               Поиск медицинской организации
-            </Label>
+            </Label> */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -276,16 +301,15 @@ export function MedicalFilterPanel({
             </div>
           </div>
 
-          {/* Выбор района */}
           <div>
-            <Label className="text-xs font-medium text-gray-700 mb-2 block">
+            {/* <Label className="text-xs font-medium text-gray-700 mb-2 block">
               Район
-            </Label>
+            </Label> */}
             <Select
               value={filters.district}
               onValueChange={(value) => updateFilters({ district: value })}
             >
-              <SelectTrigger className="w-full h-10 text-xs border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+              <SelectTrigger className="w-full h-10 text-xs border-gray-200 cursor-pointer">
                 <SelectValue placeholder="Выберите район" />
               </SelectTrigger>
               <SelectContent>
@@ -303,9 +327,9 @@ export function MedicalFilterPanel({
             <div className="border border-gray-200 rounded-lg">
               <button
                 onClick={() => toggleSection("facilityTypes")}
-                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                <span className="text-xs text-gray-900">Типы МО:</span>
+                <span className="text-xs text-gray-900">Типы МО</span>
                 {expandedSections.facilityTypes ? (
                   <ChevronUp className="h-4 w-4 text-gray-500" />
                 ) : (
@@ -314,24 +338,26 @@ export function MedicalFilterPanel({
               </button>
               {expandedSections.facilityTypes && (
                 <div className="px-3 pb-3 space-y-2 border-t border-gray-100 max-h-40 overflow-y-auto">
+                  <div className="flex items-center space-x-2 py-1">
+                    <Checkbox
+                      id="facility-type-all"
+                      checked={filters.facilityTypes.length === 0}
+                      onCheckedChange={() => handleToggleOption("facilityTypes", null, facilityTypeOptions)}
+                      className="border-gray-300 data-[state=checked]:bg-blue-600"
+                    />
+                    <Label htmlFor="facility-type-all" className="text-xs font-normal cursor-pointer text-gray-700">
+                      Все типы МО
+                    </Label>
+                  </div>
                   {facilityTypeOptions.map((option) => (
                     <div key={option.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={`facility-type-${option.id}`}
                         checked={filters.facilityTypes.includes(option.id)}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange(
-                            "facilityTypes",
-                            option.id,
-                            checked as boolean,
-                          )
-                        }
-                        className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                        onCheckedChange={() => handleToggleOption("facilityTypes", option.id, facilityTypeOptions)}
+                        className="border-gray-300 data-[state=checked]:bg-blue-600"
                       />
-                      <Label
-                        htmlFor={`facility-type-${option.id}`}
-                        className="text-xs font-normal cursor-pointer text-gray-700"
-                      >
+                      <Label htmlFor={`facility-type-${option.id}`} className="text-xs font-normal cursor-pointer text-gray-700">
                         {option.label}
                       </Label>
                     </div>
@@ -342,36 +368,40 @@ export function MedicalFilterPanel({
 
             <div className="border border-gray-200 rounded-lg">
               <button
-                onClick={() => toggleSection("bedProfiles")}
-                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+                onClick={() => toggleSection("ownTypes")}
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                <span className="text-xs text-gray-900">Профиль коек:</span>
-                {expandedSections.bedProfiles ? (
+                <span className="text-xs text-gray-900">По принадлежности</span>
+                {expandedSections.ownTypes ? (
                   <ChevronUp className="h-4 w-4 text-gray-500" />
                 ) : (
                   <ChevronDown className="h-4 w-4 text-gray-500" />
                 )}
               </button>
-              {expandedSections.bedProfiles && (
+
+              {expandedSections.ownTypes && (
                 <div className="px-3 pb-3 space-y-2 border-t border-gray-100 max-h-40 overflow-y-auto">
-                  {bedProfileOptions.map((option) => (
+                  <div className="flex items-center space-x-2 py-1">
+                    <Checkbox
+                      id="own-type-all"
+                      checked={filters.ownTypes.length === 0}
+                      onCheckedChange={() => handleToggleOption("ownTypes", null, OWN_TYPE_OPTIONS)}
+                      className="border-gray-300 data-[state=checked]:bg-blue-600"
+                    />
+                    <Label htmlFor="own-type-all" className="text-xs font-normal cursor-pointer text-gray-700">
+                      Все принадлежности
+                    </Label>
+                  </div>
+
+                  {OWN_TYPE_OPTIONS.map((option) => (
                     <div key={option.id} className="flex items-center space-x-2">
                       <Checkbox
-                        id={`bed-profile-${option.id}`}
-                        checked={filters.bedProfiles.includes(option.id)}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange(
-                            "bedProfiles",
-                            option.id,
-                            checked as boolean,
-                          )
-                        }
-                        className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                        id={`own-type-${option.id}`}
+                        checked={filters.ownTypes.includes(option.id)}
+                        onCheckedChange={() => handleToggleOption("ownTypes", option.id, OWN_TYPE_OPTIONS)}
+                        className="border-gray-300 data-[state=checked]:bg-blue-600"
                       />
-                      <Label
-                        htmlFor={`bed-profile-${option.id}`}
-                        className="text-xs font-normal cursor-pointer text-gray-700"
-                      >
+                      <Label htmlFor={`own-type-${option.id}`} className="text-xs font-normal cursor-pointer text-gray-700">
                         {option.label}
                       </Label>
                     </div>
@@ -383,36 +413,41 @@ export function MedicalFilterPanel({
             <div className="border border-gray-200 rounded-lg">
               <button
                 onClick={() => toggleSection("loadLevels")}
-                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors"
+                className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                <span className="text-xs text-gray-900">
-                  Уровень загруженности:
-                </span>
+                <span className="text-xs text-gray-900">По загруженности</span>
                 {expandedSections.loadLevels ? (
                   <ChevronUp className="h-4 w-4 text-gray-500" />
                 ) : (
                   <ChevronDown className="h-4 w-4 text-gray-500" />
                 )}
               </button>
+
               {expandedSections.loadLevels && (
                 <div className="px-3 pb-3 space-y-2 border-t border-gray-100">
+                  <div className="flex items-center space-x-2 py-1">
+                    <Checkbox
+                      id="load-level-all"
+                      checked={filters.loadLevels.length === 0}
+                      onCheckedChange={() => handleToggleOption("loadLevels", null, loadLevelOptions)}
+                      className="border-gray-300 data-[state=checked]:bg-blue-600"
+                    />
+                    <Label htmlFor="load-level-all" className="text-xs font-normal cursor-pointer text-gray-700">
+                      Все уровни
+                    </Label>
+                  </div>
+
                   {loadLevelOptions.map((option) => (
                     <div key={option.id} className="flex items-center space-x-2">
                       <Checkbox
                         id={`load-level-${option.id}`}
                         checked={filters.loadLevels.includes(option.id)}
-                        onCheckedChange={(checked) =>
-                          handleCheckboxChange(
-                            "loadLevels",
-                            option.id,
-                            checked as boolean,
-                          )
-                        }
-                        className="border-gray-300 data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                        onCheckedChange={() => handleToggleOption("loadLevels", option.id, loadLevelOptions)}
+                        className="border-gray-300 data-[state=checked]:bg-blue-600"
                       />
                       <Label
                         htmlFor={`load-level-${option.id}`}
-                        className="text-xs font-normal cursor-pointer text-gray-700"
+                        className="text-[11px] font-medium cursor-pointer text-gray-700 group-hover:text-blue-600 transition-colors"
                       >
                         {option.label}
                       </Label>
@@ -427,23 +462,52 @@ export function MedicalFilterPanel({
           {activeTab === "buildings" && (
             <>
               <div className="space-y-2">
-                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Тех. состояние</h3>
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  Тех. состояние
+                </h3>
                 <div className="bg-blue-50/50 p-2 rounded-lg space-y-1">
+                  
+                  {/* Опция ВСЕ */}
+                  <div className="flex items-center justify-between group py-1 border-b border-blue-100/50">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="tech-condition-all"
+                        checked={filters.selectedTechConditions.length === 0}
+                        onCheckedChange={() => 
+                          handleToggleOption("selectedTechConditions", null, TECH_CONDITIONS)
+                        }
+                        className="border-gray-300 data-[state=checked]:bg-blue-600"
+                      />
+                      <Label
+                        htmlFor="tech-condition-all"
+                        className="text-[11px] cursor-pointer text-gray-700"
+                      >
+                        Все состояния
+                      </Label>
+                    </div>
+                  </div>
+
                   {TECH_CONDITIONS.map((item) => (
-                    <div key={item.id} className="flex items-center justify-between">
+                    <div key={item.id} className="flex items-center justify-between py-0.5">
                       <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={item.id} 
+                        <Checkbox
+                          id={`tech-${item.id}`}
                           checked={filters.selectedTechConditions.includes(item.id)}
-                          onCheckedChange={(checked) => {
-                            const next = checked 
-                              ? [...filters.selectedTechConditions, item.id]
-                              : filters.selectedTechConditions.filter(id => id !== item.id);
-                            updateFilters({ selectedTechConditions: next });
-                          }}
+                          onCheckedChange={() =>
+                            handleToggleOption("selectedTechConditions", item.id, TECH_CONDITIONS)
+                          }
+                          className="border-gray-300 data-[state=checked]:bg-blue-600"
                         />
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                        <Label htmlFor={item.id} className="text-[11px] leading-none cursor-pointer">{item.label}</Label>
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: item.color }}
+                        />
+                        <Label
+                          htmlFor={`tech-${item.id}`}
+                          className="text-[11px] leading-none cursor-pointer text-gray-700"
+                        >
+                          {item.label}
+                        </Label>
                       </div>
                     </div>
                   ))}
@@ -451,14 +515,19 @@ export function MedicalFilterPanel({
               </div>
 
               <div className="space-y-2 border-t pt-2">
-                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Сейсмика</h3>
+                <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  Сейсмика
+                </h3>
                 <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="seismic-grid" 
+                  <Checkbox
+                    id="seismic-grid"
                     checked={filters.showSeismicGrid}
                     onCheckedChange={(val) => updateFilters({ showSeismicGrid: !!val })}
+                    className="border-gray-300 data-[state=checked]:bg-blue-600"
                   />
-                  <Label htmlFor="seismic-grid" className="text-xs">Сейсмическая сетка</Label>
+                  <Label htmlFor="seismic-grid" className="text-xs cursor-pointer text-gray-700">
+                    Сейсмическая сетка
+                  </Label>
                 </div>
               </div>
             </>
@@ -471,7 +540,7 @@ export function MedicalFilterPanel({
                 <div className="flex p-1 bg-gray-100 rounded-lg gap-1">
                   <button
                     onClick={() => updateFilters({ geoAccessMode: "current" })}
-                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
+                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
                       filters.geoAccessMode === "current" ? "bg-white shadow-sm text-blue-600" : "text-gray-500"
                     }`}
                   >
@@ -479,7 +548,7 @@ export function MedicalFilterPanel({
                   </button>
                   <button
                     onClick={() => updateFilters({ geoAccessMode: "planned" })}
-                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
+                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all cursor-pointer ${
                       filters.geoAccessMode === "planned" ? "bg-white shadow-sm text-green-600" : "text-gray-500"
                     }`}
                   >
@@ -604,20 +673,37 @@ export function MedicalFilterPanel({
             </div>
 
             {/* Критическая */}
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-red-50 border border-red-100">
-              <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-red-500">
-                <AlertTriangle className="h-3 w-3 text-white" />
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-indigo-50 border border-indigo-100">
+              <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500">
+                <Users className="h-3 w-3 text-white" /> {/* Используем иконку Users */}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[9px] text-red-600 font-medium">
-                  Критическая
+                <div className="text-[9px] text-indigo-600 font-medium">
+                  Поступило
                 </div>
-                <div className="text-xs font-bold text-red-700">
-                  {summaryData.overloadedCount}
+                <div className="text-xs font-bold text-indigo-700">
+                  {summaryData.totalAdmitted.toLocaleString("ru-RU")}
                 </div>
               </div>
             </div>
           </div>
+
+          {activeTab === "load" && (
+            <div className="space-y-2 pt-2 border-t border-gray-100">
+              <button
+                onClick={onShowDistrictSummary}
+                className="w-full py-2.5 px-4 text-[11px] font-bold text-[#1565C0] bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-all flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
+              >
+                📋 Сводка по районам
+              </button>
+              <button
+                onClick={onShowNonresidents}
+                className="w-full py-2.5 px-4 text-[11px] font-bold text-white bg-[#1565C0] rounded-lg hover:bg-[#0D47A1] transition-all shadow-md flex items-center justify-center gap-2 active:scale-[0.98] cursor-pointer"
+              >
+                🚑 Иногородние пациенты
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

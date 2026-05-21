@@ -126,7 +126,7 @@ class HealthcareApiClient {
   }
 
   async getRefusals(): Promise<ApiResponse<RefusalPoint>> {
-    return this.directFetch<RefusalPoint>("/api/v1/healthcare/extra-mo-refusal/?limit=1000");
+    return this.directFetch<RefusalPoint>("/api/v1/healthcare/extra-mo-refusal/?limit=10000");
   }
 
   async getPlannedZones(): Promise<any> {
@@ -147,6 +147,12 @@ class HealthcareApiClient {
 
   async getHospitalDetail(id: number): Promise<any> {
     return this.directFetch<any>(`/api/v1/healthcare/hospitals/${id}/`);
+  }
+
+  async getNonresidents(): Promise<any[]> {
+    const response = await fetch("https://admin.smartalmaty.kz/api/v1/healthcare/analytics/nonresidents/");
+    if (!response.ok) throw new Error("Ошибка загрузки данных иногородних");
+    return response.json();
   }
 }
 

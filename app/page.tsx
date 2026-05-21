@@ -7,6 +7,9 @@ import { Hospital, MedicalFilterState, SeismicPoint } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 import { Filter, X } from "lucide-react";
 import { OrgTypeGridPanel } from "@/components/map/OrgTypeGridPanel";
+import { DistrictSummaryModal } from "@/components/modals/DistrictSummaryModal";
+import { NonresidentsModal } from "@/components/modals/NonresidentsModal";
+import { RefusalsModal } from "@/components/modals/RefusalsModal";
 
 const MapLibreFacilityMap = dynamic(
   () =>
@@ -36,21 +39,27 @@ export default function HomePage() {
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [focusedHospitalId, setFocusedHospitalId] = useState<number | null>(null);
+  const [showDistrictSummary, setShowDistrictSummary] = useState(false);
+  const [nonresidentsData, setNonresidentsData] = useState<any[]>([]);
+  const [showNonresidents, setShowNonresidents] = useState(false);
+  const [showRefusalsPanel, setShowRefusalsPanel] = useState(false);
+  const [focusedRefusal, setFocusedRefusal] = useState<any | null>(null);
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
-    bedProfiles: [],
+    // bedProfiles: [],
     loadLevels: ["vlow", "low", "norm", "high", "vhigh", "over"], 
     searchQuery: "",
     mapMode: "load",
     showSeismicGrid: false,
-    selectedTechConditions: ["dark-red", "red", "orange", "yellow", "green", "gray"],
+    selectedTechConditions: [],
     geoAccessMode: "current",
     activeGeoLayers: ["zones"],
     selectedOrgTypeForGrid: null,
+    ownTypes: ["Городская", "Частная", "Республиканская", "Ведомственная"],
   });
 
-  const [refusalsData, setRefusalsData] = useState<any[]>([]);
+  const [refusalsData, setRefusalsData] = useState<any>(null);
   const [plannedZones, setPlannedZones] = useState<any>(null);
   const [plannedObjects, setPlannedObjects] = useState<any>(null);
   const [gridCells, setGridCells] = useState<any>(null);
@@ -68,21 +77,25 @@ export default function HomePage() {
         refusalsRes,
         zonesRes,
         plannedRes,
-        recsRes
+        recsRes,
+        nonRes,
       ] = await Promise.all([
         healthcareApi.getHospitals(),
         healthcareApi.getSeismicPoints(),
         healthcareApi.getRefusals(),
         healthcareApi.getPlannedZones(),
         healthcareApi.getPlannedObjects(),
-        fetch("/geo-files/recommendations.json").then(res => res.json())
+        fetch("/geo-files/recommendations.json").then(res => res.json()), 
+        healthcareApi.getNonresidents(),
       ]);
 
       setHospitals(hospRes.results);
       setSeismicData(seismicRes);
-      setRefusalsData(refusalsRes.results);
+      // setRefusalsData(refusalsRes.results);
+      setRefusalsData(refusalsRes);
       setPlannedZones(zonesRes);
       setRecommendations(recsRes);
+      setNonresidentsData(nonRes);
       console.log("Planned zones loaded:", zonesRes.features.length);
 
       const filteredPlanned = {
@@ -98,7 +111,7 @@ export default function HomePage() {
       console.log("Starting grid cells load...");
       const gridRes = await healthcareApi.getGridCells();
       console.log("Grid cells loaded:", gridRes.features.length);
-      setGridCells(gridRes);     
+      setGridCells(gridRes);
     } catch (error) {
       console.error("Ошибка при загрузке гео-данных:", error);
       setError("Не удалось загрузить данные для Геоанализа");
@@ -106,6 +119,14 @@ export default function HomePage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (filters.activeGeoLayers.includes("refusals")) {
+      setShowRefusalsPanel(true);
+    } else {
+      setShowRefusalsPanel(false);
+    }
+  }, [filters.activeGeoLayers]);
 
   const filteredHospitals = useMemo(() => {
     return hospitals.filter((hospital) => {
@@ -132,25 +153,46 @@ export default function HomePage() {
           return false;
         }
 
-        if (
-          filters.bedProfiles.length > 0 &&
-          !filters.bedProfiles.includes(hospital.ownership)
-        ) {
-          return false;
+        // if (
+        //   filters.bedProfiles.length > 0 &&
+        //   !filters.bedProfiles.includes(hospital.ownership)
+        // ) {
+        //   return false;
+        // }
+
+        if (filters.ownTypes.length > 0) {
+          if (!filters.ownTypes.includes(hospital.own_type)) return false;
         }
 
-      if (filters.mapMode === "buildings") {
-        let condition = "gray";
-        
-        if (hospital.bld_priority === "срочно") condition = "dark-red";
-        else if (hospital.bld_condition?.includes("Аварийное")) condition = "red";
-        else if (hospital.seismic_label?.includes("риск")) condition = "orange"; 
-        else if (hospital.bld_priority === "плановый") condition = "yellow";
-        else if (hospital.bld_condition?.includes("Исправное")) condition = "green";
-        else condition = "gray";
+      // app/page.tsx -> внутри useMemo для filteredHospitals
 
-        if (!filters.selectedTechConditions.includes(condition)) return false;
-      }
+        if (filters.mapMode === "buildings") {
+          if (filters.selectedTechConditions.length > 0) {
+            let conditionKey = "gray";
+
+            if (hospital.bld_emergency === true) {
+              conditionKey = "dark-red";
+            } 
+            else if (hospital.bld_condition?.includes("Аварийное")) {
+              conditionKey = "red";
+            } 
+            else if (hospital.bld_seismic === true) {
+              conditionKey = "orange";
+            } 
+            else if (
+              hospital.bld_condition?.includes("Ветхое") || 
+              hospital.bld_condition?.includes("Неудовлетворительное")
+            ) {
+              conditionKey = "yellow";
+            } 
+            else if (hospital.bld_condition?.includes("Исправное")) {
+              conditionKey = "green";
+            }
+            if (!filters.selectedTechConditions.includes(conditionKey)) {
+              return false;
+            }
+          }
+        }
 
       if (filters.mapMode === "load") {
         if (filters.loadLevels.length > 0 && !filters.loadLevels.includes(hospital.occ_cat)) {
@@ -200,7 +242,7 @@ export default function HomePage() {
           seismicData={seismicData}
           showSeismicGrid={filters.showSeismicGrid}
 
-          refusalsData={refusalsData}
+          refusalsData={refusalsData?.results || []}
           plannedZones={plannedZones}
           plannedObjects={plannedObjects}
           gridCells={gridCells}
@@ -210,6 +252,7 @@ export default function HomePage() {
 
           selectedOrgTypeForGrid={filters.selectedOrgTypeForGrid}
           focusedHospitalId={focusedHospitalId}
+          focusedRefusal={focusedRefusal}
         />
       </div>
 
@@ -232,11 +275,57 @@ export default function HomePage() {
         />
       )}
 
+      <div className="px-4 pb-4 space-y-2">
+        <button 
+          onClick={() => { setShowDistrictSummary(!showDistrictSummary); setShowNonresidents(false); }}
+          className="w-full py-2 text-xs font-bold text-blue-600 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+        >
+          📋 Сводка по районам
+        </button>
+        <button 
+          onClick={() => { setShowNonresidents(!showNonresidents); setShowDistrictSummary(false); }}
+          className="w-full py-2 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          🚑 Иногородние пациенты
+        </button>
+      </div>
+
+      {showDistrictSummary && (
+        <DistrictSummaryModal 
+          onClose={() => setShowDistrictSummary(false)} 
+          facilities={filteredHospitals} 
+        />
+      )}
+      {showNonresidents && (
+        <NonresidentsModal 
+          onClose={() => setShowNonresidents(false)} 
+          data={nonresidentsData} 
+        />
+      )}
+
+      {filters.mapMode === "geo" && showRefusalsPanel && (
+        <RefusalsModal 
+          data={refusalsData} 
+          onClose={() => {
+            setShowRefusalsPanel(false);
+          }}
+          onItemClick={(item) => setFocusedRefusal({...item, timestamp: Date.now()})}
+        />
+      )}
+
       <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
         <MedicalFilterPanel
           onFiltersChange={(newFilters) => setFilters(newFilters)}
           facilities={hospitals}
           className="shadow-lg"
+          onShowDistrictSummary={() => {
+            setShowDistrictSummary(!showDistrictSummary);
+            setShowNonresidents(false);
+          }}
+          onShowNonresidents={() => {
+            setShowNonresidents(!showNonresidents);
+            setShowDistrictSummary(false);
+          }}
         />
       </div>
 
@@ -269,6 +358,14 @@ export default function HomePage() {
               }}
               facilities={hospitals}
               className="border-0 shadow-none rounded-none"
+              onShowDistrictSummary={() => {
+                setShowDistrictSummary(!showDistrictSummary);
+                setShowNonresidents(false);
+              }}
+              onShowNonresidents={() => {
+                setShowNonresidents(!showNonresidents);
+                setShowDistrictSummary(false);
+              }}
             />
           </div>
           <div className="shrink-0 p-4 border-t border-gray-200">

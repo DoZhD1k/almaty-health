@@ -6,6 +6,7 @@ export interface Hospital {
   org_type: string;
   district: string;
   ownership: string;
+  own_type: string;
   lat: number;
   lng: number;
   total_beds: number;
@@ -13,6 +14,8 @@ export interface Hospital {
   occ_cat: 'over' | 'vhigh' | 'high' | 'norm' | 'low' | 'vlow';
   bld_priority: string;
   bld_condition: string;
+  bld_emergency: boolean;
+  bld_seismic: boolean;
   seismic_label: string | null;
   stop_cat: string | null;
   lethal: number;
@@ -186,11 +189,10 @@ export interface ApiError {
   timestamp: string;
 }
 
-// Интерфейсы для медицинских фильтров
 export interface MedicalFilterState {
   district: string;
   facilityTypes: string[];
-  bedProfiles: string[];
+  // bedProfiles: string[];
   loadLevels: string[];
   searchQuery: string;
   mapMode: MapMode;
@@ -199,6 +201,7 @@ export interface MedicalFilterState {
   geoAccessMode: "current" | "planned";
   activeGeoLayers: string[];
   selectedOrgTypeForGrid: string | null; 
+  ownTypes: string[];
 }
 
 export interface RefusalPoint {

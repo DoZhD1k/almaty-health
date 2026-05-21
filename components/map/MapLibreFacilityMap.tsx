@@ -24,6 +24,7 @@ interface MapLibreFacilityMapProps {
   recommendations?: any[];
   selectedOrgTypeForGrid?: string | null;
   focusedHospitalId?: number | null;
+  focusedRefusal?: any;
 }
 
 interface DistrictFeature {
@@ -273,6 +274,26 @@ function buildComplexHospitalPopup(d: any) {
   </div>`;
 }
 
+function buildPlannedObjectPopup(p: any) {
+  const title = p.short_name || p.name;
+  
+  return `
+    <div style="padding: 10px 14px; font-family: sans-serif; min-width: 230px;">
+      <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+        <span style="font-size: 14px;">🏗</span>
+        <div style="font-weight: bold; font-size: 13px; color: #333;">${title}</div>
+      </div>
+      <div style="color: #888; font-size: 11px; margin-left: 20px;">${p.district || 'Алматы'}</div>
+      <hr style="border: 0; border-top: 1px solid #eee; margin: 8px 0;">
+      <div style="font-size: 12px; line-height: 1.6; color: #444;">
+        <div>Тип: <b>${p.obj_type || '—'}</b></div>
+        <div>Статус: <b>${p.status || '—'}</b></div>
+        <div>Коек: <b>${p.capacity || '—'}</b></div>
+      </div>
+    </div>
+  `;
+}
+
 function getDistanceMeters(lat1: number, lng1: number, lat2: number, lng2: number) {
   const dy = (lat2 - lat1) * 111000;
   const dx = (lng2 - lng1) * 111000 * Math.cos(lat1 * Math.PI / 180);
@@ -310,11 +331,10 @@ function enrichZonesWithEverything(zones: any, plannedObjs: any, recommendations
   if (!zones) return zones;
 
   const features = zones.features
-    .filter((f: any) => f.properties.priority !== "critical") // Убираем ПМСП-зоны
+    .filter((f: any) => f.properties.priority !== "critical")
     .map((zone: any) => {
       const zoneId = zone.id || zone.properties.id;
 
-      // 1. Координаты для расчета расстояния
       let coords;
       try {
         coords = zone.geometry.type === "MultiPolygon" 
@@ -322,7 +342,6 @@ function enrichZonesWithEverything(zones: any, plannedObjs: any, recommendations
           : zone.geometry.coordinates[0][0];
       } catch (e) { return zone; }
 
-      // 2. Логика для ЗЕЛЕНОГО цвета (Больница в радиусе 2.5 км)
       let isPlanned = false;
       let plannedName = "";
       if (plannedObjs?.features) {
@@ -336,8 +355,6 @@ function enrichZonesWithEverything(zones: any, plannedObjs: any, recommendations
         }
       }
 
-      // 3. Логика для КРАСНОГО цвета (Совпадение по zone_id в JSON рекомендаций)
-      // Исключаем ПМСП, берем только стационары
       const rec = recommendations?.find(r => r.zone_id === zoneId && r.type !== "ПМСП");
 
       return {
@@ -374,6 +391,7 @@ export function MapLibreFacilityMap({
   recommendations = [],
   selectedOrgTypeForGrid = null,
   focusedHospitalId = null,
+  focusedRefusal,
 }: MapLibreFacilityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { mapRef, isLoading, zoomIn, zoomOut, resetView } =
@@ -909,6 +927,29 @@ export function MapLibreFacilityMap({
             "circle-opacity": 1
           }
         });
+
+        map.on("click", layerId, (e) => {
+          if (!e.features || !e.features.length) return;
+          
+          if (popupRef.current) popupRef.current.remove();
+
+          const props = e.features[0].properties;
+          const content = buildPlannedObjectPopup(props);
+
+          const popup = new maplibregl.Popup({ offset: 10, closeButton: true })
+            .setLngLat(e.lngLat)
+            .setHTML(content)
+            .addTo(map);
+
+          popupRef.current = popup;
+        });
+
+        map.on("mouseenter", layerId, () => {
+          map.getCanvas().style.cursor = 'pointer';
+        });
+        map.on("mouseleave", layerId, () => {
+          map.getCanvas().style.cursor = '';
+        });
       }
 
       map.setLayoutProperty(layerId, 'visibility', 'visible');
@@ -980,6 +1021,47 @@ export function MapLibreFacilityMap({
     else map.once("idle", updateRefusals);
 
   }, [refusalsData, activeGeoLayers, mapMode, isLoading]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !focusedRefusal || !focusedRefusal.latitude) return;
+
+    if (popupRef.current) {
+      popupRef.current.remove();
+    }
+
+    map.flyTo({
+      center: [focusedRefusal.longitude, focusedRefusal.latitude],
+      zoom: 14.5,
+      essential: true,
+      duration: 1500
+    });
+
+    const pctRef = focusedRefusal.total_emergency_visits > 0 
+      ? (focusedRefusal.hospitalization_denied / focusedRefusal.total_emergency_visits * 100).toFixed(1) 
+      : "0";
+
+    const content = `
+      <div style="padding: 12px; font-family: sans-serif; min-width: 220px;">
+        <div style="font-weight: bold; font-size: 13px; margin-bottom: 2px;">${focusedRefusal.facility_type}</div>
+        <div style="color: #888; font-size: 11px; margin-bottom: 8px;">${focusedRefusal.district}</div>
+        <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 8px;" />
+        <div style="font-size: 12px; line-height: 1.6; color: #333;">
+          Обращений: <b>${Math.round(focusedRefusal.total_emergency_visits).toLocaleString()}</b><br/>
+          Отказано: <span style="color: #2E7D32; font-weight: bold;">${Math.round(focusedRefusal.hospitalization_denied).toLocaleString()} (${pctRef}%)</span><br/>
+          Занятость коек: <b>${(focusedRefusal.occupancy_rate_percent * 100).toFixed(1)}%</b>
+        </div>
+      </div>
+    `;
+
+    const newPopup = new maplibregl.Popup({ offset: 10, closeButton: true })
+      .setLngLat([focusedRefusal.longitude, focusedRefusal.latitude])
+      .setHTML(content)
+      .addTo(map);
+
+    popupRef.current = newPopup;
+
+  }, [focusedRefusal]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -1246,24 +1328,14 @@ function getMapColorExpression(mode: string): any {
   if (mode === "buildings") {
     return [
       "case",
-      ["any", 
-        ["==", ["get", "bld_priority"], "срочно"],
-        ["==", ["get", "bld_condition"], "Аварийное (Снос)"]
-      ], "#7B0000",
-      
-      ["match", ["get", "bld_condition"], 
-        "Аварийное", true, 
-        "Ветхое", true, 
-        false
-      ], "#B71C1C",
-
+      ["to-boolean", ["coalesce", ["get", "bld_emergency"], false]], "#7B0000",
+      ["in", "Аварийное", ["coalesce", ["get", "bld_condition"], ""]], "#B71C1C",
+      ["to-boolean", ["coalesce", ["get", "bld_seismic"], false]], "#EF6C00",
       ["any",
-        ["coalesce", ["get", "bld_seismic"], false],
-        ["==", ["get", "bld_priority"], "плановый"]
-      ], "#EF6C00",
-
-      ["==", ["get", "bld_condition"], "Исправное/Удовлетворительное"], "#2E7D32",
-
+        ["in", "Ветхое", ["coalesce", ["get", "bld_condition"], ""]],
+        ["in", "Неудовлетворительное", ["coalesce", ["get", "bld_condition"], ""]]
+      ], "#F9A825",
+      ["in", "Исправное", ["coalesce", ["get", "bld_condition"], ""]], "#2E7D32",
       "#9E9E9E"
     ];
   }
@@ -1280,6 +1352,45 @@ function getMapColorExpression(mode: string): any {
     "#9E9E9E"
   ];
 }
+
+// function getMapColorExpression(mode: string): any {
+//   if (mode === "buildings") {
+//     return [
+//       "case",
+//       ["any", 
+//         ["==", ["get", "bld_priority"], "срочно"],
+//         ["==", ["get", "bld_condition"], "Аварийное (Снос)"]
+//       ], "#7B0000",
+      
+//       ["match", ["get", "bld_condition"], 
+//         "Аварийное", true, 
+//         "Ветхое", true, 
+//         false
+//       ], "#B71C1C",
+
+//       ["any",
+//         ["coalesce", ["get", "bld_seismic"], false],
+//         ["==", ["get", "bld_priority"], "плановый"]
+//       ], "#EF6C00",
+
+//       ["==", ["get", "bld_condition"], "Исправное/Удовлетворительное"], "#2E7D32",
+
+//       "#9E9E9E"
+//     ];
+//   }
+
+//   return [
+//     "match",
+//     ["get", "occ_cat"],
+//     "over", "#7B0000",
+//     "vhigh", "#C62828",
+//     "high", "#EF6C00",
+//     "norm", "#2E7D32",
+//     "low", "#FDD835",
+//     "vlow", "#9E9E9E",
+//     "#9E9E9E"
+//   ];
+// }
 
 function computeOrgTypeGrid(
   gridGeoJSON: any, 
