@@ -302,9 +302,9 @@ function computeGridData(gridGeoJSON: any, hospitalPoints: {lat: number, lng: nu
       if (d < minD) minD = d;
     }
 
-    let color = "#C62828"; // Красный (>5км)
-    if (minD <= 1200) color = "#2E7D32";      // Зеленый (пешком)
-    else if (minD <= 5000) color = "#1565C0"; // Синий (транспорт)
+    let color = "#C62828";
+    if (minD <= 1200) color = "#2E7D32";
+    else if (minD <= 5000) color = "#1565C0";
 
     return {
       ...f,

@@ -42,7 +42,6 @@ export function OrgTypeGridPanel({
 
     return (
         <div className="absolute top-4 right-4 z-50 w-80 bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] border border-blue-200">
-            {/* ШАПКА */}
             <div className="bg-blue-800 p-3 flex items-center justify-between text-white">
                 <div className="flex items-center gap-2">
                     <Search className="h-4 w-4" />
@@ -51,7 +50,6 @@ export function OrgTypeGridPanel({
                 <button onClick={onClose} className="hover:bg-blue-700 p-1 rounded-full transition-colors"><X className="h-5 w-5" /></button>
             </div>
 
-            {/* ЛЕГЕНДА (зависит от режима) */}
             <div className="p-2.5 bg-blue-50 border-b border-blue-100">
                 {!selectedType ? (
                     <p className="text-[10px] text-blue-900 leading-tight">Выберите тип МО для анализа доступности по дорогам Алматы</p>
@@ -65,7 +63,6 @@ export function OrgTypeGridPanel({
                             </span>
                         </div>
                         
-                        {/* Динамическая легенда для Территориального */}
                         {settings?.mode === 'territorial' && (
                             <div className="flex gap-3 text-[10px]">
                                 <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-green-600"/> ≤{settings.near!/1000}км</span>
@@ -75,7 +72,6 @@ export function OrgTypeGridPanel({
                             </div>
                         )}
 
-                        {/* Статистика для Зонального */}
                         {settings?.mode === 'zonal' && (
                             <div className="flex justify-between items-center text-[11px]">
                                 <span className="text-gray-600">Покрытие: <b className="text-green-600">{coveredCount} из 8 районов</b></span>
@@ -83,7 +79,6 @@ export function OrgTypeGridPanel({
                             </div>
                         )}
 
-                        {/* Статистика для Мощностного */}
                         {settings?.mode === 'capacity' && (
                             <div className="flex justify-between items-center text-[11px]">
                                 <span className="text-gray-600">Ср. нагрузка: <b className={avgLoad > 90 ? "text-red-600" : "text-green-600"}>{avgLoad}%</b></span>

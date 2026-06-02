@@ -7,5 +7,5 @@ export function shortenHospitalName(name: string): string {
     .replace(/Акционерное общество/gi, "АО")
     .replace(/Товарищество с ограниченной ответственностью/gi, "ТОО")
     .replace(/Государственное учреждение/gi, "ГУ")
-    .replace(/"/g, ''); // Удаляем лишние кавычки для компактности
+    .replace(/"/g, '');
 }

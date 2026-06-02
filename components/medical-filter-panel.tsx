@@ -265,7 +265,7 @@ export function MedicalFilterPanel({
       <div className="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-100">
         <h2 className="text-md font-semibold text-gray-900">Фильтры</h2>
       </div>
-      <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
+      {/* <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
         {[
           { id: "load", label: "Нагрузка", icon: TrendingUp },
           { id: "buildings", label: "Здания", icon: Building2 },
@@ -283,7 +283,7 @@ export function MedicalFilterPanel({
             {tab.label}
           </button>
         ))}
-      </div>
+      </div> */}
 
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-2 px-4 py-4">
@@ -608,7 +608,7 @@ export function MedicalFilterPanel({
               </div>
             </div>
 
-            {/* Средняя загруженность */}
+            {/* Загруженность */}
             <div
               className={`flex items-center gap-2 p-2 rounded-lg border ${
                 summaryData.averageOccupancy >= 40 &&
@@ -674,7 +674,7 @@ export function MedicalFilterPanel({
               </div>
             </div>
 
-            {/* Критическая */}
+            {/* Поступило */}
             <div className="flex items-center gap-2 p-2 rounded-lg bg-indigo-50 border border-indigo-100">
               <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500">
                 <Users className="h-3 w-3 text-white" /> {/* Используем иконку Users */}
