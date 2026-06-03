@@ -54,7 +54,7 @@ export function MedicalFilterPanel({
   onFiltersChange,
   facilities,
   className = "",
-  onShowDistrictSummary, // Достаем из пропсов
+  onShowDistrictSummary,
   onShowNonresidents, 
   onShowBuildingAnalysis,
 }: MedicalFilterPanelProps) {

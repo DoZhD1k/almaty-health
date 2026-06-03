@@ -232,32 +232,6 @@ function buildComplexHospitalPopup(d: any) {
       <div class="ml-profiles">
         ${profilesHtml}
       </div>
-
-      <div class="ml-section-title">🏢 Все здания (${d.bld_count} корп.)</div>
-      <div class="ml-bld-wrapper">
-        <table class="ml-table" style="font-size:10px; margin-top: 0; width: 100%;">
-          <thead>
-            <tr>
-              <th style="padding-left: 4px;">Год</th>
-              <th>Состояние</th>
-              <th style="text-align:right; padding-right: 4px;">Износ</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${d.all_blds && d.all_blds.length > 0 ? d.all_blds.map((b: any) => `
-              <tr>
-                <td style="padding-left: 4px;">${b.year_built || '—'}</td>
-                <td>
-                  <span style="display:flex; align-items:center; gap:4px; color:${b.wear > 50 ? '#ea580c' : '#16a34a'}">
-                    ${b.wear > 50 ? '● Кап.рем' : '● Исправно'}
-                  </span>
-                </td>
-                <td style="text-align:right; padding-right: 4px;"><b>${b.wear}%</b></td>
-              </tr>
-            `).join('') : '<tr><td colspan="3" style="text-align:center; padding: 10px;">Нет данных</td></tr>'}
-          </tbody>
-        </table>
-      </div>
     </div>
   </div>`;
 }
