@@ -304,9 +304,6 @@ export function MedicalFilterPanel({
           </div>
 
           <div>
-            {/* <Label className="text-xs font-medium text-gray-700 mb-2 block">
-              Район
-            </Label> */}
             <Select
               value={filters.district}
               onValueChange={(value) => updateFilters({ district: value })}

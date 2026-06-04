@@ -171,19 +171,19 @@ export default function HomePage() {
             if (hospital.bld_emergency === true) {
               conditionKey = "dark-red";
             } 
-            else if (hospital.bld_condition?.includes("Аварийное")) {
+            else if (hospital.bld_tech?.includes("Аварийное")) {
               conditionKey = "red";
             } 
             else if (hospital.bld_seismic === true) {
               conditionKey = "orange";
             } 
             else if (
-              hospital.bld_condition?.includes("Ветхое") || 
-              hospital.bld_condition?.includes("Неудовлетворительное")
+              hospital.bld_tech?.includes("Ветхое") || 
+              hospital.bld_tech?.includes("Неудовлетворительное")
             ) {
               conditionKey = "yellow";
             } 
-            else if (hospital.bld_condition?.includes("Исправное")) {
+            else if (hospital.bld_tech?.includes("Исправное")) {
               conditionKey = "green";
             }
             if (!filters.selectedTechConditions.includes(conditionKey)) {
