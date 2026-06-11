@@ -48,7 +48,11 @@ export function ComparisonTab({
       } catch (error) {
         console.error(
           "Ошибка загрузки данных городских медицинских организаций:",
+<<<<<<< HEAD
           error,
+=======
+          error
+>>>>>>> gitlab/main
         );
       } finally {
         setIsLoading(false);
@@ -60,6 +64,7 @@ export function ComparisonTab({
 
   return (
     <div className="space-y-4">
+<<<<<<< HEAD
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         {/* Кольцевая диаграмма сравнения по профилям коек */}
         <Card>
@@ -68,6 +73,14 @@ export function ComparisonTab({
               <span className="text-sm sm:text-base">
                 Сравнение по профилям коек
               </span>
+=======
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Кольцевая диаграмма сравнения по профилям коек */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex flex-col gap-1">
+              <span>Сравнение по профилям коек</span>
+>>>>>>> gitlab/main
               <FilterDisplay
                 selectedDistricts={selectedDistricts}
                 selectedFacilityTypes={selectedFacilityTypes}
@@ -85,7 +98,11 @@ export function ComparisonTab({
                 ...new Set(filteredFacilities.map((f) => f.bed_profile)),
               ].map((bedProfile, index) => {
                 const facilities = filteredFacilities.filter(
+<<<<<<< HEAD
                   (f) => f.bed_profile === bedProfile,
+=======
+                  (f) => f.bed_profile === bedProfile
+>>>>>>> gitlab/main
                 );
                 const colors = ["#3772ff", "#2956bf", "#214499", "#193373"];
 
@@ -107,11 +124,17 @@ export function ComparisonTab({
 
         {/* График иногородних пациентов по типу профиля (facility_type) - ТОП 10 */}
         <Card>
+<<<<<<< HEAD
           <CardHeader className="px-3 sm:px-6">
             <CardTitle className="flex flex-col gap-1">
               <span className="text-sm sm:text-base">
                 Иногородние пациенты по типу профиля (ТОП-10)
               </span>
+=======
+          <CardHeader>
+            <CardTitle className="flex flex-col gap-1">
+              <span>Иногородние пациенты по типу профиля (ТОП-10)</span>
+>>>>>>> gitlab/main
               <FilterDisplay
                 selectedDistricts={selectedDistricts}
                 selectedFacilityTypes={selectedFacilityTypes}
@@ -130,12 +153,20 @@ export function ComparisonTab({
                 ...new Set(filteredFacilities.map((f) => f.facility_type)),
               ].map((facilityType) => {
                 const facilities = filteredFacilities.filter(
+<<<<<<< HEAD
                   (f) => f.facility_type === facilityType,
+=======
+                  (f) => f.facility_type === facilityType
+>>>>>>> gitlab/main
                 );
                 // Используем данные admitted_rural_residents как иногородних
                 const outOfTownPatients = facilities.reduce(
                   (sum, f) => sum + (f.admitted_rural_residents || 0),
+<<<<<<< HEAD
                   0,
+=======
+                  0
+>>>>>>> gitlab/main
                 );
 
                 return {
@@ -153,7 +184,11 @@ export function ComparisonTab({
               // Вычисляем общее количество для расчета процентов
               const total = sortedData.reduce(
                 (sum, item) => sum + item.value,
+<<<<<<< HEAD
                 0,
+=======
+                0
+>>>>>>> gitlab/main
               );
 
               // Преобразуем в проценты
@@ -188,11 +223,17 @@ export function ComparisonTab({
 
       {/* Новый график: Смертность и количество стационаров по районам */}
       <Card>
+<<<<<<< HEAD
         <CardHeader className="px-3 sm:px-6">
           <CardTitle className="flex flex-col gap-1">
             <span className="text-sm sm:text-base">
               Смертность и количество стационаров по районам
             </span>
+=======
+        <CardHeader>
+          <CardTitle className="flex flex-col gap-1">
+            <span>Смертность и количество стационаров по районам</span>
+>>>>>>> gitlab/main
             <FilterDisplay
               selectedDistricts={selectedDistricts}
               selectedFacilityTypes={selectedFacilityTypes}

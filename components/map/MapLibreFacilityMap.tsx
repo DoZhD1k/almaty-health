@@ -1,5 +1,6 @@
 "use client";
 
+<<<<<<< HEAD
 import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import { useMapInitialization } from "@/hooks/use-map-initialization";
@@ -25,6 +26,18 @@ interface MapLibreFacilityMapProps {
   selectedOrgTypeForGrid?: string | null;
   focusedHospitalId?: number | null;
   focusedRefusal?: any;
+=======
+import React, { useEffect, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
+import { useMapInitialization } from "@/hooks/use-map-initialization";
+import { FacilityStatistic } from "@/types/healthcare";
+
+interface MapLibreFacilityMapProps {
+  facilities?: FacilityStatistic[];
+  className?: string;
+  fullscreen?: boolean;
+  selectedDistrict?: string;
+>>>>>>> gitlab/main
 }
 
 interface DistrictFeature {
@@ -38,12 +51,31 @@ interface DistrictFeature {
   };
 }
 
+<<<<<<< HEAD
 
+=======
+const getStatusColor = (occupancyRate: number) => {
+  if (occupancyRate > 0.95) return "#dc2626"; // red-600 - критическая (выше 95%)
+  if (occupancyRate > 0.8) return "#ea580c"; // orange-600 - высокая (80-95%)
+  if (occupancyRate >= 0.5) return "#16a34a"; // green-600 - нормальная (50-80%)
+  return "#6b7280"; // gray-500 - низкая (ниже 50%)
+};
+
+const getStatusText = (occupancyRate: number) => {
+  if (occupancyRate > 0.95) return "Критическая";
+  if (occupancyRate > 0.8) return "Высокая";
+  if (occupancyRate >= 0.5) return "Нормальная";
+  return "Низкая";
+};
+
+// Добавь рядом с твоими util-функциями (один раз на модуль)
+>>>>>>> gitlab/main
 let _popupCssInjected = false;
 const injectPopupCss = () => {
   if (_popupCssInjected) return;
   _popupCssInjected = true;
   const css = `
+<<<<<<< HEAD
   .ml-card{max-width:320px;max-height:480px;overflow-y:auto;border:1px solid rgba(0,0,0,.08);border-radius:10px;scrollbar-width:thin;background:#fff;
     box-shadow:0 6px 16px rgba(0,0,0,.06);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   .ml-card::-webkit-scrollbar { width: 3px; }
@@ -51,11 +83,19 @@ const injectPopupCss = () => {
   .ml-hd{padding:10px 12px 6px}
   .ml-hd > div{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
   .ml-ttl{margin:0;margin-bottom:2px;font-weight:600;font-size:14px;line-height:1.25;color:#111;flex:1;min-width:0}
+=======
+  .ml-card{max-width:420px;min-width:260px;border:1px solid rgba(0,0,0,.08);border-radius:12px;background:#fff;
+    box-shadow:0 6px 16px rgba(0,0,0,.06);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .ml-hd{padding:12px 14px 8px}
+  .ml-hd > div{display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap}
+  .ml-ttl{margin:0;font-weight:600;font-size:14px;line-height:1.25;color:#111;flex:1;min-width:0}
+>>>>>>> gitlab/main
   .ml-chip{flex-shrink:0;border-radius:999px;padding:2px 8px;font-weight:700;font-size:11px;white-space:nowrap}
   .ml-chip.low{background:rgba(107,114,128,.15);color:#374151}
   .ml-chip.normal{background:rgba(16,185,129,.15);color:#065f46}
   .ml-chip.high{background:rgba(245,158,11,.15);color:#92400e}
   .ml-chip.critical{background:rgba(239,68,68,.15);color:#7f1d1d}
+<<<<<<< HEAD
   .ml-meta{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
   .ml-pill{background:#f3f4f6;border-radius:6px;padding:1px 6px;font-size:10px;color:#4b5563}
   .ml-bd{padding:0 12px 10px}
@@ -135,12 +175,27 @@ const injectPopupCss = () => {
     padding-bottom: 4px;
   }
   .ml-badge { padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+=======
+  .ml-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .ml-pill{background:#f3f4f6;border-radius:6px;padding:3px 6px;font-size:11px;color:#4b5563}
+  .ml-bd{padding:0 14px 14px}
+  .ml-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+  .ml-box{background:#f9fafb;border-radius:10px;padding:8px}
+  .ml-cap{font-size:11px;color:#6b7280}
+  .ml-val{font-weight:600;color:#111}
+  .ml-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin:10px 0 6px;color:#6b7280}
+  .ml-bar{height:8px;width:100%;background:#f3f4f6;border-radius:999px;overflow:hidden}
+  .ml-bar>i{display:block;height:100%}
+  .ml-addr{margin-top:10px;font-size:11px;color:#6b7280}
+  .ml-addr b{color:#374151}
+>>>>>>> gitlab/main
   `;
   const style = document.createElement("style");
   style.textContent = css;
   document.head.appendChild(style);
 };
 
+<<<<<<< HEAD
 function buildComplexHospitalPopup(d: any) {
   injectPopupCss();
 
@@ -193,10 +248,52 @@ function buildComplexHospitalPopup(d: any) {
       <div class="ml-meta">
         <span class="ml-pill">🚐 ${d.org_type}</span>
         <span class="ml-pill">${d.district}</span>
+=======
+const fmt = (v: number | string) =>
+  new Intl.NumberFormat("ru-RU").format(Number(v ?? 0));
+
+const statusColor = (rate01: number) => {
+  // использую твои пороги, только ещё возвращаю класс чипа
+  if (rate01 > 0.95)
+    return { hex: "#dc2626", chip: "critical", label: "Критическая" };
+  if (rate01 > 0.8) return { hex: "#ea580c", chip: "high", label: "Высокая" };
+  if (rate01 >= 0.5)
+    return { hex: "#16a34a", chip: "normal", label: "Нормальная" };
+  return { hex: "#6b7280", chip: "low", label: "Низкая" };
+};
+
+function buildFacilityPopup(facility: any) {
+  injectPopupCss();
+
+  const occ = Number(facility.occupancy_rate_percent ?? 0);
+  const pct = Math.max(0, Math.min(100, +(occ * 100).toFixed(1)));
+  const col = statusColor(occ);
+  const beds = Number(facility.beds_deployed_withdrawn_for_rep ?? 0);
+  const freeEst = Math.max(0, Math.round(beds * (1 - occ)));
+
+  return `
+  <div class="ml-card" role="group" aria-label="Информация о медорганизации">
+    <div class="ml-hd">
+      <div>
+        <h3 class="ml-ttl">${
+          facility.medical_organization ?? "Неизвестная организация"
+        }</h3>
+        <span class="ml-chip ${col.chip}">${col.label} • ${pct}%</span>
+      </div>
+      <div class="ml-meta">
+        <span class="ml-pill">${facility.district ?? "Без района"}</span>
+        <span class="ml-pill">${
+          facility.facility_type ?? "Тип не указан"
+        }</span>
+        <span class="ml-pill">${
+          facility.bed_profile ?? "Профиль не указан"
+        }</span>
+>>>>>>> gitlab/main
       </div>
     </div>
 
     <div class="ml-bd">
+<<<<<<< HEAD
       ${d.work > 340 ? `
         <div class="ml-warning-box" style="margin-top:0; margin-bottom:8px; background:#fff5f2; border:1px solid #ffccbc; padding:4px 8px; border-radius:8px; font-size:10px; color:#d32f2f;">
           ⚠️ Работа койки <b>${d.work} дн/год</b> — перегружено (норма ≤340)
@@ -232,10 +329,37 @@ function buildComplexHospitalPopup(d: any) {
       <div class="ml-profiles">
         ${profilesHtml}
       </div>
+=======
+      <div class="ml-kpi">
+        <div class="ml-box">
+          <div class="ml-cap">Коек развернуто</div>
+          <div class="ml-val">${fmt(beds)}</div>
+        </div>
+        <div class="ml-box">
+          <div class="ml-cap">Свободно (оценка)</div>
+          <div class="ml-val">${fmt(freeEst)}</div>
+        </div>
+      </div>
+
+      <div class="ml-row">
+        <span>Загруженность</span>
+        <b style="color:${col.hex}">${pct}%</b>
+      </div>
+      <div class="ml-bar" aria-hidden="true">
+        <i style="width:${pct}%; background:${col.hex}"></i>
+      </div>
+
+      ${
+        facility.address
+          ? `<div class="ml-addr"><b>Адрес:</b> ${facility.address}</div>`
+          : ""
+      }
+>>>>>>> gitlab/main
     </div>
   </div>`;
 }
 
+<<<<<<< HEAD
 function buildPlannedObjectPopup(p: any) {
   const title = p.short_name || p.name;
   
@@ -336,11 +460,14 @@ function enrichZonesWithEverything(zones: any, plannedObjs: any, recommendations
   return { ...zones, features };
 }
 
+=======
+>>>>>>> gitlab/main
 export function MapLibreFacilityMap({
   facilities = [],
   className = "",
   fullscreen = false,
   selectedDistrict = "Все районы",
+<<<<<<< HEAD
   mapMode = "load",
   seismicData = [],
   showSeismicGrid = false,
@@ -354,19 +481,34 @@ export function MapLibreFacilityMap({
   selectedOrgTypeForGrid = null,
   focusedHospitalId = null,
   focusedRefusal,
+=======
+>>>>>>> gitlab/main
 }: MapLibreFacilityMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { mapRef, isLoading, zoomIn, zoomOut, resetView } =
     useMapInitialization(containerRef);
+<<<<<<< HEAD
   const popupRef = useRef<maplibregl.Popup | null>(null);
   const [districts, setDistricts] = useState<DistrictFeature[]>([]);
 
+=======
+  const markersRef = useRef<maplibregl.Marker[]>([]);
+  const [districts, setDistricts] = useState<DistrictFeature[]>([]);
+
+  // Fetch districts data
+>>>>>>> gitlab/main
   useEffect(() => {
     fetch("https://admin.smartalmaty.kz/api/v1/address/districts")
       .then((res) => res.json())
       .then((data) => {
         console.log("Districts API response:", data);
+<<<<<<< HEAD
         if (data.results && data.results.features) {
+=======
+        // API returns {count, next, previous, results: {type: "FeatureCollection", features: [...]}}
+        if (data.results && data.results.features) {
+          // Filter out districts with id 0 and 9
+>>>>>>> gitlab/main
           const filteredDistricts = data.results.features.filter(
             (feature: any) => {
               const id = feature.id || feature.properties?.id;
@@ -374,16 +516,27 @@ export function MapLibreFacilityMap({
                 "District id:",
                 id,
                 "name:",
+<<<<<<< HEAD
                 feature.properties?.name_ru,
               );
               return id !== 0 && id !== 9;
             },
+=======
+                feature.properties?.name_ru
+              );
+              return id !== 0 && id !== 9;
+            }
+>>>>>>> gitlab/main
           );
           console.log(
             "Districts loaded (filtered):",
             filteredDistricts.length,
             "from",
+<<<<<<< HEAD
             data.results.features.length,
+=======
+            data.results.features.length
+>>>>>>> gitlab/main
           );
           setDistricts(filteredDistricts);
         }
@@ -391,6 +544,10 @@ export function MapLibreFacilityMap({
       .catch((err) => console.error("Error loading districts:", err));
   }, []);
 
+<<<<<<< HEAD
+=======
+  // Add district polygons to map
+>>>>>>> gitlab/main
   useEffect(() => {
     if (!mapRef.current) return;
     if (!districts.length) {
@@ -403,7 +560,11 @@ export function MapLibreFacilityMap({
       "Districts effect triggered, isLoading:",
       isLoading,
       "style loaded:",
+<<<<<<< HEAD
       map.isStyleLoaded(),
+=======
+      map.isStyleLoaded()
+>>>>>>> gitlab/main
     );
 
     const addLayers = () => {
@@ -416,10 +577,18 @@ export function MapLibreFacilityMap({
         console.log(
           "Adding districts source with",
           districts.length,
+<<<<<<< HEAD
           "features",
         );
         console.log("Sample feature:", districts[0]);
 
+=======
+          "features"
+        );
+        console.log("Sample feature:", districts[0]);
+
+        // Remove existing layers if present
+>>>>>>> gitlab/main
         if (map.getLayer("districts-fill")) {
           console.log("Removing existing districts-fill layer");
           map.removeLayer("districts-fill");
@@ -437,13 +606,23 @@ export function MapLibreFacilityMap({
           map.removeSource("districts");
         }
 
+<<<<<<< HEAD
+=======
+        // Add source
+>>>>>>> gitlab/main
         map.addSource("districts", {
           type: "geojson",
           data: geojson as any,
         });
         console.log("Districts source added");
 
+<<<<<<< HEAD
         if (selectedDistrict !== "Все районы") {
+=======
+        // If a district is selected, show only that district
+        if (selectedDistrict !== "Все районы") {
+          // Fill layer for selected district only
+>>>>>>> gitlab/main
           map.addLayer({
             id: "districts-fill",
             type: "fill",
@@ -457,9 +636,16 @@ export function MapLibreFacilityMap({
           console.log(
             "Districts fill layer added (filtered for:",
             selectedDistrict,
+<<<<<<< HEAD
             ")",
           );
 
+=======
+            ")"
+          );
+
+          // Outline layer for selected district only
+>>>>>>> gitlab/main
           map.addLayer({
             id: "districts-outline",
             type: "line",
@@ -474,9 +660,16 @@ export function MapLibreFacilityMap({
           console.log(
             "Districts outline layer added (filtered for:",
             selectedDistrict,
+<<<<<<< HEAD
             ")",
           );
         } else {
+=======
+            ")"
+          );
+        } else {
+          // Show all districts when none selected
+>>>>>>> gitlab/main
           map.addLayer({
             id: "districts-fill",
             type: "fill",
@@ -501,16 +694,20 @@ export function MapLibreFacilityMap({
           console.log("Districts outline layer added (all districts)");
         }
 
+<<<<<<< HEAD
         if (map.getLayer("facility-clusters"))
           map.moveLayer("facility-clusters");
         if (map.getLayer("cluster-count")) map.moveLayer("cluster-count");
         if (map.getLayer("unclustered-facility"))
           map.moveLayer("unclustered-facility");
 
+=======
+>>>>>>> gitlab/main
         console.log("All district layers added successfully");
       } catch (error) {
         console.error("Error adding district layers:", error);
       }
+<<<<<<< HEAD
 
       const isZonalMode = activeGeoLayers?.includes("orgTypeGrid") && 
         selectedOrgTypeForGrid && 
@@ -527,6 +724,25 @@ export function MapLibreFacilityMap({
       }
     };
 
+=======
+    };
+
+    // Wait for map style to load with retry mechanism
+    const attemptAddLayers = () => {
+      if (map.isStyleLoaded() && map.loaded()) {
+        console.log("Map is ready, adding layers");
+        addLayers();
+      } else {
+        console.log("Map not ready, waiting...");
+        map.once("load", () => {
+          console.log("Map load event fired");
+          addLayers();
+        });
+      }
+    };
+
+    // Small delay to ensure map is ready
+>>>>>>> gitlab/main
     setTimeout(attemptAddLayers, 500);
 
     return () => {
@@ -544,6 +760,7 @@ export function MapLibreFacilityMap({
     };
   }, [districts, selectedDistrict, mapRef]);
 
+<<<<<<< HEAD
   useEffect(() => {
     if (!mapRef.current || isLoading) return;
 
@@ -1185,6 +1402,91 @@ export function MapLibreFacilityMap({
 
     setTimeout(openFocusedPopup, 400);
   }, [focusedHospitalId, facilities, isLoading]);
+=======
+  // Add facilities as markers
+  useEffect(() => {
+    if (!mapRef.current || isLoading || !facilities.length) return;
+
+    // Clear existing markers
+    markersRef.current.forEach((marker) => marker.remove());
+    markersRef.current = [];
+
+    // Add new markers
+    facilities.forEach((facility) => {
+      if (!facility.latitude || !facility.longitude) return;
+
+      const occupancyRate = facility.occupancy_rate_percent || 0;
+      const color = getStatusColor(occupancyRate);
+
+      // Create popup content
+      // const popupContent = `
+      //   <div class="min-w-[250px] p-2">
+      //     <h3 class="font-bold text-sm mb-2">${
+      //       facility.medical_organization || "Неизвестно"
+      //     }</h3>
+      //     <div class="space-y-1 text-xs">
+      //       <p><strong>Район:</strong> ${facility.district || "Неизвестно"}</p>
+      //       <p><strong>Тип:</strong> ${
+      //         facility.facility_type || "Неизвестно"
+      //       }</p>
+      //       <p><strong>Профиль:</strong> ${
+      //         facility.bed_profile || "Неизвестно"
+      //       }</p>
+      //       <p><strong>Коек развернуто:</strong> ${
+      //         facility.beds_deployed_withdrawn_for_rep || 0
+      //       }</p>
+      //       <p><strong>Загруженность:</strong> <span style="color: ${color}; font-weight: bold;">${getStatusText(
+      //   occupancyRate
+      // )} (${(occupancyRate * 100).toFixed(1)}%)</span></p>
+      //     </div>
+      //   </div>
+      // `;
+      const popupContent = buildFacilityPopup(facility);
+
+      // const popup = new maplibregl.Popup({ offset: 25 }).setHTML(popupContent);
+      const popup = new maplibregl.Popup({
+        offset: 25,
+        anchor: "bottom",
+        closeButton: true,
+        maxWidth: "320px",
+      }).setHTML(popupContent);
+
+      // Create marker element
+      const el = document.createElement("div");
+      el.className = "facility-marker";
+      el.style.width = "16px";
+      el.style.height = "16px";
+      el.style.borderRadius = "50%";
+      el.style.backgroundColor = color;
+      el.style.border = "2px solid white";
+      el.style.boxShadow = "0 2px 4px rgba(0,0,0,0.3)";
+      el.style.cursor = "pointer";
+
+      const marker = new maplibregl.Marker({ element: el })
+        .setLngLat([Number(facility.longitude), Number(facility.latitude)])
+        .setPopup(popup)
+        .addTo(mapRef.current!);
+
+      markersRef.current.push(marker);
+    });
+
+    return () => {
+      try {
+        markersRef.current.forEach((marker) => {
+          if (marker && typeof marker.remove === "function") {
+            marker.remove();
+          }
+        });
+        markersRef.current = [];
+      } catch (error) {
+        console.warn(
+          "Error cleaning up markers in MapLibreFacilityMap:",
+          error
+        );
+      }
+    };
+  }, [facilities, isLoading, mapRef]);
+>>>>>>> gitlab/main
 
   return (
     <div
@@ -1207,6 +1509,10 @@ export function MapLibreFacilityMap({
         </div>
       )}
 
+<<<<<<< HEAD
+=======
+      {/* Debug info */}
+>>>>>>> gitlab/main
       <div className="absolute top-4 left-4 bg-white p-2 rounded shadow text-xs z-10">
         <div>Districts: {districts.length}</div>
         <div>Map Ready: {mapRef.current?.loaded() ? "Yes" : "No"}</div>
@@ -1221,6 +1527,10 @@ export function MapLibreFacilityMap({
         </div>
       </div>
 
+<<<<<<< HEAD
+=======
+      {/* Map controls */}
+>>>>>>> gitlab/main
       {!fullscreen && (
         <div className="absolute top-4 right-4 flex flex-col gap-2 z-10">
           <button
@@ -1285,6 +1595,7 @@ export function MapLibreFacilityMap({
     </div>
   );
 }
+<<<<<<< HEAD
 
 function getMapColorExpression(mode: string): any {
   if (mode === "buildings") {
@@ -1351,3 +1662,5 @@ function computeOrgTypeGrid(
 
   return { ...gridGeoJSON, features };
 }
+=======
+>>>>>>> gitlab/main

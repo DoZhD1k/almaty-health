@@ -46,6 +46,7 @@ export function AnalyticsFilters({
   // Получение уникальных значений для фильтров
   const uniqueDistricts = useMemo(
     () => [...new Set(facilities.map((f) => f.district).filter(Boolean))],
+<<<<<<< HEAD
     [facilities],
   );
   const uniqueFacilityTypes = useMemo(
@@ -59,12 +60,31 @@ export function AnalyticsFilters({
 
   return (
     <div className="space-y-2 sm:space-y-3">
+=======
+    [facilities]
+  );
+  const uniqueFacilityTypes = useMemo(
+    () => [...new Set(facilities.map((f) => f.facility_type).filter(Boolean))],
+    [facilities]
+  );
+  const uniqueBedProfiles = useMemo(
+    () => [...new Set(facilities.map((f) => f.bed_profile).filter(Boolean))],
+    [facilities]
+  );
+
+  return (
+    <div className="space-y-3">
+>>>>>>> gitlab/main
       {/* Поле поиска - отдельно сверху на всю ширину */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[rgb(var(--blue-normal))]" />
         <Input
           type="text"
+<<<<<<< HEAD
           placeholder="Поиск по названию, району, адресу..."
+=======
+          placeholder="Поиск по названию, району, адресу, типу организации..."
+>>>>>>> gitlab/main
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="bg-white h-9 text-sm pl-10 border-2 border-[rgb(var(--blue-light))]/30 focus:border-[rgb(var(--blue-normal))] rounded-lg shadow-sm"
@@ -72,10 +92,17 @@ export function AnalyticsFilters({
       </div>
 
       {/* Фильтры в виде карточек */}
+<<<<<<< HEAD
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
         {/* Фильтр по районам */}
         <div className="bg-white rounded-lg border border-[rgb(var(--grey-light))]/30 p-2 sm:p-3 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 mb-1 sm:mb-2">
+=======
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {/* Фильтр по районам */}
+        <div className="bg-white rounded-lg border border-[rgb(var(--grey-light))]/30 p-3 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-2 mb-2">
+>>>>>>> gitlab/main
             <div className="p-1 rounded bg-[rgb(var(--blue-light))]/10">
               <Filter className="h-3 w-3 text-[rgb(var(--blue-normal))]" />
             </div>
@@ -91,7 +118,11 @@ export function AnalyticsFilters({
             }
             onValueChange={(value) => {
               onDistrictsChange(
+<<<<<<< HEAD
                 value === "all_districts" ? [] : value.split(","),
+=======
+                value === "all_districts" ? [] : value.split(",")
+>>>>>>> gitlab/main
               );
             }}
           >
@@ -112,8 +143,13 @@ export function AnalyticsFilters({
         </div>
 
         {/* Фильтр по типу учреждения */}
+<<<<<<< HEAD
         <div className="bg-white rounded-lg border border-[rgb(var(--grey-light))]/30 p-2 sm:p-3 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 mb-1 sm:mb-2">
+=======
+        <div className="bg-white rounded-lg border border-[rgb(var(--grey-light))]/30 p-3 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-2 mb-2">
+>>>>>>> gitlab/main
             <div className="p-1 rounded bg-[rgb(var(--blue-light))]/10">
               <Filter className="h-3 w-3 text-[rgb(var(--blue-normal))]" />
             </div>
@@ -129,7 +165,11 @@ export function AnalyticsFilters({
             }
             onValueChange={(value) => {
               onFacilityTypesChange(
+<<<<<<< HEAD
                 value === "all_types" ? [] : value.split(","),
+=======
+                value === "all_types" ? [] : value.split(",")
+>>>>>>> gitlab/main
               );
             }}
           >
@@ -150,8 +190,13 @@ export function AnalyticsFilters({
         </div>
 
         {/* Фильтр по профилю коек */}
+<<<<<<< HEAD
         <div className="bg-white rounded-lg border border-[rgb(var(--grey-light))]/30 p-2 sm:p-3 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-2 mb-1 sm:mb-2">
+=======
+        <div className="bg-white rounded-lg border border-[rgb(var(--grey-light))]/30 p-3 shadow-sm hover:shadow-md transition-shadow">
+          <div className="flex items-center gap-2 mb-2">
+>>>>>>> gitlab/main
             <div className="p-1 rounded bg-[rgb(var(--blue-light))]/10">
               <Filter className="h-3 w-3 text-[rgb(var(--blue-normal))]" />
             </div>
@@ -167,7 +212,11 @@ export function AnalyticsFilters({
             }
             onValueChange={(value) => {
               onBedProfilesChange(
+<<<<<<< HEAD
                 value === "all_profiles" ? [] : value.split(","),
+=======
+                value === "all_profiles" ? [] : value.split(",")
+>>>>>>> gitlab/main
               );
             }}
           >

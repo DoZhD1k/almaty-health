@@ -2,7 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, CircleMarker, Popup } from "react-leaflet";
+<<<<<<< HEAD
 import MarkerClusterGroup from "react-leaflet-cluster";
+=======
+>>>>>>> gitlab/main
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FacilityStatistic } from "@/types/healthcare";
@@ -43,7 +46,11 @@ export function FacilityMap({
   className,
 }: FacilityMapProps) {
   const [facilities, setFacilities] = useState<FacilityStatistic[]>(
+<<<<<<< HEAD
     propFacilities || [],
+=======
+    propFacilities || []
+>>>>>>> gitlab/main
   );
   const [loading, setLoading] = useState(!propFacilities);
   const [error, setError] = useState<string | null>(null);
@@ -120,7 +127,11 @@ export function FacilityMap({
       facility.latitude != null &&
       facility.longitude != null &&
       !isNaN(facility.latitude) &&
+<<<<<<< HEAD
       !isNaN(facility.longitude),
+=======
+      !isNaN(facility.longitude)
+>>>>>>> gitlab/main
   );
 
   // Используем правильные данные для статистики
@@ -160,6 +171,7 @@ export function FacilityMap({
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
+<<<<<<< HEAD
             <MarkerClusterGroup
               chunkedLoading
               maxClusterRadius={50}
@@ -264,6 +276,104 @@ export function FacilityMap({
                 </CircleMarker>
               ))}
             </MarkerClusterGroup>
+=======
+            {validFacilities.map((facility) => (
+              <CircleMarker
+                key={facility.id}
+                center={[facility.latitude, facility.longitude]}
+                radius={Math.max(
+                  8,
+                  Math.min(
+                    20,
+                    (facility.beds_deployed_withdrawn_for_rep || 50) / 10
+                  )
+                )}
+                fillColor={getStatusColor(
+                  facility.occupancy_status_color,
+                  facility.occupancy_rate_percent
+                )}
+                color={getStatusColor(
+                  facility.occupancy_status_color,
+                  facility.occupancy_rate_percent
+                )}
+                weight={2}
+                opacity={0.8}
+                fillOpacity={0.6}
+              >
+                <Popup>
+                  <div className="min-w-64 p-2">
+                    <h3 className="font-semibold text-lg mb-2">
+                      {facility.medical_organization}
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      {facility.address}
+                    </p>
+
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Статус:</span>
+                        <Badge
+                          variant={
+                            getOccupancyBadgeVariant(
+                              facility.occupancy_rate_percent
+                            ) as
+                              | "default"
+                              | "destructive"
+                              | "outline"
+                              | "secondary"
+                              | null
+                              | undefined
+                          }
+                        >
+                          {getStatusText(facility.occupancy_rate_percent)}
+                        </Badge>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Загруженность:</span>
+                        <span className="font-semibold">
+                          {Math.round(facility.occupancy_rate_percent * 100)}%
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Коек развернуто:</span>
+                        <span className="font-semibold">
+                          {facility.beds_deployed_withdrawn_for_rep}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Тип:</span>
+                        <span className="text-sm">
+                          {facility.facility_type}
+                        </span>
+                      </div>
+
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Пациентов принято:</span>
+                        <span className="text-sm">
+                          {facility.total_admitted_patients}
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div
+                          className={`h-2 rounded-full transition-all ${
+                            facility.occupancy_rate_percent > 0.95
+                              ? "bg-red-600"
+                              : facility.occupancy_rate_percent > 0.8
+                              ? "bg-orange-600"
+                              : "bg-green-600"
+                          }`}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </Popup>
+              </CircleMarker>
+            ))}
+>>>>>>> gitlab/main
           </MapContainer>
         </div>
 
@@ -288,10 +398,17 @@ export function FacilityMap({
                 ? Math.round(
                     (displayFacilities.reduce(
                       (sum, f) => sum + f.occupancy_rate_percent,
+<<<<<<< HEAD
                       0,
                     ) /
                       displayFacilities.length) *
                       100,
+=======
+                      0
+                    ) /
+                      displayFacilities.length) *
+                      100
+>>>>>>> gitlab/main
                   )
                 : 0}
               %

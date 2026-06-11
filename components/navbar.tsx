@@ -110,7 +110,11 @@ export function Navbar() {
                   </span>
                 </Button>
               </DialogTrigger>
+<<<<<<< HEAD
               <DialogContent className="w-[95vw] max-w-4xl max-h-[80vh] overflow-y-auto">
+=======
+              <DialogContent className="min-w-[90vh] max-h-[80vh] overflow-y-auto">
+>>>>>>> gitlab/main
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2 text-xl">
                     <BookOpen className="h-5 w-5" />
