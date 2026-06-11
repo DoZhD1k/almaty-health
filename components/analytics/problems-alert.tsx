@@ -21,19 +21,11 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
     // 1. Анализ высокой смертности
     const totalDeaths = filteredFacilities.reduce(
       (sum, f) => sum + (f.death_smp || 0) + (f.death_vtmp || 0),
-<<<<<<< HEAD
       0,
     );
     const totalAdmitted = filteredFacilities.reduce(
       (sum, f) => sum + (f.total_admitted_patients || 0),
       0,
-=======
-      0
-    );
-    const totalAdmitted = filteredFacilities.reduce(
-      (sum, f) => sum + (f.total_admitted_patients || 0),
-      0
->>>>>>> gitlab/main
     );
     const avgMortality =
       totalAdmitted > 0 ? (totalDeaths / totalAdmitted) * 100 : 0;
@@ -42,7 +34,6 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
     if (totalAdmitted > 0) {
       // Найдем наиболее проблемные районы по смертности
       const districtMortality = Array.from(
-<<<<<<< HEAD
         new Set(filteredFacilities.map((f) => f.district)),
       )
         .map((district) => {
@@ -56,21 +47,6 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
           const districtAdmitted = districtFacilities.reduce(
             (sum, f) => sum + (f.total_admitted_patients || 0),
             0,
-=======
-        new Set(filteredFacilities.map((f) => f.district))
-      )
-        .map((district) => {
-          const districtFacilities = filteredFacilities.filter(
-            (f) => f.district === district
-          );
-          const districtDeaths = districtFacilities.reduce(
-            (sum, f) => sum + (f.death_smp || 0) + (f.death_vtmp || 0),
-            0
-          );
-          const districtAdmitted = districtFacilities.reduce(
-            (sum, f) => sum + (f.total_admitted_patients || 0),
-            0
->>>>>>> gitlab/main
           );
           const mortality =
             districtAdmitted > 0
@@ -83,7 +59,6 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
 
       // Найдем наиболее проблемные профили
       const profileMortality = Array.from(
-<<<<<<< HEAD
         new Set(filteredFacilities.map((f) => f.bed_profile)),
       )
         .map((profile) => {
@@ -97,21 +72,6 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
           const profileAdmitted = profileFacilities.reduce(
             (sum, f) => sum + (f.total_admitted_patients || 0),
             0,
-=======
-        new Set(filteredFacilities.map((f) => f.bed_profile))
-      )
-        .map((profile) => {
-          const profileFacilities = filteredFacilities.filter(
-            (f) => f.bed_profile === profile
-          );
-          const profileDeaths = profileFacilities.reduce(
-            (sum, f) => sum + (f.death_smp || 0) + (f.death_vtmp || 0),
-            0
-          );
-          const profileAdmitted = profileFacilities.reduce(
-            (sum, f) => sum + (f.total_admitted_patients || 0),
-            0
->>>>>>> gitlab/main
           );
           const mortality =
             profileAdmitted > 0 ? (profileDeaths / profileAdmitted) * 100 : 0;
@@ -122,7 +82,6 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
 
       // Анализ по типу собственности
       const ownershipMortality = Array.from(
-<<<<<<< HEAD
         new Set(filteredFacilities.map((f) => f.ownership_type)),
       )
         .map((ownership) => {
@@ -136,21 +95,6 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
           const ownershipAdmitted = ownershipFacilities.reduce(
             (sum, f) => sum + (f.total_admitted_patients || 0),
             0,
-=======
-        new Set(filteredFacilities.map((f) => f.ownership_type))
-      )
-        .map((ownership) => {
-          const ownershipFacilities = filteredFacilities.filter(
-            (f) => f.ownership_type === ownership
-          );
-          const ownershipDeaths = ownershipFacilities.reduce(
-            (sum, f) => sum + (f.death_smp || 0) + (f.death_vtmp || 0),
-            0
-          );
-          const ownershipAdmitted = ownershipFacilities.reduce(
-            (sum, f) => sum + (f.total_admitted_patients || 0),
-            0
->>>>>>> gitlab/main
           );
           const mortality =
             ownershipAdmitted > 0
@@ -165,11 +109,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
       const maxMortality = Math.max(
         districtMortality.length > 0 ? districtMortality[0].mortality : 0,
         profileMortality.length > 0 ? profileMortality[0].mortality : 0,
-<<<<<<< HEAD
         ownershipMortality.length > 0 ? ownershipMortality[0].mortality : 0,
-=======
-        ownershipMortality.length > 0 ? ownershipMortality[0].mortality : 0
->>>>>>> gitlab/main
       );
 
       const mortalityStatus =
@@ -219,11 +159,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
     if (overloadedFacilities.length > 0) {
       // Анализ по районам
       const overloadedByDistrict = Array.from(
-<<<<<<< HEAD
         new Set(overloadedFacilities.map((f) => f.district)),
-=======
-        new Set(overloadedFacilities.map((f) => f.district))
->>>>>>> gitlab/main
       )
         .map((district) => ({
           district,
@@ -234,11 +170,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
 
       // Анализ по типам учреждений
       const overloadedByType = Array.from(
-<<<<<<< HEAD
         new Set(overloadedFacilities.map((f) => f.facility_type)),
-=======
-        new Set(overloadedFacilities.map((f) => f.facility_type))
->>>>>>> gitlab/main
       )
         .map((type) => ({
           type,
@@ -249,11 +181,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
 
       // Анализ по профилям
       const overloadedByProfile = Array.from(
-<<<<<<< HEAD
         new Set(overloadedFacilities.map((f) => f.bed_profile)),
-=======
-        new Set(overloadedFacilities.map((f) => f.bed_profile))
->>>>>>> gitlab/main
       )
         .map((profile) => ({
           profile,
@@ -301,11 +229,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
     if (underloadedFacilities.length > 0) {
       // Анализ по районам
       const underloadedByDistrict = Array.from(
-<<<<<<< HEAD
         new Set(underloadedFacilities.map((f) => f.district)),
-=======
-        new Set(underloadedFacilities.map((f) => f.district))
->>>>>>> gitlab/main
       )
         .map((district) => ({
           district,
@@ -316,11 +240,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
 
       // Анализ по типам учреждений
       const underloadedByType = Array.from(
-<<<<<<< HEAD
         new Set(underloadedFacilities.map((f) => f.facility_type)),
-=======
-        new Set(underloadedFacilities.map((f) => f.facility_type))
->>>>>>> gitlab/main
       )
         .map((type) => ({
           type,
@@ -331,11 +251,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
 
       // Анализ по профилям
       const underloadedByProfile = Array.from(
-<<<<<<< HEAD
         new Set(underloadedFacilities.map((f) => f.bed_profile)),
-=======
-        new Set(underloadedFacilities.map((f) => f.bed_profile))
->>>>>>> gitlab/main
       )
         .map((profile) => ({
           profile,
@@ -404,11 +320,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
       <AlertDescription className="text-orange-800">
         <div className="space-y-3">
           <strong>Выявленные проблемы:</strong>
-<<<<<<< HEAD
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
-=======
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
->>>>>>> gitlab/main
             {problems.map((problem, index) => (
               <div
                 key={index}
@@ -435,11 +347,7 @@ export function ProblemsAlert({ filteredFacilities }: ProblemsAlertProps) {
                       dangerouslySetInnerHTML={{
                         __html: detail.replace(
                           /\*\*([^*]+)\*\*/g,
-<<<<<<< HEAD
                           "<strong>$1</strong>",
-=======
-                          "<strong>$1</strong>"
->>>>>>> gitlab/main
                         ),
                       }}
                     />

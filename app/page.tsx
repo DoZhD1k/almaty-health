@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { MedicalFilterPanel } from "@/components/medical-filter-panel";
-<<<<<<< HEAD
 import { Hospital, MedicalFilterState, SeismicPoint } from "@/types/healthcare";
 import { healthcareApi } from "@/lib/api/healthcare";
 import { Filter, X } from "lucide-react";
@@ -15,12 +14,6 @@ import { MapLegend } from "@/components/map/MapLegend";
 import { ProfilesDeficitModal } from "@/components/modals/ProfilesDeficitModal";
 import { BuildingAnalysisModal } from "@/components/modals/BuildingAnalysisModal";
 
-=======
-import { FacilityStatistic, MedicalFilterState } from "@/types/healthcare";
-import { healthcareApi } from "@/lib/api/healthcare";
-
-// Dynamically import the MapLibre map component to prevent SSR issues
->>>>>>> gitlab/main
 const MapLibreFacilityMap = dynamic(
   () =>
     import("@/components/map/MapLibreFacilityMap").then((mod) => ({
@@ -38,7 +31,6 @@ const MapLibreFacilityMap = dynamic(
         </div>
       </div>
     ),
-<<<<<<< HEAD
   },
 );
 
@@ -130,55 +122,11 @@ export default function HomePage() {
     } catch (error) {
       console.error("Ошибка при загрузке гео-данных:", error);
       setError("Не удалось загрузить данные для Геоанализа");
-=======
-  }
-);
-
-export default function HomePage() {
-  const [facilities, setFacilities] = useState<FacilityStatistic[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<MedicalFilterState>({
-    district: "Все районы",
-    facilityTypes: [],
-    bedProfiles: [],
-    loadLevels: [],
-    searchQuery: "",
-  });
-
-  useEffect(() => {
-    loadFacilities();
-  }, []);
-
-  const loadFacilities = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log("Loading facilities from API...");
-      const response = await healthcareApi.getFacilityStatistics();
-      console.log("API response received:", response);
-
-      if (response.results && response.results.length > 0) {
-        setFacilities(response.results);
-        console.log(`Loaded ${response.results.length} facilities`);
-      } else {
-        console.warn("No facilities data in response:", response);
-        setError("Нет данных для отображения");
-      }
-    } catch (error) {
-      console.error("Error loading facilities:", error);
-      const errorMessage =
-        error instanceof Error
-          ? `Ошибка подключения к серверу: ${error.message}`
-          : "Ошибка подключения к серверу";
-      setError(errorMessage);
->>>>>>> gitlab/main
     } finally {
       setLoading(false);
     }
   };
 
-<<<<<<< HEAD
   useEffect(() => {
     if (filters.activeGeoLayers.includes("refusals")) {
       setShowRefusalsPanel(true);
@@ -192,35 +140,19 @@ export default function HomePage() {
       if (
         filters.searchQuery &&
         !hospital.name
-=======
-  const filteredFacilities = useMemo(() => {
-    return facilities.filter((facility) => {
-      // Search filter
-      if (
-        filters.searchQuery &&
-        !facility.medical_organization
->>>>>>> gitlab/main
           .toLowerCase()
           .includes(filters.searchQuery.toLowerCase())
       ) {
         return false;
       }
 
-<<<<<<< HEAD
       if (
         filters.district !== "Все районы" &&
         hospital.district !== filters.district
-=======
-      // District filter
-      if (
-        filters.district !== "Все районы" &&
-        facility.district !== filters.district
->>>>>>> gitlab/main
       ) {
         return false;
       }
 
-<<<<<<< HEAD
         if (
           filters.facilityTypes.length > 0 &&
           !filters.facilityTypes.includes(hospital.org_type)
@@ -264,51 +196,11 @@ export default function HomePage() {
         if (filters.loadLevels.length > 0 && !filters.loadLevels.includes(hospital.occ_cat)) {
           return false;
         }
-=======
-      // Facility type filter
-      if (
-        filters.facilityTypes.length > 0 &&
-        !filters.facilityTypes.includes(facility.facility_type)
-      ) {
-        return false;
-      }
-
-      // Bed profile filter
-      if (
-        filters.bedProfiles.length > 0 &&
-        !filters.bedProfiles.includes(facility.bed_profile)
-      ) {
-        return false;
-      }
-
-      // Load level filter
-      if (filters.loadLevels.length > 0) {
-        const loadLevelOptions = [
-          { id: "low", minOccupancy: 0, maxOccupancy: 0.5 },
-          { id: "normal", minOccupancy: 0.5, maxOccupancy: 0.8 },
-          { id: "high", minOccupancy: 0.8, maxOccupancy: 0.95 },
-          { id: "critical", minOccupancy: 0.95, maxOccupancy: 1 },
-        ];
-
-        const matchesAnyLoadLevel = filters.loadLevels.some((loadLevelId) => {
-          const loadLevel = loadLevelOptions.find((l) => l.id === loadLevelId);
-          if (!loadLevel) return false;
-          return (
-            facility.occupancy_rate_percent >= loadLevel.minOccupancy &&
-            facility.occupancy_rate_percent < loadLevel.maxOccupancy
-          );
-        });
-        if (!matchesAnyLoadLevel) return false;
->>>>>>> gitlab/main
       }
 
       return true;
     });
-<<<<<<< HEAD
   }, [hospitals, filters]);
-=======
-  }, [facilities, filters]);
->>>>>>> gitlab/main
 
   if (loading) {
     return (
@@ -319,10 +211,6 @@ export default function HomePage() {
         </div>
       </div>
     );
-<<<<<<< HEAD
-=======
-    //fun
->>>>>>> gitlab/main
   }
 
   if (error) {
@@ -331,11 +219,7 @@ export default function HomePage() {
         <div className="text-center">
           <p className="text-red-500 mb-4">Ошибка: {error}</p>
           <button
-<<<<<<< HEAD
             onClick={loadHospitals}
-=======
-            onClick={loadFacilities}
->>>>>>> gitlab/main
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
           >
             Повторить
@@ -347,7 +231,6 @@ export default function HomePage() {
 
   return (
     <div className="relative flex-1 overflow-hidden">
-<<<<<<< HEAD
       <div className="absolute inset-0 z-0">
         <MapLibreFacilityMap
           facilities={filteredHospitals}
@@ -525,36 +408,6 @@ export default function HomePage() {
           onHospitalClick={(id) => setFocusedHospitalId(id)}
         />
       )}
-=======
-      {/* Full-screen Map Background */}
-      <div className="absolute inset-0 z-0">
-        <MapLibreFacilityMap
-          facilities={filteredFacilities}
-          fullscreen={true}
-          selectedDistrict={filters.district}
-        />
-      </div>
-
-      {/* Floating Filter Panel - Overlaying the map on desktop */}
-      <div className="hidden lg:block absolute top-4 left-4 z-10 w-80 max-h-[calc(100vh-32px)] overflow-y-auto">
-        <MedicalFilterPanel
-          onFiltersChange={setFilters}
-          facilities={facilities}
-          className="shadow-lg"
-        />
-      </div>
-
-      {/* Mobile Layout - Floating panel */}
-      <div className="lg:hidden">
-        <div className="absolute top-4 left-4 right-4 z-10">
-          <MedicalFilterPanel
-            onFiltersChange={setFilters}
-            facilities={facilities}
-            className="shadow-lg"
-          />
-        </div>
-      </div>
->>>>>>> gitlab/main
     </div>
   );
 }

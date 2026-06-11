@@ -49,11 +49,7 @@ export function SmpVtmpTab({
   const smpStats = {
     admitted: filteredFacilities.reduce(
       (sum, f) => sum + (f.released_smp || 0),
-<<<<<<< HEAD
       0,
-=======
-      0
->>>>>>> gitlab/main
     ),
     deaths: filteredFacilities.reduce((sum, f) => sum + (f.death_smp || 0), 0),
   };
@@ -61,11 +57,7 @@ export function SmpVtmpTab({
   const vtmpStats = {
     admitted: filteredFacilities.reduce(
       (sum, f) => sum + (f.released_vtmp || 0),
-<<<<<<< HEAD
       0,
-=======
-      0
->>>>>>> gitlab/main
     ),
     deaths: filteredFacilities.reduce((sum, f) => sum + (f.death_vtmp || 0), 0),
   };
@@ -90,7 +82,6 @@ export function SmpVtmpTab({
     <div className="space-y-4">
       {/* Сетка: карта на 2 колонки, графики по 1 колонке */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-<<<<<<< HEAD
         {/* Карта СМП/ВТМП - занимает 2 колонки из 3, скрыта на мобилке */}
         <Card className="hidden sm:flex lg:col-span-2 lg:row-span-2 flex-col">
           <CardHeader>
@@ -98,13 +89,6 @@ export function SmpVtmpTab({
               <span className="text-sm sm:text-base">
                 Карта мобильной доступности учреждений СМП
               </span>
-=======
-        {/* Карта СМП/ВТМП - занимает 2 колонки из 3 */}
-        <Card className="lg:col-span-2 lg:row-span-2 flex flex-col">
-          <CardHeader>
-            <CardTitle className="flex flex-col gap-1">
-              <span>Карта мобильной доступности учреждений СМП</span>
->>>>>>> gitlab/main
               <FilterDisplay
                 selectedDistricts={selectedDistricts}
                 selectedFacilityTypes={selectedFacilityTypes}
@@ -171,11 +155,7 @@ export function SmpVtmpTab({
             <div className="flex items-center gap-2 leading-none font-medium">
               Всего госпитализировано:{" "}
               {formatNumber(
-<<<<<<< HEAD
                 smpVtmpStats.smp.admitted + smpVtmpStats.vtmp.admitted,
-=======
-                smpVtmpStats.smp.admitted + smpVtmpStats.vtmp.admitted
->>>>>>> gitlab/main
               )}
             </div>
             <div className="text-muted-foreground leading-none">
@@ -187,17 +167,9 @@ export function SmpVtmpTab({
 
         {/* График корреляции - правая колонка, низ */}
         <Card>
-<<<<<<< HEAD
           <CardHeader className="px-3 sm:px-6">
             <CardTitle className="flex flex-col gap-1">
               <span className="text-sm sm:text-base">Корреляция СМП/ВТМП</span>
-=======
-          <CardHeader>
-            <CardTitle className="flex flex-col gap-1">
-              <span>
-                Корреляция СМП/ВТМП: Загруженность vs Количество больниц
-              </span>
->>>>>>> gitlab/main
               <FilterDisplay
                 selectedDistricts={selectedDistricts}
                 selectedFacilityTypes={selectedFacilityTypes}
@@ -210,11 +182,7 @@ export function SmpVtmpTab({
               по районам
             </CardDescription>
           </CardHeader>
-<<<<<<< HEAD
           <CardContent className="overflow-hidden px-1 sm:px-6">
-=======
-          <CardContent className="overflow-hidden">
->>>>>>> gitlab/main
             <ChartContainer
               config={{
                 smp: {
@@ -230,11 +198,7 @@ export function SmpVtmpTab({
                   color: "#ef4444",
                 },
               }}
-<<<<<<< HEAD
               className="h-[280px] sm:h-[400px] w-full"
-=======
-              className="h-[400px] w-full"
->>>>>>> gitlab/main
             >
               <LineChart
                 data={[
@@ -248,11 +212,7 @@ export function SmpVtmpTab({
                   "Жетысуский",
                 ].map((district) => {
                   const districtFacilities = filteredFacilities.filter((f) =>
-<<<<<<< HEAD
                     f.district?.includes(district),
-=======
-                    f.district?.includes(district)
->>>>>>> gitlab/main
                   );
 
                   const avgLoad =
@@ -260,32 +220,20 @@ export function SmpVtmpTab({
                       ? districtFacilities.reduce(
                           (sum, f) =>
                             sum + (f.occupancy_rate_percent || 0) * 100,
-<<<<<<< HEAD
                           0,
-=======
-                          0
->>>>>>> gitlab/main
                         ) / districtFacilities.length
                       : 0;
 
                   const totalSmp = districtFacilities.reduce(
                     (sum, f) =>
                       sum + (f.released_smp || 0) + (f.death_smp || 0),
-<<<<<<< HEAD
                     0,
-=======
-                    0
->>>>>>> gitlab/main
                   );
 
                   const totalVtmp = districtFacilities.reduce(
                     (sum, f) =>
                       sum + (f.released_vtmp || 0) + (f.death_vtmp || 0),
-<<<<<<< HEAD
                     0,
-=======
-                    0
->>>>>>> gitlab/main
                   );
 
                   return {

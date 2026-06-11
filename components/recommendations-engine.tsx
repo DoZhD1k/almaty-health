@@ -136,7 +136,6 @@ export function RecommendationsEngine() {
       </div>
 
       {/* Main Tabs */}
-<<<<<<< HEAD
       <Tabs defaultValue="redirections" className="p-1 sm:p-3">
         <TabsList className="grid grid-cols-2 w-full sm:w-fit bg-gray-100 p-1 rounded-lg mb-3">
           <TabsTrigger
@@ -164,25 +163,6 @@ export function RecommendationsEngine() {
           <div className="flex flex-col lg:grid lg:grid-cols-[60%_40%] gap-4 min-h-[400px] lg:min-h-[calc(100vh-280px)]">
             {/* Map */}
             <div className="h-[50vh] lg:h-[calc(100vh-280px)] min-h-[350px] lg:min-h-[700px]">
-=======
-      <Tabs defaultValue="redirections" className="p-3">
-        <TabsList className="grid grid-cols-2 w-fit bg-gray-100 p-1 rounded-lg mb-3">
-          <TabsTrigger value="redirections" className="gap-2">
-            <Route className="h-4 w-4" />
-            Рекомендации по перенаправлению
-          </TabsTrigger>
-          <TabsTrigger value="smp" className="gap-2">
-            <Ambulance className="h-4 w-4" />
-            Рекомендации по СМП
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="redirections" className="space-y-0 mt-6">
-          {/* Two Column Layout: Map (Left) + Recommendations (Right) */}
-          <div className="grid grid-cols-[60%_40%] gap-4 min-h-[calc(100vh-280px)]">
-            {/* Left: Map - Always Visible */}
-            <div className="h-[calc(100vh-280px)] min-h-[700px]">
->>>>>>> gitlab/main
               <RedirectionMap
                 source={selectedSource}
                 targets={selectedAlternatives}
@@ -192,13 +172,8 @@ export function RecommendationsEngine() {
               />
             </div>
 
-<<<<<<< HEAD
             {/* Scrollable Recommendations List */}
             <div className="h-auto max-h-[60vh] lg:h-[calc(100vh-280px)] overflow-y-auto pr-0 lg:pr-2 space-y-4">
-=======
-            {/* Right: Scrollable Recommendations List */}
-            <div className="h-[calc(100vh-280px)] overflow-y-auto pr-2 space-y-4">
->>>>>>> gitlab/main
               <RedirectionRecommendations
                 onSelectFacility={handleSelectFacility}
                 selectedSourceId={selectedSource?.id}

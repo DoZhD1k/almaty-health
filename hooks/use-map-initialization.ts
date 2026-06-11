@@ -3,13 +3,7 @@ import maplibregl from "maplibre-gl";
 
 const DEFAULT_CENTER: [number, number] = [76.886, 43.238];
 const DEFAULT_ZOOM = 11;
-<<<<<<< HEAD
 const API_KEY = "9zZ4lJvufSPFPoOGi6yZ";
-=======
-
-const MAPTILER_KEY =
-  process.env.NEXT_PUBLIC_MAPTILER_KEY ?? process.env.NEXT_PUBLIC_MAP_TOKEN ?? "";
->>>>>>> gitlab/main
 
 export const useMapInitialization = (
   containerRef: React.RefObject<HTMLDivElement | null>
@@ -37,39 +31,9 @@ export const useMapInitialization = (
 
     try {
       console.log("useMapInitialization: Creating new MapLibre map");
-<<<<<<< HEAD
       mapRef.current = new maplibregl.Map({
         container: containerRef.current,
         style: `https://api.maptiler.com/maps/streets-v2/style.json?key=${API_KEY}`,
-=======
-      const style = MAPTILER_KEY
-        ? `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`
-        : {
-            version: 8,
-            sources: {
-              osm: {
-                type: "raster",
-                tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
-                tileSize: 256,
-                attribution:
-                  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-              },
-            },
-            layers: [
-              {
-                id: "osm",
-                type: "raster",
-                source: "osm",
-                minzoom: 0,
-                maxzoom: 19,
-              },
-            ],
-          };
-
-      mapRef.current = new maplibregl.Map({
-        container: containerRef.current,
-        style,
->>>>>>> gitlab/main
         center: DEFAULT_CENTER,
         zoom: DEFAULT_ZOOM,
         attributionControl: false,

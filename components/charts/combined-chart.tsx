@@ -133,7 +133,6 @@ export function CombinedChart({
     return generateColors(sortedData, "blue");
   })();
   return (
-<<<<<<< HEAD
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       {/* Показатели смертности по профилям коек */}
       <Card>
@@ -142,14 +141,6 @@ export function CombinedChart({
             <span className="text-sm sm:text-base">
               Показатели смертности по профилям коек
             </span>
-=======
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      {/* Показатели смертности по профилям коек */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex flex-col gap-1">
-            <span>Показатели смертности по профилям коек</span>
->>>>>>> gitlab/main
             <FilterDisplay
               selectedDistricts={selectedDistricts}
               selectedFacilityTypes={selectedFacilityTypes}
@@ -161,11 +152,7 @@ export function CombinedChart({
             Средний процент летальности (смертей/общ кол-во пролеченных)
           </CardDescription>
         </CardHeader>
-<<<<<<< HEAD
         <CardContent className="px-1 sm:px-6">
-=======
-        <CardContent>
->>>>>>> gitlab/main
           <ChartContainer
             config={{
               mortality: {
@@ -173,11 +160,7 @@ export function CombinedChart({
                 color: "#8B0000",
               },
             }}
-<<<<<<< HEAD
             className="h-[280px] sm:h-[350px]"
-=======
-            className="h-[350px]"
->>>>>>> gitlab/main
           >
             <BarChart
               data={mortalityByProfile}
@@ -218,17 +201,11 @@ export function CombinedChart({
 
       {/* Простой коек в разрезе по типам */}
       <Card>
-<<<<<<< HEAD
         <CardHeader className="px-3 sm:px-6">
           <CardTitle className="flex flex-col gap-1">
             <span className="text-sm sm:text-base">
               Простой коек в разрезе по типам
             </span>
-=======
-        <CardHeader>
-          <CardTitle className="flex flex-col gap-1">
-            <span>Простой коек в разрезе по типам</span>
->>>>>>> gitlab/main
             <FilterDisplay
               selectedDistricts={selectedDistricts}
               selectedFacilityTypes={selectedFacilityTypes}

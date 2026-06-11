@@ -4,17 +4,11 @@ import {
   CityMedicalOrganization,
   ApiResponse,
   DashboardFilters,
-<<<<<<< HEAD
   Hospital,
   SeismicPoint,
   RefusalPoint,
 } from "@/types/healthcare";
 
-=======
-} from "@/types/healthcare";
-
-// Прямой доступ к внешнему API без прокси Next.js
->>>>>>> gitlab/main
 const API_BASE_URL = "https://admin.smartalmaty.kz";
 
 class HealthcareApiClient {
@@ -120,7 +114,6 @@ class HealthcareApiClient {
       "/api/v1/healthcare/city-medical-organization/?limit=1000"
     );
   }
-<<<<<<< HEAD
 
   async getHospitals(): Promise<ApiResponse<Hospital>> {
     return this.directFetch<Hospital>("/api/v1/healthcare/hospitals/?limit=1000");
@@ -166,8 +159,6 @@ class HealthcareApiClient {
     if (!response.ok) throw new Error("Ошибка загрузки сводки профилей");
     return response.json();
   }
-=======
->>>>>>> gitlab/main
 }
 
 export const healthcareApi = new HealthcareApiClient();

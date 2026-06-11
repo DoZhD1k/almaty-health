@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { MapMode } from "@/components/medical-filter-panel";
 
 export interface Hospital {
@@ -37,9 +36,6 @@ export interface SeismicPoint {
   lat: number;
   lng: number;
 }
-=======
-// Интерфейсы для данных больниц и аналитики
->>>>>>> gitlab/main
 
 export interface FacilityStatistic {
   id: number;
@@ -196,7 +192,6 @@ export interface ApiError {
   timestamp: string;
 }
 
-<<<<<<< HEAD
 export interface MedicalFilterState {
   district: string;
   facilityTypes: string[];
@@ -220,15 +215,6 @@ export interface RefusalPoint {
   occupancy_rate_percent: number;
   latitude: number;
   longitude: number;
-=======
-// Интерфейсы для медицинских фильтров
-export interface MedicalFilterState {
-  district: string;
-  facilityTypes: string[];
-  bedProfiles: string[];
-  loadLevels: string[];
-  searchQuery: string;
->>>>>>> gitlab/main
 }
 
 export interface FacilityType {

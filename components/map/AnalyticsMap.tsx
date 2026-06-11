@@ -9,18 +9,10 @@ import { createFacilityPopupHTML, popupStyles } from "@/lib/utils/popup-styles";
 
 // Токен Mapbox
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-<<<<<<< HEAD
 
 if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes("example")) {
   console.warn(
     "⚠️ Mapbox token not configured. Please set NEXT_PUBLIC_MAPBOX_TOKEN in .env.local",
-=======
-const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
-
-if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes("example")) {
-  console.warn(
-    "⚠️ Mapbox token not configured. Please set NEXT_PUBLIC_MAPBOX_TOKEN in .env.local"
->>>>>>> gitlab/main
   );
 }
 
@@ -164,11 +156,7 @@ export function AnalyticsMap({
         console.log("Loading medical facilities...");
 
         // Загружаем координаты из локального GeoJSON файла (53 точки с координатами)
-<<<<<<< HEAD
         const fileResponse = await fetch("/api/gpkg?layer=hospitals");
-=======
-        const fileResponse = await fetch(`${BASE_PATH}/api/gpkg?layer=hospitals`);
->>>>>>> gitlab/main
         const fileData = await fileResponse.json();
 
         // Загружаем детальные данные из API (с пагинацией)
@@ -252,11 +240,7 @@ export function AnalyticsMap({
     // Загрузка рекомендуемых СМП
     const loadRecommendedFacilities = async () => {
       try {
-<<<<<<< HEAD
         const response = await fetch("/geo-files/Recommended_MO.geojson");
-=======
-        const response = await fetch(`${BASE_PATH}/geo-files/Recommended_MO.geojson`);
->>>>>>> gitlab/main
         if (!response.ok) {
           console.warn("Recommended_MO.geojson not found");
           return;
@@ -310,13 +294,10 @@ export function AnalyticsMap({
 
     // Удаляем существующие источники и слои
     if (map.getLayer("facilities-layer")) map.removeLayer("facilities-layer");
-<<<<<<< HEAD
     if (map.getLayer("facilities-clusters"))
       map.removeLayer("facilities-clusters");
     if (map.getLayer("facilities-cluster-count"))
       map.removeLayer("facilities-cluster-count");
-=======
->>>>>>> gitlab/main
     if (map.getLayer("recommended-facilities-layer"))
       map.removeLayer("recommended-facilities-layer");
     if (map.getSource("facilities")) map.removeSource("facilities");
@@ -348,23 +329,16 @@ export function AnalyticsMap({
 
     console.log(`Creating ${geoJsonFeatures.length} facility markers on map`);
 
-<<<<<<< HEAD
     // Добавляем источник данных с кластеризацией
-=======
-    // Добавляем источник данных для существующих учреждений
->>>>>>> gitlab/main
     map.addSource("facilities", {
       type: "geojson",
       data: {
         type: "FeatureCollection",
         features: geoJsonFeatures,
       },
-<<<<<<< HEAD
       cluster: true,
       clusterMaxZoom: 14,
       clusterRadius: 50,
-=======
->>>>>>> gitlab/main
     });
 
     // Функция для определения цвета маркера по загруженности
@@ -383,7 +357,6 @@ export function AnalyticsMap({
       return "Низкая";
     };
 
-<<<<<<< HEAD
     // Слой кластеров (кружки)
     map.addLayer({
       id: "facilities-clusters",
@@ -425,17 +398,11 @@ export function AnalyticsMap({
     });
 
     // Добавляем слой с некластеризованными маркерами
-=======
-    // Добавляем слой с маркерами
->>>>>>> gitlab/main
     map.addLayer({
       id: "facilities-layer",
       type: "circle",
       source: "facilities",
-<<<<<<< HEAD
       filter: ["!", ["has", "point_count"]],
-=======
->>>>>>> gitlab/main
       paint: {
         "circle-radius": [
           "case",
@@ -463,7 +430,6 @@ export function AnalyticsMap({
       },
     });
 
-<<<<<<< HEAD
     // Клик по кластеру → приближение
     map.on("click", "facilities-clusters", (e: any) => {
       const features = map.queryRenderedFeatures(e.point, {
@@ -492,8 +458,6 @@ export function AnalyticsMap({
       map.getCanvas().style.cursor = "";
     });
 
-=======
->>>>>>> gitlab/main
     // Добавляем всплывающие окна
     map.on("click", "facilities-layer", (e: any) => {
       if (!e.features || e.features.length === 0) return;
@@ -528,11 +492,7 @@ export function AnalyticsMap({
 
     // Добавляем рекомендуемые СМП если включен режим рекомендаций
     console.log(
-<<<<<<< HEAD
       `showRecommendations: ${showRecommendations}, recommendedFacilities: ${recommendedFacilities.length}`,
-=======
-      `showRecommendations: ${showRecommendations}, recommendedFacilities: ${recommendedFacilities.length}`
->>>>>>> gitlab/main
     );
     if (showRecommendations && recommendedFacilities.length > 0) {
       const recommendedGeoJson = recommendedFacilities.map((facility) => ({
@@ -607,20 +567,12 @@ export function AnalyticsMap({
       });
 
       console.log(
-<<<<<<< HEAD
         `Added ${recommendedFacilities.length} recommended facilities`,
-=======
-        `Added ${recommendedFacilities.length} recommended facilities`
->>>>>>> gitlab/main
       );
     }
 
     console.log(
-<<<<<<< HEAD
       `Added ${facilities.length} medical facilities to analytics map`,
-=======
-      `Added ${facilities.length} medical facilities to analytics map`
->>>>>>> gitlab/main
     );
   }, [
     mapRef.current,
@@ -705,7 +657,6 @@ export function AnalyticsMap({
             });
           }
 
-<<<<<<< HEAD
           // Перемещаем слои с больницами на передний план, если они существуют
           if (map.getLayer("facilities-clusters")) {
             map.moveLayer("facilities-clusters");
@@ -713,9 +664,6 @@ export function AnalyticsMap({
           if (map.getLayer("facilities-cluster-count")) {
             map.moveLayer("facilities-cluster-count");
           }
-=======
-          // Перемещаем слой с больницами на передний план, если он существует
->>>>>>> gitlab/main
           if (map.getLayer("facilities-layer")) {
             map.moveLayer("facilities-layer");
           }
@@ -734,13 +682,8 @@ export function AnalyticsMap({
   const toggleLayer = (layerId: string) => {
     setLayers((prev) =>
       prev.map((layer) =>
-<<<<<<< HEAD
         layer.id === layerId ? { ...layer, visible: !layer.visible } : layer,
       ),
-=======
-        layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
-      )
->>>>>>> gitlab/main
     );
   };
 
@@ -859,21 +802,12 @@ export function AnalyticsMap({
                       layer.id === "roads_accessible_10min"
                         ? "bg-green-600"
                         : layer.id === "roads_accessible_15min"
-<<<<<<< HEAD
                           ? "bg-yellow-500"
                           : layer.id === "roads_accessible_30min"
                             ? "bg-orange-600"
                             : layer.id === "roads_accessible_60min"
                               ? "bg-red-600"
                               : "bg-gray-500"
-=======
-                        ? "bg-yellow-500"
-                        : layer.id === "roads_accessible_30min"
-                        ? "bg-orange-600"
-                        : layer.id === "roads_accessible_60min"
-                        ? "bg-red-600"
-                        : "bg-gray-500"
->>>>>>> gitlab/main
                     }`}
                   ></div>
                   <span>{layer.name}</span>
@@ -1004,21 +938,12 @@ export function AnalyticsMap({
                           layer.id === "roads_accessible_10min"
                             ? "bg-green-600"
                             : layer.id === "roads_accessible_15min"
-<<<<<<< HEAD
                               ? "bg-yellow-500"
                               : layer.id === "roads_accessible_30min"
                                 ? "bg-orange-600"
                                 : layer.id === "roads_accessible_60min"
                                   ? "bg-red-600"
                                   : "bg-gray-500"
-=======
-                            ? "bg-yellow-500"
-                            : layer.id === "roads_accessible_30min"
-                            ? "bg-orange-600"
-                            : layer.id === "roads_accessible_60min"
-                            ? "bg-red-600"
-                            : "bg-gray-500"
->>>>>>> gitlab/main
                         }`}
                       ></div>
                       <span>{layer.name}</span>
