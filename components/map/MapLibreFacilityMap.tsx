@@ -361,29 +361,23 @@ export function MapLibreFacilityMap({
   const [districts, setDistricts] = useState<DistrictFeature[]>([]);
 
   useEffect(() => {
-    fetch("https://admin.smartalmaty.kz/api/v1/address/districts")
+    fetch("https://admin.smartalmaty.kz/api/v1/address/districts/?city=1")
       .then((res) => res.json())
       .then((data) => {
         console.log("Districts API response:", data);
-        if (data.results && data.results.features) {
-          const filteredDistricts = data.results.features.filter(
+        
+        const features = data.features || (data.results && data.results.features);
+
+        if (features) {
+          const filteredDistricts = features.filter(
             (feature: any) => {
-              const id = feature.id || feature.properties?.id;
-              console.log(
-                "District id:",
-                id,
-                "name:",
-                feature.properties?.name_ru,
-              );
-              return id !== 0 && id !== 9;
+              const id = feature.id;
+              const name = feature.properties?.name_ru;
+              
+              return id !== 0 && id !== 9 && name !== "г. Алматы";
             },
           );
-          console.log(
-            "Districts loaded (filtered):",
-            filteredDistricts.length,
-            "from",
-            data.results.features.length,
-          );
+          console.log("Districts loaded:", filteredDistricts.length);
           setDistricts(filteredDistricts);
         }
       })
@@ -406,87 +400,24 @@ export function MapLibreFacilityMap({
     );
 
     const addLayers = () => {
+      if (!map.isStyleLoaded()) return;
+
+      const geojson = {
+        type: "FeatureCollection",
+        features: districts,
+      };
+
       try {
-        const geojson = {
-          type: "FeatureCollection",
-          features: districts,
-        };
-
-        console.log(
-          "Adding districts source with",
-          districts.length,
-          "features",
-        );
-        console.log("Sample feature:", districts[0]);
-
-        if (map.getLayer("districts-fill")) {
-          console.log("Removing existing districts-fill layer");
-          map.removeLayer("districts-fill");
-        }
-        if (map.getLayer("districts-outline")) {
-          console.log("Removing existing districts-outline layer");
-          map.removeLayer("districts-outline");
-        }
-        if (map.getLayer("districts-highlight")) {
-          console.log("Removing existing districts-highlight layer");
-          map.removeLayer("districts-highlight");
-        }
         if (map.getSource("districts")) {
-          console.log("Removing existing districts source");
-          map.removeSource("districts");
+          (map.getSource("districts") as maplibregl.GeoJSONSource).setData(geojson as any);
+        } else {
+          map.addSource("districts", {
+            type: "geojson",
+            data: geojson as any,
+          });
         }
 
-        map.addSource("districts", {
-          type: "geojson",
-          data: geojson as any,
-        });
-        console.log("Districts source added");
-
-        if (selectedDistrict !== "Все районы") {
-          map.addLayer({
-            id: "districts-fill",
-            type: "fill",
-            source: "districts",
-            filter: ["==", ["get", "name_ru"], selectedDistrict],
-            paint: {
-              "fill-color": "#3772ff",
-              "fill-opacity": 0.3,
-            },
-          });
-          console.log(
-            "Districts fill layer added (filtered for:",
-            selectedDistrict,
-            ")",
-          );
-
-          map.addLayer({
-            id: "districts-outline",
-            type: "line",
-            source: "districts",
-            filter: ["==", ["get", "name_ru"], selectedDistrict],
-            paint: {
-              "line-color": "#3772ff",
-              "line-width": 3,
-              "line-opacity": 0.9,
-            },
-          });
-          console.log(
-            "Districts outline layer added (filtered for:",
-            selectedDistrict,
-            ")",
-          );
-        } else {
-          map.addLayer({
-            id: "districts-fill",
-            type: "fill",
-            source: "districts",
-            paint: {
-              "fill-color": "#3772ff",
-              "fill-opacity": 0.1,
-            },
-          });
-          console.log("Districts fill layer added (all districts)");
-
+        if (!map.getLayer("districts-fill")) {
           map.addLayer({
             id: "districts-outline",
             type: "line",
@@ -497,25 +428,24 @@ export function MapLibreFacilityMap({
               "line-opacity": 0.6,
             },
           });
-          console.log("Districts outline layer added (all districts)");
         }
 
-        if (map.getLayer("facility-clusters"))
-          map.moveLayer("facility-clusters");
-        if (map.getLayer("cluster-count")) map.moveLayer("cluster-count");
-        if (map.getLayer("unclustered-facility"))
-          map.moveLayer("unclustered-facility");
+        const filter = selectedDistrict !== "Все районы" 
+          ? ["==", ["get", "name_ru"], selectedDistrict] 
+          : null; 
 
-        console.log("All district layers added successfully");
+        if (map.getLayer("districts-outline")) {
+          map.setFilter("districts-outline", filter as any);
+        }
+        
+        const topLayers = ["facility-clusters", "cluster-count", "unclustered-facility"];
+        topLayers.forEach(layer => {
+          if (map.getLayer(layer)) map.moveLayer(layer);
+        });
+
       } catch (error) {
-        console.error("Error adding district layers:", error);
+        console.error("Error syncing districts layers:", error);
       }
-
-      const isZonalMode = activeGeoLayers?.includes("orgTypeGrid") && 
-        selectedOrgTypeForGrid && 
-        getMoSettings(selectedOrgTypeForGrid).mode === "zonal";
-
-      if (isZonalMode) return;
     };
 
     const attemptAddLayers = () => {

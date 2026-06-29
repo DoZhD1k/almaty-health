@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone',
+  basePath: '/hospital-admissions',
+  trailingSlash: true,
   eslint: {
     ignoreDuringBuilds: true,
   },

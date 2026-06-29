@@ -91,7 +91,7 @@ export default function HomePage() {
         healthcareApi.getRefusals(),
         healthcareApi.getPlannedZones(),
         healthcareApi.getPlannedObjects(),
-        fetch("/geo-files/recommendations.json").then(res => res.json()), 
+        fetch(`${process.env.NEXT_PUBLIC_BASE_PATH || ""}/geo-files/recommendations.json`).then(res => res.json()), 
         healthcareApi.getNonresidents(),
         healthcareApi.getBedProfilesSummary(),
       ]);

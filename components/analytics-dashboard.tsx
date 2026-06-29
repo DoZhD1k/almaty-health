@@ -55,7 +55,6 @@ export function AnalyticsDashboard() {
 
   const filteredFacilities = useMemo(() => {
     return facilities.filter((facility) => {
-      // Фильтр по районам
       if (
         selectedDistricts.length > 0 &&
         !selectedDistricts.includes(facility.district || "")

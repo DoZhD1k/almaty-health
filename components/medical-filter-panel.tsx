@@ -16,17 +16,12 @@ import {
   ChevronUp,
   Building2,
   TrendingUp,
-  AlertTriangle,
   Bed,
   Search,
   Users,
 } from "lucide-react";
 import {
-  FacilityStatistic,
   MedicalFilterState,
-  FacilityType,
-  BedProfile,
-  LoadLevel,
   Hospital
 } from "@/types/healthcare";
 
@@ -62,7 +57,6 @@ export function MedicalFilterPanel({
   const [filters, setFilters] = useState<MedicalFilterState>({
     district: "Все районы",
     facilityTypes: [],
-    // bedProfiles: [],
     ownTypes: [],
     loadLevels: [], 
     searchQuery: "",
@@ -265,32 +259,10 @@ export function MedicalFilterPanel({
       <div className="flex-shrink-0 px-4 pt-4 pb-2 border-b border-gray-100">
         <h2 className="text-md font-semibold text-gray-900">Фильтры</h2>
       </div>
-      {/* <div className="flex border-b border-gray-200 bg-gray-50 rounded-t-lg">
-        {[
-          { id: "load", label: "Нагрузка", icon: TrendingUp },
-          { id: "buildings", label: "Здания", icon: Building2 },
-          { id: "geo", label: "Геоанализ", icon: Search },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => handleTabChange(tab.id as MapMode)}
-            className={`cursor-pointer rounded-md flex-1 flex items-center justify-center gap-2 py-3 text-xs font-bold transition-all
-              ${activeTab === tab.id 
-                ? "bg-blue-600 text-white shadow-inner" 
-                : "text-gray-500 hover:bg-gray-100"}`}
-          >
-            <tab.icon className="h-3 w-3" />
-            {tab.label}
-          </button>
-        ))}
-      </div> */}
 
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-2 px-4 py-4">
           <div>
-            {/* <Label className="text-xs font-medium text-gray-700 mb-2 block">
-              Поиск медицинской организации
-            </Label> */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
@@ -466,7 +438,6 @@ export function MedicalFilterPanel({
                 </h3>
                 <div className="bg-blue-50/50 p-2 rounded-lg space-y-1">
                   
-                  {/* Опция ВСЕ */}
                   <div className="flex items-center justify-between group py-1 border-b border-blue-100/50">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -588,7 +559,6 @@ export function MedicalFilterPanel({
             </div>
           )}
 
-          {/* Статистика - в нижней части панели */}
           <div className="grid grid-cols-2 gap-2">
             {/* Всего коек */}
             <div className="flex items-center gap-2 p-2 rounded-lg bg-[rgb(var(--blue-light))] border border-[rgb(var(--blue-light-active))]">
@@ -605,7 +575,6 @@ export function MedicalFilterPanel({
               </div>
             </div>
 
-            {/* Загруженность */}
             <div
               className={`flex items-center gap-2 p-2 rounded-lg border ${
                 summaryData.averageOccupancy >= 40 &&
@@ -656,7 +625,6 @@ export function MedicalFilterPanel({
               </div>
             </div>
 
-            {/* Всего МО */}
             <div className="flex items-center gap-2 p-2 rounded-lg bg-[rgb(var(--blue-light))] border border-[rgb(var(--blue-light-active))]">
               <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-[rgb(var(--blue-normal))]">
                 <Building2 className="h-3 w-3 text-white" />
@@ -671,10 +639,9 @@ export function MedicalFilterPanel({
               </div>
             </div>
 
-            {/* Поступило */}
             <div className="flex items-center gap-2 p-2 rounded-lg bg-indigo-50 border border-indigo-100">
               <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-indigo-500">
-                <Users className="h-3 w-3 text-white" /> {/* Используем иконку Users */}
+                <Users className="h-3 w-3 text-white" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-[9px] text-indigo-600 font-medium">

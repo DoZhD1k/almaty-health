@@ -7,7 +7,6 @@ import { ZoomIn, ZoomOut, RotateCcw, Layers } from "lucide-react";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { createFacilityPopupHTML, popupStyles } from "@/lib/utils/popup-styles";
 
-// Токен Mapbox
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 if (!MAPBOX_TOKEN || MAPBOX_TOKEN.includes("example")) {
